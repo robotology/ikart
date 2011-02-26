@@ -216,7 +216,7 @@ public:
 		}
 		if (control_thr)
 		{
-			laser_thr->printStats();
+			control_thr->printStats();
 		}
 		else
 		{

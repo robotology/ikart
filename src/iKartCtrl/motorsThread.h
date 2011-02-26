@@ -88,8 +88,6 @@ protected:
 	IOpenLoopControl  *iopl;
 	IControlMode      *icmd;
 
-    double t0;
-
 public:
     CtrlThread(unsigned int _period, ResourceFinder &_rf, Property options,
                string _remoteName, string _localName) :
@@ -212,11 +210,9 @@ public:
     virtual void afterStart(bool s)
     {
         if (s)
-            printf("Thread started successfully\n");
+            printf("Motor thread started successfully\n");
         else
-            printf("Thread did not start\n");
-
-        t0=Time::now();
+            printf("Motor thread did not start\n");
     }
 
     double lp_filter(double input, int i)

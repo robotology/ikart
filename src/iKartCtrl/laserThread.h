@@ -101,6 +101,14 @@ class LaserThread: public yarp::os::RateThread
 		return true;
 	}
 
+	virtual void afterStart(bool s)
+    {
+        if (s)
+            printf("Laser thread started successfully\n");
+        else
+            printf("Laser thread did not start\n");
+    }
+
 	virtual void run()
 	{	
 		yarp::sig::Vector laser_data;

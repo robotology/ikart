@@ -83,7 +83,6 @@ bool NavThread::threadInit()
 void NavThread::run()
 {
     static double dVersus=1.0;
-    static const int MKS=VOCAB3('M','K','S');
 
     // (very poor) ODOMETRY
     // only used for target memory
@@ -101,14 +100,29 @@ void NavThread::run()
         yarp::os::ConstString cmd=bot->get(0).asString();
 
         if (cmd=="set_target")
-        {
-            mBug=false;
-            mFreeSpace=true;
+        { 
+            double heading=-bot->get(1).asDouble();
+            double distance=bot->get(2).asDouble();
+            Vec2D target=mOdoPos+distance*Vec2D(mOdoRot+heading);
+
+            if ((mTarget-target).mod()>0.5)
+            {
+                mBug=false;
+                mFreeSpace=true;
+
+                mBugRange2=distance*distance;
+            }
+
+            mTarget=target;
             mHaveTarget=true;
-            mTarget=mOdoPos+bot->get(2).asDouble()*Vec2D(mOdoRot-bot->get(1).asDouble());
+
+            printf("NEW TARGET H=%lf D=%lf\n",heading,distance);
+            fflush(stdout);
         }
         else if (cmd=="stop")
         {
+            printf("STOP\n");
+            fflush(stdout);
             mHaveTarget=false;
         }
     }
@@ -120,6 +134,34 @@ void NavThread::run()
         double Umax=0.0;
         double rMin=1000000.0;
         int iMin=-1;
+
+        // target direction
+        Vec2D T=mTarget-mOdoPos;
+        double distance=T.mod();
+        T.normalize();
+        double Thead=T.rot(-mOdoRot).arg();
+        double beta=(distance>=mRadius)?atan2(mRadius,sqrt(distance*distance-mRadius*mRadius)):0.0;
+
+        bool bFreeWay=false;
+
+        if (fabs(Thead)<mRFAngleMax-beta)
+        {
+            bFreeWay=true;
+
+            for (int i=0; i<mNumSamples; ++i)
+            {
+                if (mIsValid[i])
+                {
+                    Vec2D R=(mObjects[i]-mOdoPos);
+
+                    if (T*R>0.0 && R.mod()<distance && (R-T*(T*R)).mod()<mRadius+0.2)
+                    {
+                        bFreeWay=false;
+                        break;
+                    }
+                }
+            }
+        }
 
         // obstacles correction
         Vec2D Rres;
@@ -167,13 +209,15 @@ void NavThread::run()
 
         Rres.normalize();
 
-        // target direction
-        Vec2D delta=mTarget-mOdoPos;
-        Vec2D T=delta.norm();
-
         Vec2D H;
 
-        if (Rres*T>=0.0 && (!mBug || (mBug && (mBugRange2>(mTarget-mOdoPos).mod2()))))
+        if (bFreeWay)
+        {
+            mBug=false;
+            mFreeSpace=true;
+            H=T;
+        }
+        else if (Rres*T>=0.0 && (bFreeWay || !mBug || (mBug && (mBugRange2>(mTarget-mOdoPos).mod2()))))
         {
             mBug=false;
             mFreeSpace=true;
@@ -187,7 +231,6 @@ void NavThread::run()
             {
                 Vec2D L=Rres.rotLeft();
 
-                //if (!mBug && (mFreeSpace || (!mFreeSpace && abs(iMin-miMinOld)>mNumSamples/3)))
                 if (!mBug && (mFreeSpace || abs(iMin-miMinOld)>mNumSamples/3))
                 {
                     dVersus=L*T>0.0?1.0:-1.0;
@@ -197,10 +240,16 @@ void NavThread::run()
 
                 if (!mBug && dVersus*(L*T)<0.0)
                 {
-                    mBug=true;
-                    mBugRange2=(mTarget-mOdoPos).mod2();
-                }
+                    //mBugRange2=(mTarget-mOdoPos).mod2();
+                    double range2=(mTarget-mOdoPos).mod2();        
+                    if (range2<mBugRange2)
+                    {
+                        mBugRange2=range2;
+                    }
 
+                    mBug=true;
+                }
+                    
                 L=dVersus*L.norm(sqrt(1.0-rMin/mInfluenceZone));
 
                 if (mBug)
@@ -225,7 +274,6 @@ void NavThread::run()
         H.normalize();
         H=H.rot(-mOdoRot);
 
-        double distance=delta.mod();
         double heading=H.arg();
 
         if (distance<0.05)
@@ -283,12 +331,18 @@ void NavThread::run()
     // SEND COMMANDS
     yarp::os::Bottle& cmd=mCommandPortO.prepare();
     cmd.clear();
-    //cmd.addVocab(MKS);
+    cmd.addInt(1);
     cmd.addDouble(-mVel.arg());
-    cmd.addDouble(mVel.mod());
-    cmd.addDouble(-mOmega);
-    cmd.addDouble(1.0); // pwm %
+    cmd.addDouble(75000.0*mVel.mod());
+    cmd.addDouble(-1000.0*mOmega);
+    cmd.addDouble(65000.0); // pwm %
     mCommandPortO.write();
+
+    static unsigned int cycle=0;
+    if (!(++cycle%25))
+    {
+        printf("commands S=%lf H=%lf W=%lf\n",mVel.mod(),-mVel.arg(),-mOmega);
+    }
 }
 
 void NavThread::threadRelease()
@@ -359,11 +413,15 @@ void NavThread::readLaser(yarp::sig::Vector& rangeData)
     mMemBuffOld=mMemBuffNew;
     mMemBuffNew=swap;
 
+    double range;
+
     for (int i=0; i<mNumSamples; ++i)
     {
-        if (rangeData[i]<mRangeMax)
+        range=0.001*rangeData[i];
+
+        if (range<mRangeMax)
         {
-            mObjects[i]=rfPos+rangeData[i]*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
+            mObjects[i]=rfPos+0.001*range*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
             mIsValid[i]=true;
         }
         else

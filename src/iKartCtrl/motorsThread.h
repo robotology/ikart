@@ -40,8 +40,6 @@ using namespace yarp;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-#define PRINT_STATUS_PER    0.5     // [s]
-
 class CtrlThread: public yarp::os::RateThread
 {
 private:
@@ -348,8 +346,6 @@ public:
 			//iopl->setOutput(1,0);
 			//iopl->setOutput(2,0);
 		}
-
-        printStatus();
     }
 
     virtual void threadRelease()
@@ -367,22 +363,16 @@ public:
 		set_ikart_control_type (IKART_CONTROL_NONE);
 	}
 
-    void printStatus()
+    void printStats()
     {
-        double t=Time::now();
+		fprintf (stdout,"Motor thread timeouts: %d\n",timeout_counter);
 
-        if (t-t0>=PRINT_STATUS_PER)
-        {
-			//fprintf (stdout,"alive, time: %f\n",t-t0);
-			fprintf (stdout,"Timeouts: %d\n",timeout_counter);
-			if (joystick_counter>0) 
-				fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);
-			fprintf (stdout,"FA: %+.1f\n",FA);
-			fprintf (stdout,"FB: %+.1f\n",FB);
-			fprintf (stdout,"FC: %+.1f\n",FC);
-			fprintf (stdout,"\n");
-            t0=t;
-        }
+		if (joystick_counter>0) 
+			fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);
+		fprintf (stdout,"FA: %+.1f\n",FA);
+		fprintf (stdout,"FB: %+.1f\n",FB);
+		fprintf (stdout,"FC: %+.1f\n",FC);
+		fprintf (stdout,"\n");
     }
 };
 

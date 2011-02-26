@@ -204,7 +204,26 @@ public:
     }
 
     virtual double getPeriod()    { return 1.0;  }
-    virtual bool   updateModule() { return true; }
+    virtual bool   updateModule()
+	{ 
+		if (laser_thr)
+		{
+			laser_thr->printStats();
+		}
+		else
+		{
+			fprintf(stdout,"Laser thread not running\n");
+		}
+		if (control_thr)
+		{
+			laser_thr->printStats();
+		}
+		else
+		{
+			fprintf(stdout,"Motor thread not running\n");
+		}
+		return true;
+	}
 };
 
 

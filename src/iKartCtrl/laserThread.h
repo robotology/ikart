@@ -38,8 +38,6 @@ using namespace yarp;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-#define PRINT_STATUS_PER    0.5     // [s]
-
 class LaserThread: public yarp::os::RateThread
 {
 	protected:
@@ -51,6 +49,7 @@ class LaserThread: public yarp::os::RateThread
 	IAnalogSensor       *iLaser;
 	string remoteName;
     string localName;
+	int                 timeout_counter;
 
 	public:
     
@@ -60,6 +59,7 @@ class LaserThread: public yarp::os::RateThread
 			   iKartCtrl_options (options),
                remoteName(_remoteName), localName(_localName) 
 	{
+		timeout_counter     = 0;
 	}
 
     virtual bool threadInit()
@@ -102,10 +102,13 @@ class LaserThread: public yarp::os::RateThread
 	}
 
 	virtual void run()
-	{		
+	{	
 		yarp::sig::Vector laser_data;
 		//fprintf(stderr,"before laser reading\n");
+		double before_laser=Time::now();
 		int res = iLaser->read(laser_data);
+		double after_laser=Time::now();
+		if (after_laser-before_laser > 0.040) { timeout_counter++;  }
 		//fprintf(stderr,"after laser reading\n");
 		if (res == yarp::dev::IAnalogSensor::AS_OK)
 		{
@@ -127,6 +130,11 @@ class LaserThread: public yarp::os::RateThread
 
 		port_laser_output.interrupt();
         port_laser_output.close();
+    }
+
+    void printStats()
+    {
+		fprintf (stdout,"Laser thread timeouts: %d\n",timeout_counter);
     }
 };
 

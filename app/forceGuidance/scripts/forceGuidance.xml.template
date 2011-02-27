@@ -2,7 +2,7 @@
 <name>forceGuidance Application </name>
 
 <dependencies>	
-<port>/ikart/command:i</port>
+<port>/ikart/control:i</port>
 <port>/ftObs/left_arm/wrench:o</port>
 <port>/ftObs/right_arm/wrench:o</port>
 </dependencies>
@@ -29,7 +29,7 @@
 
 <connection>
   <from>/forceGuidance/commands:o</from>
-  <to>/ikart/command:i</to>
+  <to>/ikart/control:i</to>
   <protocol>udp</protocol>
 </connection>
 

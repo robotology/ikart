@@ -103,6 +103,10 @@ protected:
 	double              ly0;
 	double              rx0;
 	double              ry0;
+	double              lx;
+	double              ly;
+	double              rx;
+	double              ry;
 
 	Port                            commands_out_port;
 	BufferedPort<yarp::sig::Vector> l_wrench_in_port;
@@ -146,16 +150,50 @@ public:
             fprintf(stderr, "Thread did not start\n");
     }
 
+	double lp_filter_1Hz(double input, int i)
+    {
+	   //This is a butterworth low pass first order, with a cut off freqency of 1Hz
+	   //It must be used with a sampling frequency of 50Hz (20ms)
+       static double xv[2][10], yv[2][10];
+       xv[0][i] = xv[1][i]; 
+       xv[1][i] = input /1.689454484e+01;
+       yv[0][i] = yv[1][i]; 
+       yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.8816185924 * yv[0][i]);
+       return yv[1][i];
+    }
+    double lp_filter_0_5Hz(double input, int i)
+    {
+	   //This is a butterworth low pass first order, with a cut off freqency of 0.5Hz
+	   //It must be used with a sampling frequency of 50Hz (20ms)
+       static double xv[2][10], yv[2][10];
+       xv[0][i] = xv[1][i]; 
+       xv[1][i] = input /3.282051595e+01;
+       yv[0][i] = yv[1][i]; 
+       yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.9390625058 * yv[0][i]);
+       return yv[1][i];
+    }
+
     virtual void run()
     {
-		yarp::sig::Vector* l_wrench = l_wrench_in_port.read(true);
-		yarp::sig::Vector* r_wrench = r_wrench_in_port.read(true);
+		yarp::sig::Vector* l_wrench = l_wrench_in_port.read(false);
+		yarp::sig::Vector* r_wrench = r_wrench_in_port.read(false);
 		
-		if (l_wrench==0 || r_wrench==0) return;
-		double ly=-(l_wrench->data()[0]-lx0);
-		double lx=+(l_wrench->data()[1]-ly0);
-		double ry=-(r_wrench->data()[0]-rx0);
-		double rx=+(r_wrench->data()[1]-ry0);
+		if (l_wrench!=0)
+		{
+			ly=-(l_wrench->data()[0]-lx0);
+			lx=+(l_wrench->data()[1]-ly0);
+		}
+
+		if (r_wrench!=0)
+		{
+			ry=-(r_wrench->data()[0]-rx0);
+			rx=+(r_wrench->data()[1]-ry0);
+		}
+
+		lx = lp_filter_0_5Hz(lx,0);
+		ly = lp_filter_0_5Hz(ly,1);
+		rx = lp_filter_0_5Hz(rx,2);
+		ry = lp_filter_0_5Hz(ry,3);
 
 		double desired_direction = atan2( lx+rx, ly+ry ) * 180.0 / 3.14159265;
 		double linear_speed      = sqrt ( pow(lx+rx,2)+ pow(ly+ry,2) ) / 60 * 65000;

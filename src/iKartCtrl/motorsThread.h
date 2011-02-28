@@ -215,7 +215,7 @@ public:
             printf("Motor thread did not start\n");
     }
 
-    double lp_filter(double input, int i)
+    double lp_filter_1Hz(double input, int i)
     {
 	   //This is a butterworth low pass first order, with a cut off freqency of 1Hz
 	   //It must be used with a sampling frequency of 50Hz (20ms)
@@ -224,6 +224,17 @@ public:
        xv[1][i] = input /1.689454484e+01;
        yv[0][i] = yv[1][i]; 
        yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.8816185924 * yv[0][i]);
+       return yv[1][i];
+    }
+    double lp_filter_0_5Hz(double input, int i)
+    {
+	   //This is a butterworth low pass first order, with a cut off freqency of 0.5Hz
+	   //It must be used with a sampling frequency of 50Hz (20ms)
+       static double xv[2][10], yv[2][10];
+       xv[0][i] = xv[1][i]; 
+       xv[1][i] = input /3.282051595e+01;
+       yv[0][i] = yv[1][i]; 
+       yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.9390625058 * yv[0][i]);
        return yv[1][i];
     }
 
@@ -318,9 +329,9 @@ public:
 		//Use a low pass filter to obtain smooth control
 		if (filter_enabled)
 		{
-			FA  = lp_filter(FA,0);
-			FB  = lp_filter(FB,1);
-			FC  = lp_filter(FC,2);
+			FA  = lp_filter_0_5Hz(FA,0);
+			FB  = lp_filter_0_5Hz(FB,1);
+			FC  = lp_filter_0_5Hz(FC,2);
 		}
 
 		//Apply the commands

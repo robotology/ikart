@@ -137,6 +137,10 @@ void drawRobot (IplImage *img)
 	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-2),color_black);
 }
 
+void drawCompass(const Vector *v, IplImage *img)
+{
+}
+
 void drawLaser(const Vector *v, IplImage *img)
 {
 const CvScalar color_white = cvScalar(255,255,255);
@@ -211,15 +215,18 @@ int main(int argc, char *argv[])
 
 	Network yarp;
 
-    string name;
-    if(argc > 1) name = argv[1];
-    else name = "/laserScannerGui:i";
+    string laser_port_name;
+    laser_port_name = "/laserScannerGui/laser:i";
+    string compass_port_name;
+    compass_port_name = "/laserScannerGui/compass:i";
 
     int width = 600;
     int height = 600;
 
-	BufferedPort<yarp::sig::Vector> inPort;
-    inPort.open(name.c_str());
+	BufferedPort<yarp::sig::Vector> laserInPort;
+    laserInPort.open(laser_port_name.c_str());
+	BufferedPort<yarp::sig::Vector> compassInPort;
+    compassInPort.open(compass_port_name.c_str());
 
     IplImage *img  = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
 	IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
@@ -227,18 +234,30 @@ int main(int argc, char *argv[])
 	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
 
     bool exit = false;
-    while(!exit)
+	yarp::sig::Vector compass_data;
+	compass_data.resize(3, 0.0);
+
+	yarp::sig::Vector laser_data;
+	laser_data.resize(1080, 0.0);
+
+	while(!exit)
     {
-        yarp::sig::Vector *v = inPort.read(false);
-		if (v)
-        {
-            //your drawing func.
-            drawLaser(v,img);
+		yarp::sig::Vector *cmp = compassInPort.read(false);
+		if (cmp) compass_data = *cmp;
+
+        yarp::sig::Vector *las = laserInPort.read(false);
+		if (las) laser_data = *las;
+
+		//The drawing functions.
+		{        
+		    drawLaser(&laser_data,img);
 			drawRobot(img2);
 			drawGrid(img);
+			drawCompass(&compass_data,img);
             cvAddWeighted(img, 0.7, img2, 0.3, 0.0, img);
             cvShowImage("Laser Scanner GUI",img);
         }
+
 		Time::delay(0.005);
         //if ESC is pressed, exit.
 		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
@@ -256,7 +275,8 @@ int main(int argc, char *argv[])
 		if(keypressed == 'v' ) verbose= (!verbose);
     }
 
-    inPort.close();
+    laserInPort.close();
+	compassInPort.close();
     cvDestroyAllWindows();
     cvReleaseImage(&img);
 }

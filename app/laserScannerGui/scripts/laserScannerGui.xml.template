@@ -15,7 +15,13 @@
 
 <connection>
   <from>/iKart/laser:o</from>
-  <to>/laserScannerGui:i</to>
+  <to>/laserScannerGui/laser:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/iKart/compass:o</from>
+  <to>/laserScannerGui/compass:i</to>
   <protocol>udp</protocol>
 </connection>
 

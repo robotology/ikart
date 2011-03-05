@@ -74,6 +74,7 @@ Windows, Linux
 
 #include "motorsThread.h"
 #include "laserThread.h"
+#include "compassThread.h"
 
 YARP_DECLARE_DEVICES(icubmod)
 
@@ -86,15 +87,17 @@ using namespace yarp::math;
 class CtrlModule: public RFModule
 {
 protected:
-    CtrlThread  *control_thr;
-	LaserThread *laser_thr;
-    Port        rpcPort;
+    CtrlThread    *control_thr;
+	LaserThread   *laser_thr;
+	CompassThread *compass_thr;
+    Port          rpcPort;
 
 public:
     CtrlModule() 
 	{
 		control_thr=0;
 		laser_thr=0;
+		compass_thr=0;
 	}
 
     virtual bool configure(ResourceFinder &rf)
@@ -128,6 +131,11 @@ public:
 			iKartCtrl_options.fromConfigFile(configFile.c_str());
 		}
 
+		//set the thread rate
+		
+		int rate = rf.check("rate",Value(20)).asInt();
+		printf("\niKartCtrl thread rate: %d ms.\n",rate);
+			
 		// the motor control thread
 		bool motors_enabled=true;
 		if (rf.check("no_motors"))
@@ -138,7 +146,7 @@ public:
 
 		if (motors_enabled==true)
 		{
-			control_thr=new CtrlThread(20,rf,iKartCtrl_options,remoteName,localName);
+			control_thr=new CtrlThread(rate,rf,iKartCtrl_options,remoteName,localName);
 			if (!control_thr->start())
 			{
 				delete control_thr;
@@ -161,10 +169,28 @@ public:
 
 		if (laser_enabled==true)
 		{
-			laser_thr=new LaserThread(20,rf,iKartCtrl_options,remoteName,localName);
+			laser_thr=new LaserThread(rate,rf,iKartCtrl_options,remoteName,localName);
 			if (!laser_thr->start())
 			{
 				delete laser_thr;
+				return false;
+			}
+		}
+
+		// the compass thread
+		bool compass_enabled=true;
+		if (rf.check("no_compass"))
+		{
+			printf("\n'no_compass' option found. Skipping inertial/compass part.\n");
+			compass_enabled=false;
+		}
+
+		if (compass_enabled==true)
+		{
+			compass_thr=new CompassThread(rate,rf,iKartCtrl_options,remoteName,localName);
+			if (!compass_thr->start())
+			{
+				delete compass_thr;
 				return false;
 			}
 		}
@@ -196,7 +222,11 @@ public:
 			laser_thr->stop();
 			delete laser_thr;
 		}
-
+		if (compass_thr)
+		{
+			compass_thr->stop();
+			delete compass_thr;
+		}
         rpcPort.interrupt();
         rpcPort.close();
 
@@ -240,9 +270,11 @@ int main(int argc, char *argv[])
     {
 		printf("\n");
         printf("Possible options: \n");
+		printf("'rate <r>' sets the threads rate (default 20ms).\n");
 		printf("'no_filter' disables command filtering.\n");
 		printf("'no_motors' motor interface will not be opened.\n");
 		printf("'no_laser' laser interface will not be opened.\n");
+		printf("'no_compass' inertial/compass ports will not be opened.\n");
 		printf("'no_start' do not automatically enables pwm.\n");
 		printf("'laser <filename>' starts the laser with the specified configuration file.\n");
 		printf("\n");

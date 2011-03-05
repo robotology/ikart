@@ -252,6 +252,14 @@ public:
 		{
 			fprintf(stdout,"Motor thread not running\n");
 		}
+		if (compass_thr)
+		{
+			compass_thr->printStats();
+		}
+		else
+		{
+			fprintf(stdout,"Compass thread not running\n");
+		}
 		return true;
 	}
 };

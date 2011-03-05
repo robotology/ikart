@@ -92,13 +92,18 @@ double scale =0.1; //global scale factor
 int robot_radius = 715/2; //mm
 int laser_position = 245; //mm
 bool verbose = false;
+bool absolute = false;
+bool compass  = true;
 CvFont font;
+CvFont fontBig;
+
+const CvScalar color_white = cvScalar(255,255,255);
+const CvScalar color_red   = cvScalar(0,0,255);
+const CvScalar color_black = cvScalar(0,0,0);
+const CvScalar color_gray = cvScalar(100,100,100);
 
 void drawGrid(IplImage *img)
 {
-const CvScalar color_white = cvScalar(255,255,255);
-const CvScalar color_black = cvScalar(0,0,0);
-
 	cvLine(img,cvPoint(0,0),cvPoint(img->width,img->height),color_black);
 	cvLine(img,cvPoint(img->width,0),cvPoint(0,img->height),color_black);
 	cvLine(img,cvPoint(img->width/2,0),cvPoint(img->width/2,img->height),color_black);
@@ -128,8 +133,6 @@ const CvScalar color_black = cvScalar(0,0,0);
 void drawRobot (IplImage *img)
 {
 	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(0,0,0),CV_FILLED);
-	const CvScalar color_black = cvScalar(0,0,0);
-	const CvScalar color_gray  = cvScalar(100,100,100);
 
 	//draw a circle
 	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale),color_gray,CV_FILLED);
@@ -139,13 +142,38 @@ void drawRobot (IplImage *img)
 
 void drawCompass(const Vector *v, IplImage *img)
 {
+	int sx = 0;
+	int sy = 0;
+	int ex = 0;
+	int ey = 0;
+	int tx = 0;
+	int ty = 0;
+	char buff [20];
+	cvCircle(img,cvPoint(img->width/2,img->height/2),250,color_black);
+	for (int i=0; i<360; i+=10)
+	{
+		double ang;
+		if (!absolute) ang = i;
+		else           ang = i+(*v)[0];
+		sx = int(250*sin(ang/180.0*3.14)+img->width/2);
+		sy = int(250*cos(ang/180.0*3.14)+img->height/2);
+		ex = int(260*sin(ang/180.0*3.14)+img->width/2);
+		ey = int(260*cos(ang/180.0*3.14)+img->height/2);
+		tx = int(275*sin(ang/180.0*3.14)+img->width/2);
+		ty = int(-275*cos(ang/180.0*3.14)+img->height/2);
+		cvLine(img,cvPoint(sx,sy),cvPoint(ex,ey),color_black);
+		CvSize tempSize;
+		int lw;
+		if      (i==0)     {sprintf(buff,"N");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+		else if (i==90)    {sprintf(buff,"E");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+		else if (i==180)   {sprintf(buff,"S");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+		else if (i==270)   {sprintf(buff,"W");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+		else               {sprintf(buff,"%d",i); cvGetTextSize( buff, &font   , &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &font, cvScalar(0, 0, 0, 0));}
+	}
 }
 
 void drawLaser(const Vector *v, IplImage *img)
 {
-const CvScalar color_white = cvScalar(255,255,255);
-const CvScalar color_red   = cvScalar(0,0,255);
-const CvScalar color_black = cvScalar(0,0,0);
     cvZero(img);
 	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
 	CvPoint center;
@@ -231,7 +259,8 @@ int main(int argc, char *argv[])
     IplImage *img  = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
 	IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
     cvNamedWindow("Laser Scanner GUI",CV_WINDOW_AUTOSIZE);
-	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
+	cvInitFont(&font,    CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
+	cvInitFont(&fontBig, CV_FONT_HERSHEY_SIMPLEX, 0.8, 0.8, 0, 1, CV_AA);
 
     bool exit = false;
 	yarp::sig::Vector compass_data;
@@ -253,7 +282,7 @@ int main(int argc, char *argv[])
 		    drawLaser(&laser_data,img);
 			drawRobot(img2);
 			drawGrid(img);
-			drawCompass(&compass_data,img);
+			if (compass) drawCompass(&compass_data,img);
             cvAddWeighted(img, 0.7, img2, 0.3, 0.0, img);
             cvShowImage("Laser Scanner GUI",img);
         }
@@ -264,15 +293,19 @@ int main(int argc, char *argv[])
         if(keypressed == 27) exit = true;
         if(keypressed == 'w' && scale <0.5)
 		{
-			scale+=0.001;
+			//scale+=0.001;
+			scale*=1.02;
 			printf("new scale factor is:%f\n",scale);
 		}
 		if(keypressed == 's' && scale >0.015) 
 		{
-			scale-=0.001;
+			//scale-=0.001;
+			scale/=1.02;
 			printf("new scale factor is:%f\n",scale);
 		}
 		if(keypressed == 'v' ) verbose= (!verbose);
+		if(keypressed == 'a' ) absolute= (!absolute);
+		if(keypressed == 'c' ) compass= (!compass);
     }
 
     laserInPort.close();

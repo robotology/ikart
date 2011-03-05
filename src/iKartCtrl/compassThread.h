@@ -52,6 +52,7 @@ class CompassThread: public yarp::os::RateThread
 	yarp::sig::Vector inertial_data;
 	string remoteName;
     string localName;
+	int                 timeout_counter;
 
 	public:
     
@@ -61,6 +62,7 @@ class CompassThread: public yarp::os::RateThread
 			   iKartCtrl_options (options),
                remoteName(_remoteName), localName(_localName) 
 	{
+		timeout_counter     = 0;
 		inertial_data.resize(12,0.0);
 		compass_data.resize(3,0.0);	
 	}
@@ -77,6 +79,7 @@ class CompassThread: public yarp::os::RateThread
 	{		
 		yarp::sig::Vector *iner = port_inertial_input.read(false);
 		if (iner) inertial_data = *iner;
+		else timeout_counter++;
 
 		//add here kinematics computation
 		compass_data[0]=inertial_data[5];
@@ -96,6 +99,10 @@ class CompassThread: public yarp::os::RateThread
         port_inertial_input.close();
 		port_compass_output.interrupt();
         port_compass_output.close();
+    }
+    void printStats()
+    {
+		fprintf (stdout,"Compass thread timeouts: %d\n",timeout_counter);
     }
 };
 

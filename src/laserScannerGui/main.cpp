@@ -290,6 +290,7 @@ int main(int argc, char *argv[])
 		Time::delay(0.005);
         //if ESC is pressed, exit.
 		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
+	keypressed &= 255;
         if(keypressed == 27) exit = true;
         if(keypressed == 'w' && scale <0.5)
 		{

@@ -71,7 +71,7 @@ class CompassThread: public yarp::os::RateThread
     {
 		port_inertial_input.open((localName+"/inertial:i").c_str());
 		port_compass_output.open((localName+"/compass:o").c_str());
-		
+		Network::connect("/icub/inertial",(localName+"/inertial:i").c_str());
 		return true;
 	}
 
@@ -82,9 +82,9 @@ class CompassThread: public yarp::os::RateThread
 		else timeout_counter++;
 
 		//add here kinematics computation
-		compass_data[0]=inertial_data[5];
-		compass_data[1]=inertial_data[4];
-		compass_data[2]=inertial_data[3];
+		compass_data[0]=inertial_data[2];
+		compass_data[1]=inertial_data[1];
+		compass_data[2]=inertial_data[0];
 
 		yarp::sig::Vector &pcompass_data=port_compass_output.prepare();
 		pcompass_data=compass_data;

@@ -260,6 +260,7 @@ public:
 		{
 			fprintf(stdout,"Compass thread not running\n");
 		}
+		fprintf(stdout,"\n");
 		return true;
 	}
 };

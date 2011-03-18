@@ -140,7 +140,7 @@ void drawRobot (IplImage *img)
 	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-2),color_black);
 }
 
-void drawCompass(const Vector *v, IplImage *img)
+void drawCompass(const Vector *comp, IplImage *img)
 {
 	int sx = 0;
 	int sy = 0;
@@ -153,14 +153,14 @@ void drawCompass(const Vector *v, IplImage *img)
 	for (int i=0; i<360; i+=10)
 	{
 		double ang;
-		if (!absolute) ang = i;
-		else           ang = i+(*v)[0];
-		sx = int(250*sin(ang/180.0*3.14)+img->width/2);
+		if  (absolute) ang = i+180;
+		else           ang = i+(*comp)[0]+180;
+		sx = int(-250*sin(ang/180.0*3.14)+img->width/2);
 		sy = int(250*cos(ang/180.0*3.14)+img->height/2);
-		ex = int(260*sin(ang/180.0*3.14)+img->width/2);
+		ex = int(-260*sin(ang/180.0*3.14)+img->width/2);
 		ey = int(260*cos(ang/180.0*3.14)+img->height/2);
-		tx = int(275*sin(ang/180.0*3.14)+img->width/2);
-		ty = int(-275*cos(ang/180.0*3.14)+img->height/2);
+		tx = int(-275*sin(ang/180.0*3.14)+img->width/2);
+		ty = int(275*cos(ang/180.0*3.14)+img->height/2);
 		cvLine(img,cvPoint(sx,sy),cvPoint(ex,ey),color_black);
 		CvSize tempSize;
 		int lw;
@@ -172,38 +172,45 @@ void drawCompass(const Vector *v, IplImage *img)
 	}
 }
 
-void drawLaser(const Vector *v, IplImage *img)
+void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
 {
     cvZero(img);
 	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
 	CvPoint center;
-	center.x = img->width/2;
-	center.y = img->height/2-(int)(laser_position*scale);
+
+	double center_angle;
+	if (!absolute) center_angle=0;
+	else center_angle = -180-(*comp)[0];	
+	center.x = (int)(img->width/2  + (laser_position*scale)*sin(center_angle/180*3.14) );
+	center.y = (int)(img->height/2 - (laser_position*scale)*cos(center_angle/180*3.14) );
 
 	double angle =0;
 	double lenght=0;
 	static double old_time=0;
 
-	if (!v) 
+	if (!las || !comp) 
 	{
 		return;
 	}
 
 	double curr_time=yarp::os::Time::now();
-	if (verbose) fprintf(stderr,"received vector size:%d ",v->size());
+	if (verbose) fprintf(stderr,"received vector size:%d ",las->size());
 	static int timeout_count=0;
 	if (curr_time-old_time > 0.40) timeout_count++;
 	if (verbose) fprintf(stderr,"time:%f timeout:%d\n",curr_time-old_time, timeout_count);
 	old_time = curr_time;
 	for (int i=0; i<1080; i++)
 	{
-		lenght=(*v)[i];
+		lenght=(*las)[i];
 		if      (lenght<0)     lenght = 0;
 		else if (lenght>10000) lenght = 10000; //10m maximum
 		angle=i/1080.0*270.0-(90-(360-270)/2);
-//		lenght=i;
+
+		//lenght=i; //this line is for debug only
+		angle-=center_angle;
 		double x = lenght*scale*cos(angle/180*3.14);
-		double y =-lenght*scale*sin(angle/180*3.14);
+		double y = -lenght*scale*sin(angle/180*3.14);
+
 		CvPoint ray;
 		ray.x=int(x);
 		ray.y=int(y);
@@ -214,26 +221,6 @@ void drawLaser(const Vector *v, IplImage *img)
 		//draw a line
 		cvLine(img,center,ray,color_white,thickness);
 	}
-	/*int thickness = 4;
-	for (int i=0; i<1080; i++)
-	{
-		lenght=(*v)[i];
-		if      (lenght<0)     lenght = 0;
-		else if (lenght>10000) lenght = 10000; //10m maximum
-		angle=i/1080.0*270.0-(90-(360-270)/2);
-//		lenght=i;
-		double x = lenght*scale*cos(angle/180*3.14);
-		double y =-lenght*scale*sin(angle/180*3.14);
-		CvPoint ray;
-		ray.x=int(x);
-		ray.y=int(y);
-		ray.x += center.x;
-		ray.y += center.y;
-
-		int thickness = 4;
-		cvLine(img,ray,ray,color_red,thickness);
-	}*/
-	
 }
 
 
@@ -271,15 +258,18 @@ int main(int argc, char *argv[])
 
 	while(!exit)
     {
-		yarp::sig::Vector *cmp = compassInPort.read(false);
-		if (cmp) compass_data = *cmp;
+		if (compass)
+		{
+			yarp::sig::Vector *cmp = compassInPort.read(false);
+			if (cmp) compass_data = *cmp;
+		}
 
         yarp::sig::Vector *las = laserInPort.read(false);
 		if (las) laser_data = *las;
 
 		//The drawing functions.
 		{        
-		    drawLaser(&laser_data,img);
+		    drawLaser(&compass_data,&laser_data,img);
 			drawRobot(img2);
 			drawGrid(img);
 			if (compass) drawCompass(&compass_data,img);
@@ -290,23 +280,38 @@ int main(int argc, char *argv[])
 		Time::delay(0.005);
         //if ESC is pressed, exit.
 		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
-	keypressed &= 255;
+	    keypressed &= 0xFF; //this mask is required in Linux systems
         if(keypressed == 27) exit = true;
         if(keypressed == 'w' && scale <0.5)
 		{
 			//scale+=0.001;
 			scale*=1.02;
-			printf("new scale factor is:%f\n",scale);
+			printf("scale factor is now:%.3f\n",scale);
 		}
 		if(keypressed == 's' && scale >0.015) 
 		{
 			//scale-=0.001;
 			scale/=1.02;
-			printf("new scale factor is:%f\n",scale);
+			printf("scale factor is now:%.3f\n",scale);
 		}
-		if(keypressed == 'v' ) verbose= (!verbose);
-		if(keypressed == 'a' ) absolute= (!absolute);
-		if(keypressed == 'c' ) compass= (!compass);
+		if(keypressed == 'v' ) 
+		{
+			verbose= (!verbose);
+			if (verbose) printf("verbose mode is now ON\n");
+			else         printf("verbose mode is now OFF\n");
+		}
+		if(keypressed == 'a' )
+		{
+			absolute= (!absolute);
+			if (absolute) printf("display is now in ABSOLUTE mode\n");
+			else          printf("display is now in RELATIVE mode\n");
+		}
+		if(keypressed == 'c' )
+		{
+			compass= (!compass);
+			if (compass) {printf("compass is now ON\n"); }
+			else         {printf("compass is now OFF\n"); compass_data.zero();}
+		}
     }
 
     laserInPort.close();

@@ -94,6 +94,14 @@ void NavThread::run()
     while (mOdoRot>=180.0) mOdoRot-=360.0;
     while (mOdoRot<-180.0) mOdoRot+=360.0;
 
+    static int sTime=0;
+    if (++sTime==25)
+    {
+        sTime=0;
+        printf("X=%.3lf  Y=%.3lf  H=%.1lf\n",mOdoPos.x,mOdoPos.y,mOdoRot);
+        printf("target %.3lf  %.3lf\n",mTarget.x,mTarget.y);
+    }
+
     // set new target if it is received
     for (yarp::os::Bottle* bot; bot=mTargetPortI.read(false);)
     {
@@ -154,7 +162,7 @@ void NavThread::run()
                 {
                     Vec2D R=(mObjects[i]-mOdoPos);
 
-                    if (T*R>0.0 && R.mod()<distance && (R-T*(T*R)).mod()<mRadius+0.2)
+                    if (T*R>0.0 && R.mod()<distance && (R-T*(T*R)).mod()<mRadius+0.1)
                     {
                         bFreeWay=false;
                         break;
@@ -180,7 +188,11 @@ void NavThread::run()
 
                 Rres+=R.norm(U);
 
-                if (U>Umax) Umax=U;
+                if (U>Umax)
+                {
+                    Umax=U;
+                    //Rres=R.norm(U);
+                }
 
                 if (r<rMin)
                 {
@@ -200,7 +212,11 @@ void NavThread::run()
 
             Rres+=R.norm(U);
 
-            if (U>Umax) Umax=U;
+            if (U>Umax)
+            {
+                Umax=U;
+                //Rres=R.norm(U);
+            }
 
             if (r<rMin) rMin=r;
         }
@@ -213,18 +229,24 @@ void NavThread::run()
 
         if (bFreeWay)
         {
+            if (!sTime) printf("freeway\n");
+
             mBug=false;
             mFreeSpace=true;
             H=T;
         }
-        else if (Rres*T>=0.0 && (bFreeWay || !mBug || (mBug && (mBugRange2>(mTarget-mOdoPos).mod2()))))
+        else if (Rres*T>=0.0 && (!mBug || (mBug && (mBugRange2>(mTarget-mOdoPos).mod2()))))
         {
+            if (!sTime) printf("freespace\n");
+
             mBug=false;
             mFreeSpace=true;
             H=Rres.norm(Umax)+T.norm(1.0-Umax);
         }
         else 
         {
+            if (!sTime) printf("obstacles\n");
+
             if ((rMin-=mRadius)<0.0) rMin=0.0;
 
             if (rMin<mInfluenceZone)
@@ -240,20 +262,17 @@ void NavThread::run()
 
                 if (!mBug && dVersus*(L*T)<0.0)
                 {
-                    //mBugRange2=(mTarget-mOdoPos).mod2();
-                    double range2=(mTarget-mOdoPos).mod2();        
-                    if (range2<mBugRange2)
-                    {
-                        mBugRange2=range2;
-                    }
-
                     mBug=true;
+                    double range2=(mTarget-mOdoPos).mod2();
+                    if (range2<mBugRange2) mBugRange2=range2;
+                    //mBugRange2=(mTarget-mOdoPos).mod2();
                 }
                     
                 L=dVersus*L.norm(sqrt(1.0-rMin/mInfluenceZone));
 
                 if (mBug)
                 {
+                    if (!sTime) printf("follow\n");
                     H=Rres.norm()*(2.0*Umax-1.0)+L;
                 }
                 else
@@ -278,25 +297,34 @@ void NavThread::run()
 
         if (distance<0.05)
         {
+            //setVel(Vec2D::zero);
+            //setOmega(0.0);
             setVel(Vec2D::zero);
             setOmega(0.0);
         }
         else if (distance<0.25)
         {
+            //setVel(Vec2D::zero);
+            //setOmega(0.0);
             setVel(distance*H);
-            setOmega(0.5*heading);
+            setOmega(0.2*heading);
         }
         else
         {
             if (fabs(heading)<=45.0)
             {
+                //setVel(Vec2D::zero);
+                //setOmega(0.0);
                 setVel(mMaxSpeed*H);
-                setOmega(0.5*heading);
+                setOmega(0.2*heading);
             }
             else
             {
+                //setVel(Vec2D::zero);
+                //setOmega(0.0);
                 setVel(Vec2D::zero);
-                setOmega(0.5*heading);
+                setOmega(heading>0.0?9.0:-9.0);
+                //setOmega(0.2*heading);
             }    
         }
     }
@@ -333,16 +361,18 @@ void NavThread::run()
     cmd.clear();
     cmd.addInt(1);
     cmd.addDouble(-mVel.arg());
-    cmd.addDouble(75000.0*mVel.mod());
+    cmd.addDouble(127500.0*mVel.mod());
     cmd.addDouble(-1000.0*mOmega);
     cmd.addDouble(65000.0); // pwm %
     mCommandPortO.write();
 
+    /*
     static unsigned int cycle=0;
     if (!(++cycle%25))
     {
         printf("commands S=%lf H=%lf W=%lf\n",mVel.mod(),-mVel.arg(),-mOmega);
     }
+    */
 }
 
 void NavThread::threadRelease()
@@ -421,7 +451,7 @@ void NavThread::readLaser(yarp::sig::Vector& rangeData)
 
         if (range<mRangeMax)
         {
-            mObjects[i]=rfPos+0.001*range*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
+            mObjects[i]=rfPos+range*Vec2D(mOdoRot+double(i-mNumSamplesByTwo)*mAngularRes);
             mIsValid[i]=true;
         }
         else
@@ -465,4 +495,69 @@ bool NavThread::setVel(const Vec2D& vel)
     return true;
 }
 
+/*
+        if (bFreeWay)
+        {
+            if (!sTime) printf("freeway\n");
 
+            mBug=false;
+            mFreeSpace=true;
+            H=T;
+        }
+        else if (Rres*T>=0.0 && (bFreeWay || !mBug || (mBug && (mBugRange2>(mTarget-mOdoPos).mod2()))))
+        {
+            if (!sTime) printf("freespace\n");
+
+            mBug=false;
+            mFreeSpace=true;
+            H=Rres.norm(Umax)+T.norm(1.0-Umax);
+        }
+        else 
+        {
+            if (!sTime) printf("obstacles\n");
+
+            if ((rMin-=mRadius)<0.0) rMin=0.0;
+
+            if (rMin<mInfluenceZone)
+            {
+                Vec2D L=Rres.rotLeft();
+
+                if (!mBug && (mFreeSpace || abs(iMin-miMinOld)>mNumSamples/3))
+                {
+                    dVersus=L*T>0.0?1.0:-1.0;
+                    mFreeSpace=false;
+                    mBug=false;
+                }
+
+                if (!mBug && dVersus*(L*T)<0.0)
+                {
+                    //mBugRange2=(mTarget-mOdoPos).mod2();
+                    double range2=(mTarget-mOdoPos).mod2();        
+                    if (range2<mBugRange2)
+                    {
+                        mBugRange2=range2;
+                    }
+                    
+                    mBug=true;
+                }
+                    
+                L=dVersus*L.norm(sqrt(1.0-rMin/mInfluenceZone));
+
+                if (mBug)
+                {
+                    if (!sTime) printf("follow\n");
+                    H=Rres.norm()*(2.0*Umax-1.0)+L;
+                }
+                else
+                {
+                    H=Rres.norm(Umax)+T.norm(1.0-Umax)+L;
+                }
+            }
+            else
+            {
+                mBug=false;
+                mFreeSpace=true;
+                H=Rres.norm(Umax)+T.norm(1.0-Umax);
+            }
+        }
+*/

@@ -25,7 +25,7 @@ public:
         std::string local=mRF->check("local",yarp::os::Value("/ikartnav")).asString().c_str();
         
         mLaserPortI.open((local+"/laser:i").c_str());
-        if (!yarp::os::Network::connect(mLaserPortI.getName(),(remote+"/laser:o").c_str()))
+        if (!yarp::os::Network::connect((remote+"/laser:o").c_str(),mLaserPortI.getName()))
         {
             fprintf(stderr,"ERROR: can't connect to iKartCtrl laser port\n");
             return false;

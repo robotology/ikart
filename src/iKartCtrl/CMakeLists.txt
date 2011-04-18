@@ -4,11 +4,13 @@ SET(PROJECTNAME iKartCtrl)
 
 PROJECT(${PROJECTNAME})
 
-SET(folder_source main.cpp)
+#SET(folder_source main.cpp)
 
 FILE(GLOB folder_source *.cpp)
 FILE(GLOB folder_header *.h)
+
 SOURCE_GROUP("Source Files" FILES ${folder_source})
+SOURCE_GROUP("Header Files" FILES ${folder_header})
 
 FIND_PACKAGE(ICUB)
 FIND_PACKAGE(YARP)
@@ -16,7 +18,7 @@ FIND_PACKAGE(YARP)
 INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS}
                     ${YARP_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(${PROJECTNAME} ${folder_source})
+ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
 
 TARGET_LINK_LIBRARIES(${PROJECTNAME} icubmod
                                      ${GSL_LIBRARIES}

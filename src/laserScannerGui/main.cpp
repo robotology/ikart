@@ -94,6 +94,7 @@ int laser_position = 245; //mm
 bool verbose = false;
 bool absolute = false;
 bool compass  = true;
+int rate=50; //ms
 CvFont font;
 CvFont fontBig;
 
@@ -277,7 +278,8 @@ int main(int argc, char *argv[])
             cvShowImage("Laser Scanner GUI",img);
         }
 
-		Time::delay(0.005);
+		Time::delay(double(rate)/1000.0+0.005);
+		
         //if ESC is pressed, exit.
 		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
 	    keypressed &= 0xFF; //this mask is required in Linux systems
@@ -306,11 +308,33 @@ int main(int argc, char *argv[])
 			if (absolute) printf("display is now in ABSOLUTE mode\n");
 			else          printf("display is now in RELATIVE mode\n");
 		}
+		if(keypressed == 'r' )
+		{
+			if      (rate==0)  rate = 50;
+			else if (rate==50) rate = 100;
+			else if (rate==100) rate = 200;
+			else if (rate==200) rate = 0;
+			printf("refresh rate set to %d ms.\n", rate);
+			
+		}
 		if(keypressed == 'c' )
 		{
 			compass= (!compass);
 			if (compass) {printf("compass is now ON\n"); }
 			else         {printf("compass is now OFF\n"); compass_data.zero();}
+		}
+		if(keypressed == 'h' || 
+		   keypressed == 'H')
+		{
+			printf("\n");
+			printf("available commands:\n");
+			printf("c ...... enables/disables compass.\n");
+			printf("a ...... set absolute/relative mode.\n");
+			printf("w ...... zoom in.\n");
+			printf("s ...... zoom out.\n");
+			printf("v ...... set verbose mode on/off.\n");
+			printf("r ...... set refresh rate.\n");
+			printf("\n");
 		}
     }
 

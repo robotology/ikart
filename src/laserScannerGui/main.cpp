@@ -288,25 +288,25 @@ int main(int argc, char *argv[])
 		{
 			//scale+=0.001;
 			scale*=1.02;
-			printf("scale factor is now:%.3f\n",scale);
+			fprintf(stderr,"scale factor is now:%.3f\n",scale);
 		}
 		if(keypressed == 's' && scale >0.015) 
 		{
 			//scale-=0.001;
 			scale/=1.02;
-			printf("scale factor is now:%.3f\n",scale);
+			fprintf(stderr,"scale factor is now:%.3f\n",scale);
 		}
 		if(keypressed == 'v' ) 
 		{
 			verbose= (!verbose);
-			if (verbose) printf("verbose mode is now ON\n");
-			else         printf("verbose mode is now OFF\n");
+			if (verbose) fprintf(stderr,"verbose mode is now ON\n");
+			else         fprintf(stderr,"verbose mode is now OFF\n");
 		}
 		if(keypressed == 'a' )
 		{
 			absolute= (!absolute);
-			if (absolute) printf("display is now in ABSOLUTE mode\n");
-			else          printf("display is now in RELATIVE mode\n");
+			if (absolute) fprintf(stderr,"display is now in ABSOLUTE mode\n");
+			else          fprintf(stderr,"display is now in RELATIVE mode\n");
 		}
 		if(keypressed == 'r' )
 		{
@@ -314,27 +314,27 @@ int main(int argc, char *argv[])
 			else if (rate==50) rate = 100;
 			else if (rate==100) rate = 200;
 			else if (rate==200) rate = 0;
-			printf("refresh rate set to %d ms.\n", rate);
+			fprintf(stderr,"refresh rate set to %d ms.\n", rate);
 			
 		}
 		if(keypressed == 'c' )
 		{
 			compass= (!compass);
-			if (compass) {printf("compass is now ON\n"); }
-			else         {printf("compass is now OFF\n"); compass_data.zero();}
+			if (compass) {fprintf(stderr,"compass is now ON\n"); }
+			else         {fprintf(stderr,"compass is now OFF\n"); compass_data.zero();}
 		}
 		if(keypressed == 'h' || 
 		   keypressed == 'H')
 		{
-			printf("\n");
-			printf("available commands:\n");
-			printf("c ...... enables/disables compass.\n");
-			printf("a ...... set absolute/relative mode.\n");
-			printf("w ...... zoom in.\n");
-			printf("s ...... zoom out.\n");
-			printf("v ...... set verbose mode on/off.\n");
-			printf("r ...... set refresh rate.\n");
-			printf("\n");
+			fprintf(stderr,"\n");
+			fprintf(stderr,"available commands:\n");
+			fprintf(stderr,"c ...... enables/disables compass.\n");
+			fprintf(stderr,"a ...... set absolute/relative mode.\n");
+			fprintf(stderr,"w ...... zoom in.\n");
+			fprintf(stderr,"s ...... zoom out.\n");
+			fprintf(stderr,"v ...... set verbose mode on/off.\n");
+			fprintf(stderr,"r ...... set refresh rate.\n");
+			fprintf(stderr,"\n");
 		}
     }
 

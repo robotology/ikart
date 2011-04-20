@@ -544,9 +544,10 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     static double period=0.0;
     period+=step;
     
-    double odoRot=0.5*step*mOmega;
-    Vec2D odoPos=step*mVel.rot(odoRot);
-    odoRot+=0.5*step*mOmega;
+    static double odoRot=0.0;
+    static Vec2D odoPos;
+    odoPos+=step*mVel.rot(0.5*step*mOmega);
+    odoRot+=step*mOmega;
     while (odoRot>=180.0) odoRot-=360.0;
     while (odoRot<-180.0) odoRot+=360.0;
 
@@ -589,7 +590,8 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
             else if (distance<0.2)
             {
                 setVel(0.5*distance*mTarget.norm());
-                setOmega(0.2*mTarget.arg());
+                //setOmega(0.2*mTarget.arg());
+                setOmega(0.0);
             }
             else
             {
@@ -611,6 +613,9 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
             setVel(Vec2D::zero);
             setOmega(0.0);
         }
+
+        odoRot=0.0;
+        odoPos=Vec2D::zero;
     }
 
     // SMOOTHING
@@ -638,14 +643,14 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     // SEND COMMANDS
     //mKartCtrl->setCommands(-mVel.arg(),mVel.mod(),-mOmega); 
 
-    if (mCommandPortO.getOutputCount()>0)
+    //if (mCommandPortO.getOutputCount()>0)
     {
         // SEND COMMANDS
         yarp::os::Bottle& cmd=mCommandPortO.prepare();
         cmd.clear();
         cmd.addInt(1);
         cmd.addDouble(-mVel.arg());
-        cmd.addDouble(45000.0*mVel.mod());
+        cmd.addDouble(127500.0*mVel.mod());
         //cmd.addDouble(45000.0);
         cmd.addDouble(-1000.0*mOmega);
         cmd.addDouble(65000.0); // pwm %

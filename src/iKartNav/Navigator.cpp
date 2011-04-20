@@ -142,23 +142,32 @@ bool Navigator::threadInit()
         return false;
     }
 
+    mTargetPortI.open((local+"/target:i").c_str());
+
+    /*
     mCommandPortO.open((local+"/control:o").c_str());
     if (!yarp::os::Network::connect(mCommandPortO.getName(),(remote+"/control:i").c_str()))
     {
         fprintf(stderr,"ERROR: can't connect to iKartCtrl command port\n");
         return false;
     }
+    */
 
-    mTargetPortI.open((local+"/target:i").c_str());
+    mKartCtrl=new CtrlThread(local,remote);
+
+    mKartCtrl->start();
 
     return true;
 }
 
 void Navigator::threadRelease()
 {
+    mKartCtrl->stop();
+    delete mKartCtrl;
+
     mLaserPortI.close();
     mTargetPortI.close();
-    mCommandPortO.close();
+    //mCommandPortO.close();
 
     if (mRays) delete [] mRays;
     if (mPoints) delete [] mPoints;
@@ -641,8 +650,9 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     }
 
     // SEND COMMANDS
-    //mKartCtrl->setCommands(-mVel.arg(),mVel.mod(),-mOmega); 
+    mKartCtrl->setCtrlRef(-mVel.arg(),127500.0*mVel.mod(),-1000.0*mOmega); 
 
+    /*
     //if (mCommandPortO.getOutputCount()>0)
     {
         // SEND COMMANDS
@@ -656,6 +666,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
         cmd.addDouble(65000.0); // pwm %
         mCommandPortO.write();
     }
+    */
 }
 
 /*

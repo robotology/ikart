@@ -10,6 +10,7 @@
 #include <yarp/sig/Vector.h>
 
 #include "Vec2D.h"
+#include "CtrlThread.h"
 
 #define DIM 200
 
@@ -24,13 +25,15 @@ public:
 
     virtual void onStop()
     {
+        mKartCtrl->stop();
+
         mLaserPortI.interrupt();
         mTargetPortI.interrupt();
-        mCommandPortO.interrupt();
+        //mCommandPortO.interrupt();
 
         mLaserPortI.close();
         mTargetPortI.close();
-        mCommandPortO.close();
+        //mCommandPortO.close();
     }
 
     bool checkResetAlive()
@@ -46,6 +49,9 @@ public:
         mOmega=mOmegaRef=0.0;
         mVel=mVelRef=Vec2D::zero;
 
+        mKartCtrl->setCtrlRef(0.0,0.0,0.0);
+
+        /*
         yarp::os::Bottle& cmd=mCommandPortO.prepare();
         cmd.clear();
         cmd.addInt(1);
@@ -54,6 +60,7 @@ public:
         cmd.addDouble(0.0);
         cmd.addDouble(65000.0); // pwm %
         mCommandPortO.write();
+        */
 
         fprintf(stderr,"NO LASER DATA -> EMERGENCY STOP\n");
         fflush(stderr);
@@ -133,7 +140,7 @@ protected:
     Vec2D *mPointsBuffOld;
     Vec2D *mPointsBuffNew;
 
-    //iKartCtrl* mKartCtrl;
+    CtrlThread* mKartCtrl;
 
     bool mHaveTarget;
     Vec2D mTarget;
@@ -163,7 +170,7 @@ protected:
     yarp::os::ResourceFinder *mRF;
     yarp::os::BufferedPort<yarp::sig::Vector> mLaserPortI;
     yarp::os::BufferedPort<yarp::os::Bottle> mTargetPortI;
-    yarp::os::BufferedPort<yarp::os::Bottle> mCommandPortO;
+    //yarp::os::BufferedPort<yarp::os::Bottle> mCommandPortO;
 };
 
 #endif

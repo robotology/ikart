@@ -110,7 +110,7 @@ protected:
 
     void compileZ(Vec2D* points,int N);
     void runGNF(yarp::sig::Vector& rangeData);
-    void GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,double& direction,double& curvature);
+    bool GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,double& direction,double& curvature,double& zeta);
 
     // config
     double mRadius;

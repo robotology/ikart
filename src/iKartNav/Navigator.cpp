@@ -200,7 +200,7 @@ void Navigator::threadRelease()
     delete [] mMask;
 }
 
-void Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,double& direction,double& curvature)
+bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,double& direction,double& curvature,double &zeta)
 {
     //mLaserSem.wait();
 
@@ -365,7 +365,7 @@ void Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
 	    mQueued[Mxc][Myc]=false;
 	  
         double dD=mD[Mxc][Myc];
-	    double dNewDL=1.25*0.1*mZeta[Mxc][Myc]+0.1;
+	    double dNewDL=1.5*0.1*mZeta[Mxc][Myc]+0.1;
 	    double dNewDT=1.414*dNewDL+dD;
 	    dNewDL+=dD;
 
@@ -459,6 +459,8 @@ void Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
     direction=W.arg();
     curvature=ONE_BY_03*(W.x*(W.x*Wxy-W.y*Wxx)+W.y*(W.x*Wyy-W.y*Wxy))/modW;
     //mLaserSem.post();
+    zeta=mZeta[DIM][DIM];
+    return mReach[DIM][DIM];
 }
 
 void Navigator::compileZ(Vec2D* points,int N)
@@ -586,8 +588,28 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
 
             double heading;
             double curvature;
+            double zeta;
 
-            GNF(odoPos,odoRot,rangeData,heading,curvature);
+            double gain=1.0;
+
+            if (!GNF(odoPos,odoRot,rangeData,heading,curvature,zeta))
+            {
+                if (zeta>0.666)
+                { 
+                    gain=0.0;
+                    static int times=9;
+
+                    if (++times==10)
+                    {
+                        times=0;
+                        printf("No path to target\n");
+                    }
+                    else
+                    {
+                        times=9;
+                    }
+                }
+            }
 
             Vec2D U(heading);
 
@@ -598,7 +620,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
             }
             else if (distance<0.2)
             {
-                setVel(0.5*distance*mTarget.norm());
+                setVel(gain*0.5*distance*mTarget.norm());
                 //setOmega(0.2*mTarget.arg());
                 setOmega(0.0);
             }
@@ -606,15 +628,17 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
             {
                 if (fabs(heading)<=45.0)
                 {
-                    setVel(mMaxSpeed*U);
-                    //static const double RAD2DEG=1.0/Vec2D::DEG2RAD;
-                    setOmega(0.2*heading/*+RAD2DEG*mVel.mod()*curvature*/);
+                    setVel(gain*mMaxSpeed*U);
+                    static const double RAD2DEG=1.0/Vec2D::DEG2RAD;                    
+                    //setVel(gain*mMaxSpeed*Vec2D(1.0,0.0));
+                    
+                    setOmega(0.2*heading+RAD2DEG*mVel.mod()*curvature);
                 }
                 else
                 {
                     setVel(Vec2D::zero);
                     setOmega(heading>0.0?9.0:-9.0);
-                } 
+                }   
             }
         }
         else
@@ -650,7 +674,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     }
 
     // SEND COMMANDS
-    mKartCtrl->setCtrlRef(-mVel.arg(),127500.0*mVel.mod(),-1000.0*mOmega); 
+    mKartCtrl->setCtrlRef(-mVel.arg(),153000.0*mVel.mod(),-550.0*mOmega); 
 
     /*
     //if (mCommandPortO.getOutputCount()>0)
@@ -659,12 +683,17 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
         yarp::os::Bottle& cmd=mCommandPortO.prepare();
         cmd.clear();
         cmd.addInt(1);
-        cmd.addDouble(-mVel.arg());
-        cmd.addDouble(127500.0*mVel.mod());
+        //cmd.addDouble(-mVel.arg());
+        cmd.addDouble(0.0);
+        //cmd.addDouble(127500.0*mVel.mod());
+        cmd.addDouble(127500.0*0.2);
         //cmd.addDouble(45000.0);
-        cmd.addDouble(-1000.0*mOmega);
+        //cmd.addDouble(-1000.0*mOmega);
+        cmd.addDouble(0.0);
         cmd.addDouble(65000.0); // pwm %
         mCommandPortO.write();
+
+        printf("%lf   %lf    %lf\n",-mVel.arg(),mVel.mod(),mOmega);
     }
     */
 }

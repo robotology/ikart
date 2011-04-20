@@ -41,7 +41,7 @@ public:
 			return Vec2D(0.0,0.0);
 	}
 
-	void normalize(double dl=1.0)
+	double normalize(double dl=1.0)
 	{ 
 		double dm=mod();
 		
@@ -52,6 +52,8 @@ public:
 		}
 		else
 			x=y=0.0;
+
+        return dm;
 	}
 
 	double arg() const

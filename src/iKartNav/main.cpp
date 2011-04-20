@@ -71,14 +71,12 @@ Windows, Linux
 #include <yarp/os/Port.h>
 
 #include "Vec2D.h"
-#include "NavThread.h"
-#include "LaserThread.h"
+#include "Navigator.h"
 
 class iKartNavModule : public yarp::os::RFModule
 {
 protected:
-    LaserThread *mLaserThread;
-    NavThread   *mNavThread;
+    Navigator *mNavThread;
     yarp::os::Port mHandlerPort;
 
 public:
@@ -90,26 +88,12 @@ public:
     virtual bool configure(yarp::os::ResourceFinder &rf)
     {
         yarp::os::Time::turboBoost();
-
-        int period=int(1000.0*rf.check("period",yarp::os::Value(0.02)).asDouble());
         
-        mNavThread=new NavThread(period,&rf);
+        mNavThread=new Navigator(&rf);
 
         if (!mNavThread->start())
         {
             delete mNavThread;
-            return false;
-        }
-
-        mLaserThread=new LaserThread(&rf,mNavThread);
-
-        if (!mLaserThread->start())
-        {
-            mNavThread->stop();
-
-            delete mNavThread;
-            delete mLaserThread;
-
             return false;
         }
 
@@ -130,16 +114,13 @@ public:
 
     virtual bool close()
     {
-        mLaserThread->stop();
-        delete mLaserThread;
-        mLaserThread=NULL;
+        mHandlerPort.interrupt();
+        mHandlerPort.close();
 
+        mNavThread->shutdown();
         mNavThread->stop();
         delete mNavThread;
         mNavThread=NULL;
-
-        mHandlerPort.interrupt();
-        mHandlerPort.close();
 
         return true;
     }
@@ -153,10 +134,13 @@ public:
     { 
         if (isStopping())
         {
-            mLaserThread->stop();
-            mNavThread->stop();
-            
+            mNavThread->stop();   
             return false;
+        }
+
+        if (!mNavThread->checkResetAlive())
+        {
+            mNavThread->emergencyStop();
         }
         
         return true; 
@@ -182,7 +166,7 @@ int main(int argc, char *argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("iKartNav.ini");		   //overridden by --from parameter
-    rf.setDefaultContext("iKart/conf");                     //overridden by --context parameter
+    rf.setDefaultContext("iKart/conf");                //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     
     iKartNavModule iKartNav;

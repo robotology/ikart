@@ -58,12 +58,29 @@ private:
 	double              wdt_joy_timeout;
 	int                 timeout_counter;
 	int                 joystick_counter;
+	int                 mov_timeout_counter;
+	int                 joy_timeout_counter;
 
 	//movement control variables
 	double				linear_speed;
 	double				angular_speed;
 	double				desired_direction;
 	double              pwm_gain;
+
+	double				joy_linear_speed;
+	double				joy_angular_speed;
+	double				joy_desired_direction;
+	double              joy_pwm_gain;
+
+	double				cmd_linear_speed;
+	double				cmd_angular_speed;
+	double				cmd_desired_direction;
+	double              cmd_pwm_gain;
+
+	double				exec_linear_speed;
+	double				exec_angular_speed;
+	double				exec_desired_direction;
+	double              exec_pwm_gain;
 
 	//motor variables
 	double              FA;
@@ -101,6 +118,8 @@ public:
 		wdt_joy_timeout     = 0.200;
 		timeout_counter     = 0;
 		joystick_counter    = 0;
+        mov_timeout_counter = 0;
+        joy_timeout_counter = 0;
 
 		linear_speed        = 1;
 		angular_speed       = 0;
@@ -240,6 +259,8 @@ public:
 
     virtual void run()
     {
+		static double wdt_old_mov_cmd=Time::now();
+		static double wdt_old_joy_cmd=Time::now();	
 		static double wdt_mov_cmd=Time::now();
 		static double wdt_joy_cmd=Time::now();		
 
@@ -248,37 +269,69 @@ public:
             if (b->get(0).asInt()==1)
             {                                
 				//received a joystick command.
-				desired_direction = b->get(1).asDouble();
-				linear_speed = b->get(2).asDouble();
-				angular_speed = b->get(3).asDouble();
-				pwm_gain = b->get(4).asDouble();
+				joy_desired_direction = b->get(1).asDouble();
+				joy_linear_speed      = b->get(2).asDouble();
+				joy_angular_speed     = b->get(3).asDouble();
+				joy_pwm_gain          = b->get(4).asDouble();
+                wdt_old_joy_cmd = wdt_joy_cmd;
 				wdt_joy_cmd = Time::now();
+
 				//Joystick commands have higher priorty respect to movement commands.
 				//this make the joystick to take control for 100*20 ms
-				if (pwm_gain>10) joystick_counter = 100;
+				if (joy_pwm_gain>10) joystick_counter = 100;
             }
         }
 		if (Bottle *b = port_movement_control.read(false))
 		{                
 			if (b->get(0).asInt()==1)
-			{                                
-				//received a movement command
-				if (joystick_counter==0)
-				{	
-					//execute the command only if the joystick is not controlling!
-					desired_direction = b->get(1).asDouble();
-					linear_speed = b->get(2).asDouble();
-					angular_speed = b->get(3).asDouble();
-					pwm_gain = b->get(4).asDouble();
-				}
-				wdt_mov_cmd = Time::now();
+			{       
+				cmd_desired_direction = b->get(1).asDouble();
+				cmd_linear_speed      = b->get(2).asDouble();
+				cmd_angular_speed     = b->get(3).asDouble();
+				cmd_pwm_gain          = b->get(4).asDouble();                         
+                wdt_old_mov_cmd = wdt_mov_cmd;
+  				wdt_mov_cmd = Time::now();
 			}
 		}
-		
+
+		//priority test 
+		if (joystick_counter==0)
+		{	
+			//execute the command only if the joystick is not controlling!
+			desired_direction  = cmd_desired_direction;
+			linear_speed       = cmd_linear_speed;
+			angular_speed      = cmd_angular_speed;
+			pwm_gain           = cmd_pwm_gain;
+		}
+        else
+        {
+			desired_direction  = joy_desired_direction;
+			linear_speed       = joy_linear_speed;
+			angular_speed      = joy_angular_speed;
+			pwm_gain           = joy_pwm_gain;
+        }
+
 		//watchdog on received commands
         static double wdt_old=Time::now();
 		double wdt=Time::now();
 		//fprintf(stderr,"period: %f\n", wdt-wdt_old);
+        if (wdt-wdt_mov_cmd > 0.200)
+        {
+            cmd_desired_direction=0;
+            cmd_linear_speed=0;
+            cmd_angular_speed=0;
+            cmd_pwm_gain=0;
+            mov_timeout_counter++; 
+        }
+        if (wdt-wdt_joy_cmd > 0.200)
+        {
+            joy_desired_direction=0;
+            joy_linear_speed=0;
+            joy_angular_speed=0;
+            joy_pwm_gain=0;
+            joy_timeout_counter++;
+        }
+
 		if (wdt-wdt_old > 0.040) { timeout_counter++;  }
 		wdt_old=wdt;
 		if (joystick_counter>0)  { joystick_counter--; }
@@ -304,27 +357,28 @@ public:
 			MAX_VALUE = 200; // Maximum joint speed (deg/s)
 		}
 		
-		linear_speed = linear_speed / 46000 * MAX_VALUE;
-		angular_speed = angular_speed / 46000 * MAX_VALUE;
-		pwm_gain = pwm_gain / 65000 * 1.0;
+		exec_linear_speed = linear_speed / 46000 * MAX_VALUE;
+		exec_angular_speed = angular_speed / 46000 * MAX_VALUE;
+		exec_pwm_gain = pwm_gain / 65000 * 1.0;
+        exec_desired_direction = desired_direction;
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
 		{
 			const double ratio = 0.7; // This value must be < 1 
-			if (linear_speed  >  MAX_VALUE*ratio) linear_speed  = MAX_VALUE*ratio;
-			if (linear_speed  < -MAX_VALUE*ratio) linear_speed  = -MAX_VALUE*ratio;
-			if (angular_speed >  MAX_VALUE*(1-ratio)) angular_speed = MAX_VALUE*(1-ratio);
-			if (angular_speed < -MAX_VALUE*(1-ratio)) angular_speed = -MAX_VALUE*(1-ratio);
+			if (exec_linear_speed  >  MAX_VALUE*ratio) exec_linear_speed  = MAX_VALUE*ratio;
+			if (exec_linear_speed  < -MAX_VALUE*ratio) exec_linear_speed  = -MAX_VALUE*ratio;
+			if (exec_angular_speed >  MAX_VALUE*(1-ratio)) exec_angular_speed = MAX_VALUE*(1-ratio);
+			if (exec_angular_speed < -MAX_VALUE*(1-ratio)) exec_angular_speed = -MAX_VALUE*(1-ratio);
 		}
-		if (pwm_gain<0) pwm_gain = 0;
-		if (pwm_gain>1)	pwm_gain = 1;
+		if (exec_pwm_gain<0) exec_pwm_gain = 0;
+		if (exec_pwm_gain>1) exec_pwm_gain = 1;
 
 		//wheel contribution calculation
-		FA = linear_speed * cos ((150-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
-		FB = linear_speed * cos ((030-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
-		FC = linear_speed * cos ((270-desired_direction)/ 180.0 * 3.14159265) + angular_speed;
-		FA *= pwm_gain;
-		FB *= pwm_gain;
-		FC *= pwm_gain;
+		FA = exec_linear_speed * cos ((150-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+		FB = exec_linear_speed * cos ((030-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+		FC = exec_linear_speed * cos ((270-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+		FA *= exec_pwm_gain;
+		FB *= exec_pwm_gain;
+		FC *= exec_pwm_gain;
         
 		//Use a low pass filter to obtain smooth control
 		if (filter_enabled)
@@ -343,6 +397,10 @@ public:
 		}
 		else if	(ikart_control_type == IKART_CONTROL_SPEED)
 		{
+//#define CONTROL_DEBUG
+#ifdef  CONTROL_DEBUG
+            fprintf (stdout,">**: %+6.6f **** %+6.6f %+6.6f %+6.6f\n",exec_linear_speed,-FA,-FB,-FC);
+#endif
 			ivel->velocityMove(0,-FA);
 			ivel->velocityMove(1,-FB);
 			ivel->velocityMove(2,-FC);
@@ -372,7 +430,7 @@ public:
 
     void printStats()
     {
-		fprintf (stdout,"Motor thread timeouts: %d\n",timeout_counter);
+		fprintf (stdout,"Motor thread timeouts: %d joy: %d cmd %d\n",timeout_counter, joy_timeout_counter,mov_timeout_counter);
 
 		if (joystick_counter>0) 
 			fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);

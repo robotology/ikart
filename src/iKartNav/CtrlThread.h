@@ -20,6 +20,10 @@ public:
     {
         mLocal=local;
         mRemote=remote;
+
+        mOmega=0.0;
+        mSpeed=0.0;
+        mHead=0.0;
     }
 
     virtual bool threadInit()

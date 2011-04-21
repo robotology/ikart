@@ -365,7 +365,7 @@ bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
 	    mQueued[Mxc][Myc]=false;
 	  
         double dD=mD[Mxc][Myc];
-	    double dNewDL=1.5*0.1*mZeta[Mxc][Myc]+0.1;
+	    double dNewDL=1.25*0.1*mZeta[Mxc][Myc]+0.1;
 	    double dNewDT=1.414*dNewDL+dD;
 	    dNewDL+=dD;
 
@@ -632,7 +632,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
                     static const double RAD2DEG=1.0/Vec2D::DEG2RAD;                    
                     //setVel(gain*mMaxSpeed*Vec2D(1.0,0.0));
                     
-                    setOmega(0.2*heading+RAD2DEG*mVel.mod()*curvature);
+                    setOmega(0.2*heading/*+RAD2DEG*mVel.mod()*curvature*/);
                 }
                 else
                 {

@@ -1,10 +1,14 @@
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Alessandro Scalzo alessandro.scalzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
+
 cmake_minimum_required(VERSION 2.6)
 
 SET(PROJECTNAME iKartNav)
 
 PROJECT(${PROJECTNAME})
-
-#SET(folder_source main.cpp)
 
 FILE(GLOB folder_source *.cpp)
 FILE(GLOB folder_header *.h)

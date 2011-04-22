@@ -25,15 +25,15 @@ public:
 
     virtual void onStop()
     {
+        mActive=false;
+
         mKartCtrl->stop();
 
-        mLaserPortI.interrupt();
         mTargetPortI.interrupt();
-        //mCommandPortO.interrupt();
-
-        mLaserPortI.close();
+        mLaserPortI.interrupt();
+        
         mTargetPortI.close();
-        //mCommandPortO.close();
+        mLaserPortI.close();
     }
 
     bool checkResetAlive()
@@ -50,17 +50,6 @@ public:
         mVel=mVelRef=Vec2D::zero;
 
         mKartCtrl->setCtrlRef(0.0,0.0,0.0);
-
-        /*
-        yarp::os::Bottle& cmd=mCommandPortO.prepare();
-        cmd.clear();
-        cmd.addInt(1);
-        cmd.addDouble(0.0);
-        cmd.addDouble(0.0);
-        cmd.addDouble(0.0);
-        cmd.addDouble(65000.0); // pwm %
-        mCommandPortO.write();
-        */
 
         fprintf(stderr,"NO LASER DATA -> EMERGENCY STOP\n");
         fflush(stderr);
@@ -161,8 +150,6 @@ protected:
 
     bool mActive;
     bool mImAlive;
-    //double mTimeOld;
-    //double mPeriod;
 
     double T[4],Tx[4],Txx[4],S[4],Sy[4],Syy[4];
     double Mb[4][4];
@@ -170,7 +157,6 @@ protected:
     yarp::os::ResourceFinder *mRF;
     yarp::os::BufferedPort<yarp::sig::Vector> mLaserPortI;
     yarp::os::BufferedPort<yarp::os::Bottle> mTargetPortI;
-    //yarp::os::BufferedPort<yarp::os::Bottle> mCommandPortO;
 };
 
 #endif

@@ -100,7 +100,7 @@ public:
         std::string local=rf.check("local",yarp::os::Value("/ikartnav")).asString().c_str();
         mHandlerPort.open(local.c_str());
         attach(mHandlerPort);
-        attachTerminal();
+        //attachTerminal();
 
         return true;
     }

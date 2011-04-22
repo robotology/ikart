@@ -136,14 +136,14 @@ bool Navigator::threadInit()
     std::string local=mRF->check("local",yarp::os::Value("/ikartnav")).asString().c_str();
         
     mLaserPortI.open((local+"/laser:i").c_str());
+    /*
     if (!yarp::os::Network::connect((remote+"/laser:o").c_str(),mLaserPortI.getName()))
     {
         fprintf(stderr,"ERROR: can't connect to iKartCtrl laser port\n");
         return false;
     }
-
+    */
     mTargetPortI.open((local+"/target:i").c_str());
-
     /*
     mCommandPortO.open((local+"/control:o").c_str());
     if (!yarp::os::Network::connect(mCommandPortO.getName(),(remote+"/control:i").c_str()))

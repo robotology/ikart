@@ -30,10 +30,12 @@ public:
     {
         mCommandPortO.open((mLocal+"/control:o").c_str());
         
+        /*
         if (!yarp::os::Network::connect(mCommandPortO.getName(),(mRemote+"/control:i").c_str()))
         {
             fprintf(stderr,"ERROR: can't connect to iKartCtrl command port\n");
         }
+        */
 
         return true;
     }

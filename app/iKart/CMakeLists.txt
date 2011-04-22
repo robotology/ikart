@@ -1,4 +1,9 @@
-########## application
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Francesco Rea francesco.rea@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
+
 set(appname iKart)
 
 icub_app(${appname})

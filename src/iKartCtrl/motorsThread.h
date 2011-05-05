@@ -52,7 +52,7 @@ private:
 		IKART_CONTROL_SPEED = 2
 	};
 		 
-	int                 *board_control_modes;
+	int                 board_control_modes[3];
     int					ikart_control_type;
 	double              wdt_mov_timeout;
 	double              wdt_joy_timeout;
@@ -112,7 +112,6 @@ public:
 			   iKartCtrl_options (options),
                remoteName(_remoteName), localName(_localName) 
 	{
-		board_control_modes = new int [3];
 		ikart_control_type  = IKART_CONTROL_NONE;
 		wdt_mov_timeout     = 0.200;
 		wdt_joy_timeout     = 0.200;
@@ -336,16 +335,6 @@ public:
 		wdt_old=wdt;
 		if (joystick_counter>0)  { joystick_counter--; }
 
-	//	icmd->getControlModes(board_control_modes);
-	/*	for (int i=0; i<3; i++)
-			if (board_control_modes[i]==VOCAB_CM_IDLE)
-			{
-				fprintf (stderr,"One motor is in idle state. Turning off control.");
-				turn_off_control();
-				break;
-			}
-	*/
-
 		//saturators
 		int MAX_VALUE = 0;
 		if (ikart_control_type == IKART_CONTROL_OPENLOOP)
@@ -428,15 +417,39 @@ public:
 		set_ikart_control_type (IKART_CONTROL_NONE);
 	}
 
+	void updateControlMode()
+    {
+		icmd->getControlModes(board_control_modes);
+		/*
+			for (int i=0; i<3; i++)
+			if (board_control_modes[i]==VOCAB_CM_IDLE)
+			{
+				fprintf (stderr,"One motor is in idle state. Turning off control.");
+				turn_off_control();
+				break;
+			}
+		*/
+	}
+
     void printStats()
     {
 		fprintf (stdout,"Motor thread timeouts: %d joy: %d cmd %d\n",timeout_counter, joy_timeout_counter,mov_timeout_counter);
 
 		if (joystick_counter>0) 
 			fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);
-		fprintf (stdout,"FA: %+.1f\n",FA);
-		fprintf (stdout,"FB: %+.1f\n",FB);
-		fprintf (stdout,"FC: %+.1f\n",FC);
+		
+		double val = 0;
+		for (int i=0; i<3; i++)
+		{
+			if      (i==0) val=FA;
+			else if (i==1) val=FB;
+			else           val=FC;
+			if (board_control_modes[i]==VOCAB_CM_IDLE)
+				fprintf (stdout,"F%d: IDLE\n",i);
+			else
+				fprintf (stdout,"F%d: %+.1f\n",i,val);	
+		}
+
 		fprintf (stdout,"\n");
     }
 };

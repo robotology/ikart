@@ -246,6 +246,7 @@ public:
 		}
 		if (control_thr)
 		{
+			control_thr->updateControlMode();
 			control_thr->printStats();
 		}
 		else

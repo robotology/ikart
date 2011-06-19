@@ -85,7 +85,6 @@ YARP_DECLARE_DEVICES(icubmod)
 #define PRINT_STATUS_PER    0.200     // [s]
 
 using namespace std;
-using namespace yarp;
 using namespace yarp::os;
 using namespace yarp::dev;
 using namespace yarp::sig;

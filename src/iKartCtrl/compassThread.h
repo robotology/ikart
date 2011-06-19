@@ -34,7 +34,6 @@
 #include <string>
 
 using namespace std;
-using namespace yarp;
 using namespace yarp::os;
 using namespace yarp::dev;
 

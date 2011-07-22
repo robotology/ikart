@@ -10,9 +10,6 @@ FILE(GLOB folder_source *.cpp)
 FILE(GLOB folder_header *.h)
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 
-FIND_PACKAGE(ICUB)
-FIND_PACKAGE(YARP)
-
 INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS}
                     ${YARP_INCLUDE_DIRS})
 

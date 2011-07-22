@@ -4,8 +4,6 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
 
-cmake_minimum_required(VERSION 2.6)
-
 SET(PROJECTNAME iKartNav)
 
 PROJECT(${PROJECTNAME})
@@ -15,8 +13,6 @@ FILE(GLOB folder_header *.h)
 
 SOURCE_GROUP("Source Files" FILES ${folder_source})
 SOURCE_GROUP("Header Files" FILES ${folder_header})
-
-FIND_PACKAGE(YARP)
 
 INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS})
 

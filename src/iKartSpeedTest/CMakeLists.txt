@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 2.6)
 
 SET(PROJECTNAME iKartSpeedTest)
 
@@ -6,9 +5,6 @@ PROJECT(${PROJECTNAME})
 
 FILE(GLOB folder_source *.cpp)
 FILE(GLOB folder_header *.h)
-
-FIND_PACKAGE(ICUB)
-FIND_PACKAGE(YARP)
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}
 		    ${SDL_INCLUDE_DIR}

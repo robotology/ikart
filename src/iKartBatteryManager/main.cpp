@@ -92,8 +92,12 @@ struct struct_battery_data
 {
 	int count;
 	int raw_voltage;
+	int raw_current;
+	int raw_charge;
 	
 	double voltage;
+	double current;
+	double charge;
 	char* timestamp;
 };
 
@@ -152,7 +156,7 @@ public:
 		{
 			//default values
 			#ifdef WIN32
-				prop.put("comport",      "COM2");
+				prop.put("comport",      "COM3");
 			#else
 				prop.put("comport",      "/ttyUSB0");
 			#endif
@@ -161,7 +165,7 @@ public:
 		{
 			prop.put("comport",      COMport.c_str());
 		}
-		prop.put("baudrate",     115200);
+		prop.put("baudrate",     38400);
 		prop.put("xonlim ",      0);
 		prop.put("xofflim",      0);
 		prop.put("readmincharacters", 1);
@@ -275,22 +279,24 @@ public:
 		int len = strlen(serial_buff);
 		if (len>0)
 		{
-			if (verboseEnable)
+	//		if (verboseEnable)
 				fprintf(stderr,"%s", serial_buff);
 		}
 		
 		int pars = 0;
-		pars = sscanf (serial_buff, "%*s %d %*s %d", &battery_data.count, &battery_data.raw_voltage);
+		pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
 
-		if (pars == 2)
+		if (pars == 3)
 		{
 			time_t rawtime;
 			struct tm * timeinfo;
 			time ( &rawtime );
 			timeinfo = localtime ( &rawtime );
-			battery_data.voltage = double(battery_data.raw_voltage)/1024 * 60;
-			battery_data.timestamp = asctime (timeinfo);
-			sprintf(log_buffer,"%d %d %f %s", battery_data.count,battery_data.raw_voltage,battery_data.voltage,battery_data.timestamp);
+			battery_data.timestamp=asctime (timeinfo);
+			battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
+			battery_data.current = (double(battery_data.raw_current)-512)/1024 * 60; //+- 60 is the maximum current that the sensor can read
+			battery_data.charge =  double(battery_data.raw_charge)/1024 *100; // the value coming from the BCS board goes from 0 to 100%
+			sprintf(log_buffer,"%f - %f -  %f - %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
 		}
 		else
 		{
@@ -305,6 +311,10 @@ public:
 			bot.addInt(battery_data.count);
 			bot.addString("voltage");
 			bot.addDouble(battery_data.voltage);
+			bot.addString("current");
+			bot.addDouble(battery_data.current);
+			bot.addString("charge");
+			bot.addDouble(battery_data.charge);
 			bot.addString("time");
 			bot.addString(battery_data.timestamp);
 			port_battery_output.write(bot);

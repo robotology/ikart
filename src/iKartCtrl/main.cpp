@@ -283,6 +283,7 @@ int main(int argc, char *argv[])
 		printf("'no_filter' disables command filtering.\n");
 		printf("'no_motors' motor interface will not be opened.\n");
 		printf("'no_laser' laser interface will not be opened.\n");
+        printf("'fake_laser' a simulated laser sensor will be used instead of a real one (debug).\n");
 		printf("'no_compass' inertial/compass ports will not be opened.\n");
 		printf("'no_start' do not automatically enables pwm.\n");
 		printf("'laser <filename>' starts the laser with the specified configuration file.\n");

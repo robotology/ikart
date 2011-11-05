@@ -41,7 +41,6 @@ class LaserThread: public yarp::os::RateThread
 {
 	protected:
 	Property iKartCtrl_options;
-
 	ResourceFinder      &rf;
 	PolyDriver          *laser_driver;
 	BufferedPort<yarp::sig::Vector> port_laser_output;
@@ -49,6 +48,7 @@ class LaserThread: public yarp::os::RateThread
 	string remoteName;
     string localName;
 	int                 timeout_counter;
+    bool                fake_laser;
 
 	public:
     
@@ -59,6 +59,8 @@ class LaserThread: public yarp::os::RateThread
                remoteName(_remoteName), localName(_localName) 
 	{
 		timeout_counter     = 0;
+        if (rf.check("fake_laser")) fake_laser=true;
+        else fake_laser = false;
 	}
 
     virtual bool threadInit()
@@ -80,6 +82,7 @@ class LaserThread: public yarp::os::RateThread
 			// open the laser scanner driver
 			laser_driver=new PolyDriver;
 			laser_options.put("device","laserHokuyo");
+            if (fake_laser) laser_options.put("fake","");
 			if (!laser_driver->open(laser_options))
 			{
 				fprintf(stderr,"ERROR: cannot open laser driver...\n");

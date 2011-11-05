@@ -255,6 +255,16 @@ public:
        return yv[1][i];
     }
 
+	double ratelim_filter_0(double input, int i)
+	{
+		//This is a rate limiter filter. 
+		static double prev[3];
+		if      (input>prev[i]+10) prev[i]=prev[i]+10;
+		else if (input<prev[i]-10) prev[i]=prev[i]-10;
+		else     prev[i]=input;
+		return prev[i];
+	}
+
     virtual void run()
     {
 		static double wdt_old_mov_cmd=Time::now();
@@ -374,6 +384,9 @@ public:
 			FA  = lp_filter_0_5Hz(FA,0);
 			FB  = lp_filter_0_5Hz(FB,1);
 			FC  = lp_filter_0_5Hz(FC,2);
+			//FA  = ratelim_filter_0(FA,0);
+			//FB  = ratelim_filter_0(FB,1);
+			//FC  = ratelim_filter_0(FC,2);
 		}
 
 		//Apply the commands

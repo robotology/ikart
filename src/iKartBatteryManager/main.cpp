@@ -294,8 +294,9 @@ public:
 			timeinfo = localtime ( &rawtime );
 			battery_data.timestamp=asctime (timeinfo);
 			battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
-			battery_data.current = (double(battery_data.raw_current)-512)/1024 * 60; //+- 60 is the maximum current that the sensor can read
-			battery_data.charge =  double(battery_data.raw_charge)/1024 *100; // the value coming from the BCS board goes from 0 to 100%
+			battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
+																					//when the current is 20A.		
+			battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
 			sprintf(log_buffer,"%f - %f -  %f - %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
 		}
 		else

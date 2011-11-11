@@ -159,8 +159,8 @@ public:
         // the odometry thread
 		if (motors_enabled==true)
         {
-            localName=localName+"/odom";
-			odometry_thr=new OdometryThread(rate,rf,iKartCtrl_options,remoteName,localName);
+            string odomLocalName=localName+"/odom";
+			odometry_thr=new OdometryThread(rate,rf,iKartCtrl_options,remoteName,odomLocalName);
 			if (!odometry_thr->start())
 			{
 				delete odometry_thr;

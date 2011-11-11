@@ -187,7 +187,12 @@ public:
 
     void printStats()
     {
-		fprintf (stdout,"Odometry Thread: Curr motor velocities: %+3.3f %+3.3f %+3.3f\n", velA, velB, velC);
+		//fprintf (stdout,"Odometry Thread: Curr motor velocities: %+3.3f %+3.3f %+3.3f\n", velA, velB, velC);
+        fprintf (stdout,"Odometry Thread: \
+        %+3.3f %+3.3f %+3.3f ******** \
+        %+3.3f %+3.3f %+3.3f ******** \
+        %+3.3f %+3.3f %+3.3f \
+        \n", encA, encB, encC, velA, velB, velC, odom_x, odom_y, odom_theta);
     }
 };
 

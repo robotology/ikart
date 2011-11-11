@@ -211,6 +211,15 @@ public:
         port_movement_control.open((localName+"/control:i").c_str());
 		port_joystick_control.open((localName+"/joystick:i").c_str());
 
+        //turns off the motors and resets the encoders
+        iamp->disableAmp(0);
+		iamp->disableAmp(1);
+		iamp->disableAmp(2);
+
+        ienc->resetEncoder(0);
+        ienc->resetEncoder(1);
+        ienc->resetEncoder(2);
+
 		//set the control type
 		if (!rf.check("no_start"))
 		{

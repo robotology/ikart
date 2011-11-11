@@ -73,6 +73,7 @@ Windows, Linux
 #include <string>
 
 #include "motorsThread.h"
+#include "odometryThread.h"
 #include "laserThread.h"
 #include "compassThread.h"
 
@@ -86,10 +87,11 @@ using namespace yarp::math;
 class CtrlModule: public RFModule
 {
 protected:
-    CtrlThread    *control_thr;
-	LaserThread   *laser_thr;
-	CompassThread *compass_thr;
-    Port          rpcPort;
+    CtrlThread     *control_thr;
+	LaserThread    *laser_thr;
+	CompassThread  *compass_thr;
+    OdometryThread *odometry_thr;
+    Port            rpcPort;
 
 public:
     CtrlModule() 
@@ -97,6 +99,7 @@ public:
 		control_thr=0;
 		laser_thr=0;
 		compass_thr=0;
+        odometry_thr=0;
 	}
 
     virtual bool configure(ResourceFinder &rf)
@@ -149,6 +152,17 @@ public:
 			if (!control_thr->start())
 			{
 				delete control_thr;
+				return false;
+			}
+		}
+
+        // the odometry thread
+		if (motors_enabled==true)
+        {
+			odometry_thr=new OdometryThread(rate,rf,iKartCtrl_options,remoteName,localName);
+			if (!odometry_thr->start())
+			{
+				delete odometry_thr;
 				return false;
 			}
 		}
@@ -226,6 +240,11 @@ public:
 			compass_thr->stop();
 			delete compass_thr;
 		}
+		if (odometry_thr)
+		{
+			odometry_thr->stop();
+			delete odometry_thr;
+		}
         rpcPort.interrupt();
         rpcPort.close();
 
@@ -261,6 +280,14 @@ public:
 			fprintf(stdout,"Compass thread not running\n");
 		}
 		fprintf(stdout,"\n");
+		if (odometry_thr)
+		{
+			odometry_thr->printStats();
+		}
+		else
+		{
+			fprintf(stdout,"Odometry thread not running\n");
+		}
 		return true;
 	}
 };

@@ -47,6 +47,10 @@ private:
 	Property iKartCtrl_options;
  
 	//encoder variables
+    double              encA_offset;
+	double              encB_offset;
+	double              encC_offset;
+
 	double              encA;
 	double              encB;
 	double              encC;
@@ -122,6 +126,10 @@ public:
         port_a.open((localName+"/odom/a").c_str());
 		port_b.open((localName+"/odom/b").c_str());
 
+        ienc->getEncoder(0,&encA_offset);
+        ienc->getEncoder(1,&encB_offset);
+        ienc->getEncoder(2,&encC_offset);
+
         return true;
     }
 
@@ -138,6 +146,9 @@ public:
         ienc->getEncoder(0,&encA);
         ienc->getEncoder(1,&encB);
         ienc->getEncoder(2,&encC);
+        encA= encA - encA_offset;
+        encB= encB - encB_offset;
+        encC= encC - encC_offset;
        
         ienc->getEncoderSpeed(0,&velA);
         ienc->getEncoderSpeed(1,&velB);

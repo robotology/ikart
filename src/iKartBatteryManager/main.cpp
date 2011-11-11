@@ -56,7 +56,7 @@ CopyPolicy: Released under the terms of the GNU GPL v2.0.
 \section tested_os_sec Tested OS
 Windows, Linux
 
-\author Marco Randazzo
+\author Marco Randazzo 
 */ 
 
 #include <yarp/os/Network.h>

@@ -161,7 +161,7 @@ public:
         // -------------------------------------------------------------------------------------
 
         //odom_theta is expressed in radians
-        odom_theta = geom_r*(encA+encB+encC)/3*geom_L;
+        odom_theta = geom_r*(encA+encB+encC)/(3*geom_L);
 
         double co3p = cos (M_PI/3+odom_theta);
         double si3p = cos (M_PI/3+odom_theta);

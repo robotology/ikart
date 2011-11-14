@@ -94,8 +94,8 @@ public:
                odom_x=0;
 	           odom_y=0;
                odom_theta=0;		
-               geom_r = 3;    //mm
-               geom_L = 30;   //mm
+               geom_r = 62.5;     //mm
+               geom_L = 297.16;   //mm
     }
 
 	
@@ -146,20 +146,28 @@ public:
         ienc->getEncoder(0,&encA);
         ienc->getEncoder(1,&encB);
         ienc->getEncoder(2,&encC);
-        encA= encA - encA_offset;
-        encB= encB - encB_offset;
-        encC= encC - encC_offset;
+        //remove the offset and convert in radians
+        encA= (encA - encA_offset) * 0.0174532925; 
+        encB= (encB - encB_offset) * 0.0174532925;
+        encC= (encC - encC_offset) * 0.0174532925;
        
         ienc->getEncoderSpeed(0,&velA);
         ienc->getEncoderSpeed(1,&velB);
         ienc->getEncoderSpeed(2,&velC);
+
+        // -------------------------------------------------------------------------------------
+        // The following formulas are adapted from:
+        // "A New Odometry System to reduce asymmetric Errors for Omnidirectional Mobile Robots"
+        // -------------------------------------------------------------------------------------
+
+        //odom_theta is expressed in radians
+        odom_theta = geom_r*(encA+encB+encC)/3*geom_L;
 
         double co3p = cos (M_PI/3+odom_theta);
         double si3p = cos (M_PI/3+odom_theta);
         double co3m = cos (M_PI/3-odom_theta);
         double si3m = cos (M_PI/3-odom_theta);
 
-        odom_theta = geom_r*(encA+encB+encC)/3*geom_L;
         odom_x = geom_r/(3* 0.86602)*
                  (
                  (co3p-co3m)*encA + 
@@ -172,6 +180,12 @@ public:
                  (-sin(odom_theta)-si3p)*encB + 
                  (sin(odom_theta)-si3m)*encC
                  );
+
+        //convert from radians back to degrees
+        odom_theta *= 57.2957795;
+        encA       *= 57.2957795;
+        encB       *= 57.2957795;
+        encC       *= 57.2957795;
 
 		Bottle &b=port_a.prepare();
         b.addDouble(encA);

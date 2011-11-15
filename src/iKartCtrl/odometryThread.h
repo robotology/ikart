@@ -40,7 +40,9 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+#ifndef M_PI
 #define M_PI 3.14159265
+#endif
 
 class OdometryThread: public yarp::os::RateThread
 {
@@ -77,27 +79,26 @@ private:
 
 protected:
     ResourceFinder                  &rf;
-	PolyDriver                      *control_board_driver;
-    BufferedPort<Bottle>            port_a;
-	BufferedPort<Bottle>            port_b;
+    PolyDriver                      *control_board_driver;
+    BufferedPort<Bottle>            port_odom;
+    BufferedPort<Bottle>            port_b;
 
-    string remoteName;
-    string localName;
-
-	IEncoders         *ienc;
+    string                          localName;
+    IEncoders                       *ienc;
 
 public:
     OdometryThread(unsigned int _period, ResourceFinder &_rf, Property options,
                PolyDriver* _driver) :
                RateThread(_period),     rf(_rf),
-			   iKartCtrl_options (options)
-	{
+               iKartCtrl_options (options)
+    {
                control_board_driver= _driver;
                odom_x=0;
-	           odom_y=0;
+	       odom_y=0;
                odom_theta=0;		
                geom_r = 62.5;     //mm
                geom_L = 297.16;   //mm
+               localName = "/ikart";
     }
 
 	
@@ -105,12 +106,12 @@ public:
     {
 
         // open the control board driver
-		printf("\nOpening the motors interface...\n");
+	printf("\nOpening the motors interface...\n");
 
         Property control_board_options("(device remote_controlboard)");
         if (!control_board_driver)
         {
-			fprintf(stderr,"ERROR: control board driver not ready!\n");
+	     fprintf(stderr,"ERROR: control board driver not ready!\n");
              return false;
         }
         // open the interfaces for the control boards
@@ -122,8 +123,8 @@ public:
 			//return false;
 		}
         // open control input ports
-        port_a.open((localName+"/odom/a").c_str());
-		port_b.open((localName+"/odom/b").c_str());
+        port_odom.open((localName+"/odom:o").c_str());
+	port_b.open((localName+"/odom/b").c_str());
 
         ienc->getEncoder(0,&encA_offset);
         ienc->getEncoder(1,&encB_offset);
@@ -190,7 +191,7 @@ public:
 
         mutex.post();
 
-		Bottle &b=port_a.prepare();
+	Bottle &b=port_odom.prepare();
         b.addDouble(encA);
         b.addDouble(encB);
         b.addDouble(encC);
@@ -200,14 +201,14 @@ public:
         b.addDouble(odom_x);
         b.addDouble(odom_y);
         b.addDouble(odom_theta);
-		port_a.write();
+	port_odom.write();
     }
 
     virtual void threadRelease()
     {    
-        port_a.interrupt();
-        port_a.close();
-		port_b.interrupt();
+        port_odom.interrupt();
+        port_odom.close();
+	port_b.interrupt();
         port_b.close();
     }
 

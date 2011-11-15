@@ -30,6 +30,7 @@
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
+#include <yarp/os/Semaphore.h>
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/math/Math.h>
 #include <string>
@@ -45,6 +46,7 @@ class OdometryThread: public yarp::os::RateThread
 {
 private:
 	Property iKartCtrl_options;
+    yarp::os::Semaphore   mutex;
  
 	//encoder variables
     double              encA_offset;
@@ -74,7 +76,7 @@ private:
     double              geom_L;
 
 protected:
-    ResourceFinder                   &rf;
+    ResourceFinder                  &rf;
 	PolyDriver                      *control_board_driver;
     BufferedPort<Bottle>            port_a;
 	BufferedPort<Bottle>            port_b;
@@ -86,11 +88,11 @@ protected:
 
 public:
     OdometryThread(unsigned int _period, ResourceFinder &_rf, Property options,
-               string _remoteName, string _localName) :
+               PolyDriver* _driver) :
                RateThread(_period),     rf(_rf),
-			   iKartCtrl_options (options),
-               remoteName(_remoteName), localName(_localName) 
+			   iKartCtrl_options (options)
 	{
+               control_board_driver= _driver;
                odom_x=0;
 	           odom_y=0;
                odom_theta=0;		
@@ -104,15 +106,12 @@ public:
 
         // open the control board driver
 		printf("\nOpening the motors interface...\n");
-		control_board_driver=new PolyDriver;
+
         Property control_board_options("(device remote_controlboard)");
-        control_board_options.put("remote",remoteName.c_str());
-        control_board_options.put("local",localName.c_str());
-        if (!control_board_driver->open(control_board_options))
+        if (!control_board_driver)
         {
-			fprintf(stderr,"ERROR: cannot open control board driver...\n");
-            delete control_board_driver;    
-            return false;
+			fprintf(stderr,"ERROR: control board driver not ready!\n");
+             return false;
         }
         // open the interfaces for the control boards
 		bool ok = true;
@@ -143,6 +142,8 @@ public:
 
     virtual void run()
     {
+        mutex.wait();
+
         ienc->getEncoder(0,&encA);
         ienc->getEncoder(1,&encB);
         ienc->getEncoder(2,&encC);
@@ -187,6 +188,8 @@ public:
         encB       *= 57.2957795;
         encC       *= 57.2957795;
 
+        mutex.post();
+
 		Bottle &b=port_a.prepare();
         b.addDouble(encA);
         b.addDouble(encB);
@@ -202,8 +205,6 @@ public:
 
     virtual void threadRelease()
     {    
-		delete control_board_driver;
-
         port_a.interrupt();
         port_a.close();
 		port_b.interrupt();
@@ -212,12 +213,14 @@ public:
 
     void printStats()
     {
+        mutex.wait();
 		//fprintf (stdout,"Odometry Thread: Curr motor velocities: %+3.3f %+3.3f %+3.3f\n", velA, velB, velC);
         fprintf (stdout,"Odometry Thread: \
         %+3.3f %+3.3f %+3.3f ******** \
         %+3.3f %+3.3f %+3.3f ******** \
         %+3.3f %+3.3f %+3.3f \
         \n", encA, encB, encC, velA, velB, velC, odom_x, odom_y, odom_theta);
+        mutex.post();
     }
 };
 

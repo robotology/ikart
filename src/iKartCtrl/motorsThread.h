@@ -105,6 +105,11 @@ protected:
 	IControlMode      *icmd;
 
 public:
+    PolyDriver* getControlBoardDriver ()
+    {
+        return control_board_driver;
+    }
+
     CtrlThread(unsigned int _period, ResourceFinder &_rf, Property options,
                string _remoteName, string _localName) :
                RateThread(_period),     rf(_rf),

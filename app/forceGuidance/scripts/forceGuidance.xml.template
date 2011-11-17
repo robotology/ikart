@@ -3,8 +3,8 @@
 
 <dependencies>	
 <port>/ikart/control:i</port>
-<port>/wholeBodyTorqueObserver/right_arm/cartesianEndEffectorWrench:o</port>
-<port>/wholeBodyTorqueObserver/left_arm/cartesianEndEffectorWrench:o</port>
+<port>/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o</port>
+<port>/wholeBodyDynamics/left_arm/cartesianEndEffectorWrench:o</port>
 </dependencies>
 
 <module>
@@ -16,13 +16,13 @@
 </module>
 
 <connection>
-  <from>/wholeBodyTorqueObserver/left_arm/cartesianEndEffectorWrench:o</from>
+  <from>/wholeBodyDynamics/left_arm/cartesianEndEffectorWrench:o</from>
   <to>/forceGuidance/l_wrenches:i</to>
   <protocol>udp</protocol>
 </connection>
 
 <connection>
-  <from>/wholeBodyTorqueObserver/right_arm/cartesianEndEffectorWrench:o</from>
+  <from>/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o</from>
   <to>/forceGuidance/r_wrenches:i</to>
   <protocol>udp</protocol>
 </connection>

@@ -279,6 +279,7 @@ public:
         mutex.post();
 
 	Bottle &b=port_odometry.prepare();
+        b.clear();
         b.addDouble(odom_x);
         b.addDouble(odom_y);
         b.addDouble(odom_theta);
@@ -288,6 +289,7 @@ public:
 	port_odometry.write();
 
 	Bottle &t=port_odometer.prepare();
+        t.clear();
         t.addDouble(traveled_distance);
         t.addDouble(traveled_angle);
         port_odometer.write();
@@ -310,7 +312,7 @@ public:
         %+3.3f %+3.3f %+3.3f ******** \
         vx:%+3.3f vy:%+3.3f vt:%+3.3f ******** \
         x: %+3.3f y: %+3.3f t: %+3.3f ******** \
-        \n", enc[0]*57, enc[1]*57, enc[2]*57, encv[0]*57, encv[1]*57, encv[2]*57, /*velA,velB,velC*/vel_x, vel_y, vel_theta,  odom_x, odom_y,odom_theta );
+        \n", enc[0]*57, enc[1]*57, enc[2]*57, encv[0]*57, encv[1]*57, encv[2]*57, vel_x, vel_y, vel_theta,  odom_x, odom_y,odom_theta );
         mutex.post();
     }
 };

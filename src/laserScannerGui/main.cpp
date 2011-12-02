@@ -87,7 +87,7 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 
-double scale =0.1; //global scale factor 
+double scale =100; //global scale factor 
 int robot_radius = 715/2; //mm
 int laser_position = 245; //mm
 bool verbose = false;
@@ -104,123 +104,123 @@ const CvScalar color_gray = cvScalar(100,100,100);
 
 void drawGrid(IplImage *img)
 {
-	cvLine(img,cvPoint(0,0),cvPoint(img->width,img->height),color_black);
-	cvLine(img,cvPoint(img->width,0),cvPoint(0,img->height),color_black);
-	cvLine(img,cvPoint(img->width/2,0),cvPoint(img->width/2,img->height),color_black);
-	cvLine(img,cvPoint(0,img->height/2),cvPoint(img->width,img->height/2),color_black);
-	const int step = (int)(500.0 * scale); //mm
+    cvLine(img,cvPoint(0,0),cvPoint(img->width,img->height),color_black);
+    cvLine(img,cvPoint(img->width,0),cvPoint(0,img->height),color_black);
+    cvLine(img,cvPoint(img->width/2,0),cvPoint(img->width/2,img->height),color_black);
+    cvLine(img,cvPoint(0,img->height/2),cvPoint(img->width,img->height/2),color_black);
+    const int step = (int)(500.0 * scale); //mm
 /*
-	for (int xi=0; xi<img->width; xi+=step)
-		cvLine(img,cvPoint(xi,0),cvPoint(xi,img->height),color_black);
-	for (int yi=0; yi<img->height; yi+=step)
-		cvLine(img,cvPoint(0,yi),cvPoint(img->width,yi),color_black);
+    for (int xi=0; xi<img->width; xi+=step)
+        cvLine(img,cvPoint(xi,0),cvPoint(xi,img->height),color_black);
+    for (int yi=0; yi<img->height; yi+=step)
+        cvLine(img,cvPoint(0,yi),cvPoint(img->width,yi),color_black);
 */
-	char buff [10];
-	int  rad_step=0;
-	if   (scale>0.06) 
-		rad_step=1;
-	else             
-		rad_step=2;
-	for (int rad=0; rad<20; rad+=rad_step)
-	{
-		sprintf (buff,"%3.1fm",float(rad)/2);
-		cvPutText(img, buff, cvPoint(img->width/2,float(img->height)/2.0-float(step)*rad), &font, cvScalar(0, 0, 0, 0));
-		cvCircle(img,cvPoint(img->width/2,img->height/2),step*rad,color_black);
-	}
+    char buff [10];
+    int  rad_step=0;
+    if   (scale>0.06) 
+        rad_step=1;
+    else             
+        rad_step=2;
+    for (int rad=0; rad<20; rad+=rad_step)
+    {
+        sprintf (buff,"%3.1fm",float(rad)/2);
+        cvPutText(img, buff, cvPoint(img->width/2,float(img->height)/2.0-float(step)*rad), &font, cvScalar(0, 0, 0, 0));
+        cvCircle(img,cvPoint(img->width/2,img->height/2),step*rad,color_black);
+    }
 
 }
 
 void drawRobot (IplImage *img)
 {
-	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(0,0,0),CV_FILLED);
+    cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(0,0,0),CV_FILLED);
 
-	//draw a circle
-	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale),color_gray,CV_FILLED);
-	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-1),color_black);
-	cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-2),color_black);
+    //draw a circle
+    cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale),color_gray,CV_FILLED);
+    cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-1),color_black);
+    cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(robot_radius*scale-2),color_black);
 }
 
 void drawCompass(const Vector *comp, IplImage *img)
 {
-	int sx = 0;
-	int sy = 0;
-	int ex = 0;
-	int ey = 0;
-	int tx = 0;
-	int ty = 0;
-	char buff [20];
-	cvCircle(img,cvPoint(img->width/2,img->height/2),250,color_black);
-	for (int i=0; i<360; i+=10)
-	{
-		double ang;
-		if  (absolute) ang = i+180;
-		else           ang = i+(*comp)[0]+180;
-		sx = int(-250*sin(ang/180.0*3.14)+img->width/2);
-		sy = int(250*cos(ang/180.0*3.14)+img->height/2);
-		ex = int(-260*sin(ang/180.0*3.14)+img->width/2);
-		ey = int(260*cos(ang/180.0*3.14)+img->height/2);
-		tx = int(-275*sin(ang/180.0*3.14)+img->width/2);
-		ty = int(275*cos(ang/180.0*3.14)+img->height/2);
-		cvLine(img,cvPoint(sx,sy),cvPoint(ex,ey),color_black);
-		CvSize tempSize;
-		int lw;
-		if      (i==0)     {sprintf(buff,"N");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
-		else if (i==90)    {sprintf(buff,"E");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
-		else if (i==180)   {sprintf(buff,"S");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
-		else if (i==270)   {sprintf(buff,"W");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
-		else               {sprintf(buff,"%d",i); cvGetTextSize( buff, &font   , &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &font, cvScalar(0, 0, 0, 0));}
-	}
+    int sx = 0;
+    int sy = 0;
+    int ex = 0;
+    int ey = 0;
+    int tx = 0;
+    int ty = 0;
+    char buff [20];
+    cvCircle(img,cvPoint(img->width/2,img->height/2),250,color_black);
+    for (int i=0; i<360; i+=10)
+    {
+        double ang;
+        if  (absolute) ang = i+180;
+        else           ang = i+(*comp)[0]+180;
+        sx = int(-250*sin(ang/180.0*3.14)+img->width/2);
+        sy = int(250*cos(ang/180.0*3.14)+img->height/2);
+        ex = int(-260*sin(ang/180.0*3.14)+img->width/2);
+        ey = int(260*cos(ang/180.0*3.14)+img->height/2);
+        tx = int(-275*sin(ang/180.0*3.14)+img->width/2);
+        ty = int(275*cos(ang/180.0*3.14)+img->height/2);
+        cvLine(img,cvPoint(sx,sy),cvPoint(ex,ey),color_black);
+        CvSize tempSize;
+        int lw;
+        if      (i==0)     {sprintf(buff,"N");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+        else if (i==90)    {sprintf(buff,"E");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+        else if (i==180)   {sprintf(buff,"S");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+        else if (i==270)   {sprintf(buff,"W");    cvGetTextSize( buff, &fontBig, &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &fontBig, cvScalar(0, 0, 0, 0));}
+        else               {sprintf(buff,"%d",i); cvGetTextSize( buff, &font   , &tempSize, &lw ); cvPutText(img, buff, cvPoint(tx-tempSize.width/2,ty+tempSize.height/2), &font, cvScalar(0, 0, 0, 0));}
+    }
 }
 
 void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
 {
     cvZero(img);
-	cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
-	CvPoint center;
+    cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
+    CvPoint center;
 
-	double center_angle;
-	if (!absolute) center_angle=0;
-	else center_angle = -180-(*comp)[0];	
-	center.x = (int)(img->width/2  + (laser_position*scale)*sin(center_angle/180*3.14) );
-	center.y = (int)(img->height/2 - (laser_position*scale)*cos(center_angle/180*3.14) );
+    double center_angle;
+    if (!absolute) center_angle=0;
+    else center_angle = -180-(*comp)[0];	
+    center.x = (int)(img->width/2  + (laser_position*scale)*sin(center_angle/180*3.14) );
+    center.y = (int)(img->height/2 - (laser_position*scale)*cos(center_angle/180*3.14) );
 
-	double angle =0;
-	double lenght=0;
-	static double old_time=0;
+    double angle =0;
+    double lenght=0;
+    static double old_time=0;
 
-	if (!las || !comp) 
-	{
-		return;
-	}
+    if (!las || !comp) 
+    {
+        return;
+    }
 
-	double curr_time=yarp::os::Time::now();
-	if (verbose) fprintf(stderr,"received vector size:%d ",las->size());
-	static int timeout_count=0;
-	if (curr_time-old_time > 0.40) timeout_count++;
-	if (verbose) fprintf(stderr,"time:%f timeout:%d\n",curr_time-old_time, timeout_count);
-	old_time = curr_time;
-	for (int i=0; i<1080; i++)
-	{
-		lenght=(*las)[i];
-		if      (lenght<0)     lenght = 0;
-		else if (lenght>10000) lenght = 10000; //10m maximum
-		angle=i/1080.0*270.0-(90-(360-270)/2);
+    double curr_time=yarp::os::Time::now();
+    if (verbose) fprintf(stderr,"received vector size:%d ",las->size());
+    static int timeout_count=0;
+    if (curr_time-old_time > 0.40) timeout_count++;
+    if (verbose) fprintf(stderr,"time:%f timeout:%d\n",curr_time-old_time, timeout_count);
+    old_time = curr_time;
+    for (int i=0; i<1080; i++)
+    {
+        lenght=(*las)[i];
+        if      (lenght<0)     lenght = 0;
+        else if (lenght>10)    lenght = 10; //10m maximum
+        angle=i/1080.0*270.0-(90-(360-270)/2);
 
-		//lenght=i; //this line is for debug only
-		angle-=center_angle;
-		double x = lenght*scale*cos(angle/180*3.14);
-		double y = -lenght*scale*sin(angle/180*3.14);
+        //lenght=i; //this line is for debug only
+        angle-=center_angle;
+        double x = lenght*scale*cos(angle/180*3.14);
+        double y = -lenght*scale*sin(angle/180*3.14);
 
-		CvPoint ray;
-		ray.x=int(x);
-		ray.y=int(y);
-		ray.x += center.x;
-		ray.y += center.y;
+        CvPoint ray;
+        ray.x=int(x);
+        ray.y=int(y);
+        ray.x += center.x;
+        ray.y += center.y;
 
-		int thickness = 2;
-		//draw a line
-		cvLine(img,center,ray,color_white,thickness);
-	}
+        int thickness = 2;
+        //draw a line
+        cvLine(img,center,ray,color_white,thickness);
+    }
 }
 
 
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 {
     YARP_REGISTER_DEVICES(icubmod)
 
-	Network yarp;
+    Network yarp;
 
     string laser_port_name;
     laser_port_name = "/laserScannerGui/laser:i";
@@ -238,108 +238,106 @@ int main(int argc, char *argv[])
     int width = 600;
     int height = 600;
 
-	BufferedPort<yarp::sig::Vector> laserInPort;
+    BufferedPort<yarp::sig::Vector> laserInPort;
     laserInPort.open(laser_port_name.c_str());
-	BufferedPort<yarp::sig::Vector> compassInPort;
+    BufferedPort<yarp::sig::Vector> compassInPort;
     compassInPort.open(compass_port_name.c_str());
 
     IplImage *img  = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
-	IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
+    IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
     cvNamedWindow("Laser Scanner GUI",CV_WINDOW_AUTOSIZE);
-	cvInitFont(&font,    CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
-	cvInitFont(&fontBig, CV_FONT_HERSHEY_SIMPLEX, 0.8, 0.8, 0, 1, CV_AA);
+    cvInitFont(&font,    CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4, 0, 1, CV_AA);
+    cvInitFont(&fontBig, CV_FONT_HERSHEY_SIMPLEX, 0.8, 0.8, 0, 1, CV_AA);
 
     bool exit = false;
-	yarp::sig::Vector compass_data;
-	compass_data.resize(3, 0.0);
+    yarp::sig::Vector compass_data;
+    compass_data.resize(3, 0.0);
 
-	yarp::sig::Vector laser_data;
-	laser_data.resize(1080, 0.0);
+    yarp::sig::Vector laser_data;
+    laser_data.resize(1080, 0.0);
 
-	while(!exit)
+    while(!exit)
     {
-		if (compass)
-		{
-			yarp::sig::Vector *cmp = compassInPort.read(false);
-			if (cmp) compass_data = *cmp;
-		}
+        if (compass)
+        {
+            yarp::sig::Vector *cmp = compassInPort.read(false);
+            if (cmp) compass_data = *cmp;
+        }
 
         yarp::sig::Vector *las = laserInPort.read(false);
-		if (las) laser_data = *las;
+        if (las) laser_data = *las;
 
-		//The drawing functions.
-		{        
-		    drawLaser(&compass_data,&laser_data,img);
-			drawRobot(img2);
-			drawGrid(img);
-			if (compass) drawCompass(&compass_data,img);
+        //The drawing functions.
+        {        
+        drawLaser(&compass_data,&laser_data,img);
+            drawRobot(img2);
+            drawGrid(img);
+            if (compass) drawCompass(&compass_data,img);
             cvAddWeighted(img, 0.7, img2, 0.3, 0.0, img);
             cvShowImage("Laser Scanner GUI",img);
         }
 
-		Time::delay(double(rate)/1000.0+0.005);
-		
+        Time::delay(double(rate)/1000.0+0.005);
+
         //if ESC is pressed, exit.
-		int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
-	    keypressed &= 0xFF; //this mask is required in Linux systems
+        int keypressed = cvWaitKey(2); //wait 2ms. Lower values do not work under Linux
+        keypressed &= 0xFF; //this mask is required in Linux systems
         if(keypressed == 27) exit = true;
-        if(keypressed == 'w' && scale <0.5)
-		{
-			//scale+=0.001;
-			scale*=1.02;
-			fprintf(stderr,"scale factor is now:%.3f\n",scale);
-		}
-		if(keypressed == 's' && scale >0.015) 
-		{
-			//scale-=0.001;
-			scale/=1.02;
-			fprintf(stderr,"scale factor is now:%.3f\n",scale);
-		}
-		if(keypressed == 'v' ) 
-		{
-			verbose= (!verbose);
-			if (verbose) fprintf(stderr,"verbose mode is now ON\n");
-			else         fprintf(stderr,"verbose mode is now OFF\n");
-		}
-		if(keypressed == 'a' )
-		{
-			absolute= (!absolute);
-			if (absolute) fprintf(stderr,"display is now in ABSOLUTE mode\n");
-			else          fprintf(stderr,"display is now in RELATIVE mode\n");
-		}
-		if(keypressed == 'r' )
-		{
-			if      (rate==0)  rate = 50;
-			else if (rate==50) rate = 100;
-			else if (rate==100) rate = 200;
-			else if (rate==200) rate = 0;
-			fprintf(stderr,"refresh rate set to %d ms.\n", rate);
-			
-		}
-		if(keypressed == 'c' )
-		{
-			compass= (!compass);
-			if (compass) {fprintf(stderr,"compass is now ON\n"); }
-			else         {fprintf(stderr,"compass is now OFF\n"); compass_data.zero();}
-		}
-		if(keypressed == 'h' || 
-		   keypressed == 'H')
-		{
-			fprintf(stderr,"\n");
-			fprintf(stderr,"available commands:\n");
-			fprintf(stderr,"c ...... enables/disables compass.\n");
-			fprintf(stderr,"a ...... set absolute/relative mode.\n");
-			fprintf(stderr,"w ...... zoom in.\n");
-			fprintf(stderr,"s ...... zoom out.\n");
-			fprintf(stderr,"v ...... set verbose mode on/off.\n");
-			fprintf(stderr,"r ...... set refresh rate.\n");
-			fprintf(stderr,"\n");
-		}
+        if(keypressed == 'w' && scale <500)
+        {
+            //scale+=0.001;
+            scale*=1.02;
+            fprintf(stderr,"scale factor is now:%.3f\n",scale);
+        }
+        if(keypressed == 's' && scale >15) 
+        {
+           //scale-=0.001;
+           scale/=1.02;
+            fprintf(stderr,"scale factor is now:%.3f\n",scale);
+        }
+        if(keypressed == 'v' ) 
+        {
+           verbose= (!verbose);
+            if (verbose) fprintf(stderr,"verbose mode is now ON\n");
+        else         fprintf(stderr,"verbose mode is now OFF\n");
+        }
+        if(keypressed == 'a' )
+        {
+            absolute= (!absolute);
+            if (absolute) fprintf(stderr,"display is now in ABSOLUTE mode\n");
+            else          fprintf(stderr,"display is now in RELATIVE mode\n");
+        }
+        if(keypressed == 'r' )
+        {
+            if      (rate==0)  rate = 50;
+            else if (rate==50) rate = 100;
+            else if (rate==100) rate = 200;
+            else if (rate==200) rate = 0;
+         fprintf(stderr,"refresh rate set to %d ms.\n", rate);
+        }
+        if(keypressed == 'c' )
+        {
+            compass= (!compass);
+            if (compass) {fprintf(stderr,"compass is now ON\n"); }
+            else         {fprintf(stderr,"compass is now OFF\n"); compass_data.zero();}
+        }
+        if(keypressed == 'h' || 
+            keypressed == 'H')
+        {
+            fprintf(stderr,"\n");
+            fprintf(stderr,"available commands:\n");
+            fprintf(stderr,"c ...... enables/disables compass.\n");
+            fprintf(stderr,"a ...... set absolute/relative mode.\n");
+            fprintf(stderr,"w ...... zoom in.\n");
+            fprintf(stderr,"s ...... zoom out.\n");
+            fprintf(stderr,"v ...... set verbose mode on/off.\n");
+            fprintf(stderr,"r ...... set refresh rate.\n");
+           fprintf(stderr,"\n");
+        }
     }
 
     laserInPort.close();
-	compassInPort.close();
+    compassInPort.close();
     cvDestroyAllWindows();
     cvReleaseImage(&img);
 }
-

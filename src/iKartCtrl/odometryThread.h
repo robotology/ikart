@@ -129,27 +129,26 @@ public:
            encvel_estimator =new iCub::ctrl::AWLinEstimator(3,1.0);
     }
 
-	
     virtual bool threadInit()
     {
 
         // open the control board driver
-	    printf("\nOpening the motors interface...\n");
+        printf("\nOpening the motors interface...\n");
 
         Property control_board_options("(device remote_controlboard)");
         if (!control_board_driver)
         {
-	     fprintf(stderr,"ERROR: control board driver not ready!\n");
+         fprintf(stderr,"ERROR: control board driver not ready!\n");
              return false;
         }
         // open the interfaces for the control boards
-		bool ok = true;
-		ok = ok & control_board_driver->view(ienc);
-		if(!ok)
-		{
-			fprintf(stderr,"ERROR: one or more devices has not been viewed\nreturning...\n");
-			//return false;
-		}
+        bool ok = true;
+        ok = ok & control_board_driver->view(ienc);
+        if(!ok)
+        {
+            fprintf(stderr,"ERROR: one or more devices has not been viewed\nreturning...\n");
+            //return false;
+        }
         // open control input ports
         port_odometry.open((localName+"/odometry:o").c_str());
         port_odometer.open((localName+"/odometer:o").c_str());
@@ -220,7 +219,7 @@ public:
         kin(2,1) = -1;
         kin(2,2) = geom_L;
         yarp::sig::Matrix ikin = luinv(kin);
-	
+
         //build the rotation matrix
         yarp::sig::Matrix m;
         m.resize(3,3);
@@ -232,7 +231,7 @@ public:
         m(2,2) = 1;
 
         yarp::sig::Vector cart_vels;
-	cart_vels = m*ikin*encv;
+        cart_vels = m*ikin*encv;
         vel_x     = cart_vels[1]*geom_r;
         vel_y     = cart_vels[0]*geom_r;
         vel_lin   = vel_x*vel_x + vel_y*vel_y;
@@ -244,8 +243,8 @@ public:
         double si3m = cos (M_PI/3-odom_theta);*/
     
         //the integration step
-	odom_x=odom_x + (vel_x * period/1000);
-	odom_y=odom_y + (vel_y * period/1000);
+        odom_x=odom_x + (vel_x * period/1000);
+        odom_y=odom_y + (vel_y * period/1000);
 
         //compute traveled distance (odometer)
         traveled_distance = traveled_distance + fabs(vel_lin * period/1000);
@@ -278,7 +277,7 @@ public:
 
         mutex.post();
 
-	Bottle &b=port_odometry.prepare();
+	    Bottle &b=port_odometry.prepare();
         b.clear();
         b.addDouble(odom_x);
         b.addDouble(odom_y);
@@ -286,9 +285,9 @@ public:
         b.addDouble(vel_x);
         b.addDouble(vel_y);
         b.addDouble(vel_theta);
-	port_odometry.write();
+        port_odometry.write();
 
-	Bottle &t=port_odometer.prepare();
+        Bottle &t=port_odometer.prepare();
         t.clear();
         t.addDouble(traveled_distance);
         t.addDouble(traveled_angle);

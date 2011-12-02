@@ -88,19 +88,19 @@ class CtrlModule: public RFModule
 {
 protected:
     CtrlThread     *control_thr;
-	LaserThread    *laser_thr;
-	CompassThread  *compass_thr;
+    LaserThread    *laser_thr;
+    CompassThread  *compass_thr;
     OdometryThread *odometry_thr;
     Port            rpcPort;
 
 public:
     CtrlModule() 
-	{
-		control_thr=0;
-		laser_thr=0;
-		compass_thr=0;
+    {
+        control_thr=0;
+        laser_thr=0;
+        compass_thr=0;
         odometry_thr=0;
-	}
+    }
 
     virtual bool configure(ResourceFinder &rf)
     {
@@ -120,132 +120,134 @@ public:
         remoteName=slash+robotName+"/wheels";
         localName=slash+ctrlName;//+"/local/";
 
-		//reads the configuration file
-		Property iKartCtrl_options;
-		ConstString configFile=rf.findFile("from");		
-		if (configFile=="") //--from iKartCtrl.ini
-		{
-			printf("\nError! Cannot find .ini configuration file. \nBy default I'm searching for iKartCtrl.ini\n");
-			return false;
-		}
-		else
-		{
-			iKartCtrl_options.fromConfigFile(configFile.c_str());
-		}
+        //reads the configuration file
+        Property iKartCtrl_options;
+        ConstString configFile=rf.findFile("from");		
+        if (configFile=="") //--from iKartCtrl.ini
+        {
+            printf("\nError! Cannot find .ini configuration file. \nBy default I'm searching for iKartCtrl.ini\n");
+            return false;
+        }
+        else
+        {
+            iKartCtrl_options.fromConfigFile(configFile.c_str());
+        }
 
-		//set the thread rate
-		
-		int rate = rf.check("rate",Value(20)).asInt();
-		printf("\niKartCtrl thread rate: %d ms.\n",rate);
-			
-		// the motor control thread
-		bool motors_enabled=true;
-		if (rf.check("no_motors"))
-		{
-			printf("\n'no_motors' option found. Skipping motor control part.\n");
-			motors_enabled=false;
-		}
+        //set the thread rate
 
-		if (motors_enabled==true)
-		{
-			control_thr=new CtrlThread(rate,rf,iKartCtrl_options,remoteName,localName);
-			if (!control_thr->start())
-			{
-				delete control_thr;
-				return false;
-			}
-		}
+        int rate = rf.check("rate",Value(20)).asInt();
+        printf("\niKartCtrl thread rate: %d ms.\n",rate);
+
+        // the motor control thread
+        bool motors_enabled=true;
+        if (rf.check("no_motors"))
+        {
+            printf("\n'no_motors' option found. Skipping motor control part.\n");
+            motors_enabled=false;
+        }
+
+        if (motors_enabled==true)
+        {
+            control_thr=new CtrlThread(rate,rf,iKartCtrl_options,remoteName,localName);
+            if (!control_thr->start())
+            {
+                delete control_thr;
+                return false;
+            }
+        }
 
         // the odometry thread
-		if (motors_enabled==true)
+        if (motors_enabled==true)
         {
             PolyDriver *driver = control_thr->getControlBoardDriver();
-			odometry_thr=new OdometryThread(rate,rf,iKartCtrl_options,driver);
-			if (!odometry_thr->start())
-			{
-				delete odometry_thr;
-				return false;
-			}
-		}
+            odometry_thr=new OdometryThread(rate,rf,iKartCtrl_options,driver);
+            if (!odometry_thr->start())
+            {
+                delete odometry_thr;
+                return false;
+            }
+        }
 
-		// the laser thread
-		bool laser_enabled=true;
-		if (iKartCtrl_options.check("laser")==false)
-		{
-			printf("\nLaser configuration not specified. Turning off laser.\n");
-			laser_enabled=false;
-		}
-		if (rf.check("no_laser"))
-		{
-			printf("\nLaser disabled.\n");
-			laser_enabled=false;
-		}
+        // the laser thread
+        bool laser_enabled=true;
+        if (iKartCtrl_options.check("laser")==false)
+        {
+            printf("\nLaser configuration not specified. Turning off laser.\n");
+            laser_enabled=false;
+        }
+        if (rf.check("no_laser"))
+        {
+            printf("\nLaser disabled.\n");
+            laser_enabled=false;
+        }
 
-		if (laser_enabled==true)
-		{
-			laser_thr=new LaserThread(rate,rf,iKartCtrl_options,remoteName,localName);
-			if (!laser_thr->start())
-			{
-				delete laser_thr;
-				return false;
-			}
-		}
+        if (laser_enabled==true)
+        {
+            laser_thr=new LaserThread(rate,rf,iKartCtrl_options,remoteName,localName);
+            if (!laser_thr->start())
+            {
+                delete laser_thr;
+                return false;
+            }
+        }
 
-		// the compass thread
-		bool compass_enabled=true;
-		if (rf.check("no_compass"))
-		{
-			printf("\n'no_compass' option found. Skipping inertial/compass part.\n");
-			compass_enabled=false;
-		}
+        // the compass thread
+        bool compass_enabled=true;
+        if (rf.check("no_compass"))
+        {
+            printf("\n'no_compass' option found. Skipping inertial/compass part.\n");
+            compass_enabled=false;
+        }
 
-		if (compass_enabled==true)
-		{
-			compass_thr=new CompassThread(rate,rf,iKartCtrl_options,remoteName,localName);
-			if (!compass_thr->start())
-			{
-				delete compass_thr;
-				return false;
-			}
-		}
+        if (compass_enabled==true)
+        {
+            compass_thr=new CompassThread(rate,rf,iKartCtrl_options,remoteName,localName);
+            if (!compass_thr->start())
+            {
+                delete compass_thr;
+                return false;
+            }
+        }
 
         rpcPort.open((localName+"/rpc").c_str());
-		attach(rpcPort);
+        attach(rpcPort);
 
         return true;
     }
 
-	bool respond(const Bottle& command, Bottle& reply) 
-	{
-		fprintf(stdout,"rpc respond\n");
-		Bottle cmd;
-		reply.clear(); 
-		
-		return true;
-	}
+    bool respond(const Bottle& command, Bottle& reply) 
+    {
+        fprintf(stdout,"rpc respond\n");
+        Bottle cmd;
+        reply.clear(); 
+
+        return true;
+    }
 
     virtual bool close()
     {
-		if (control_thr)
-		{
-			control_thr->stop();
-			delete control_thr;
-		}
-		if (laser_thr)
-		{
-			laser_thr->stop();
-			delete laser_thr;
-		}
-		if (compass_thr)
-		{
-			compass_thr->stop();
-			delete compass_thr;
-		}
-		if (odometry_thr)
-		{
-			odometry_thr->stop();
-			delete odometry_thr;
-		}
+        //The order in which the threads are closed is important
+        if (odometry_thr)
+        {
+            odometry_thr->stop();
+            delete odometry_thr;
+        }
+        if (control_thr)
+        {
+            control_thr->stop();
+            delete control_thr;
+        }
+        if (laser_thr)
+        {
+            laser_thr->stop();
+            delete laser_thr;
+        }
+        if (compass_thr)
+        {
+            compass_thr->stop();
+            delete compass_thr;
+        }
+
         rpcPort.interrupt();
         rpcPort.close();
 
@@ -254,43 +256,43 @@ public:
 
     virtual double getPeriod()    { return 1.0;  }
     virtual bool   updateModule()
-	{ 
-		if (laser_thr)
-		{
-			laser_thr->printStats();
-		}
-		else
-		{
-			fprintf(stdout,"Laser thread not running\n");
-		}
-		if (control_thr)
-		{
-			control_thr->updateControlMode();
-			control_thr->printStats();
-		}
-		else
-		{
-			fprintf(stdout,"Motor thread not running\n");
-		}
-		if (compass_thr)
-		{
-			compass_thr->printStats();
-		}
-		else
-		{
-			fprintf(stdout,"Compass thread not running\n");
-		}
-		fprintf(stdout,"\n");
-		if (odometry_thr)
-		{
-			odometry_thr->printStats();
-		}
-		else
-		{
-			fprintf(stdout,"Odometry thread not running\n");
-		}
-		return true;
-	}
+    { 
+        if (laser_thr)
+        {
+            laser_thr->printStats();
+        }
+        else
+        {
+            fprintf(stdout,"Laser thread not running\n");
+        }
+        if (control_thr)
+        {
+            control_thr->updateControlMode();
+            control_thr->printStats();
+        }
+        else
+        {
+            fprintf(stdout,"Motor thread not running\n");
+        }
+        if (compass_thr)
+        {
+            compass_thr->printStats();
+        }
+        else
+        {
+            fprintf(stdout,"Compass thread not running\n");
+        }
+        fprintf(stdout,"\n");
+        if (odometry_thr)
+        {
+            odometry_thr->printStats();
+        }
+        else
+        {
+            fprintf(stdout,"Odometry thread not running\n");
+        }
+        return true;
+    }
 };
 
 
@@ -300,32 +302,32 @@ int main(int argc, char *argv[])
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.configure("ICUB_ROOT",argc,argv);
-	rf.setDefaultContext("iKart/conf");
-	rf.setDefaultConfigFile("iKartCtrl.ini");
+    rf.setDefaultContext("iKart/conf");
+    rf.setDefaultConfigFile("iKartCtrl.ini");
 
     if (rf.check("help"))
     {
-		printf("\n");
+        printf("\n");
         printf("Possible options: \n");
-		printf("'rate <r>' sets the threads rate (default 20ms).\n");
-		printf("'no_filter' disables command filtering.\n");
-		printf("'no_motors' motor interface will not be opened.\n");
-		printf("'no_laser' laser interface will not be opened.\n");
+        printf("'rate <r>' sets the threads rate (default 20ms).\n");
+        printf("'no_filter' disables command filtering.\n");
+        printf("'no_motors' motor interface will not be opened.\n");
+        printf("'no_laser' laser interface will not be opened.\n");
         printf("'fake_laser' a simulated laser sensor will be used instead of a real one (debug).\n");
-		printf("'no_compass' inertial/compass ports will not be opened.\n");
-		printf("'no_start' do not automatically enables pwm.\n");
-		printf("'laser <filename>' starts the laser with the specified configuration file.\n");
-		printf("\n");
-		return 0;
+        printf("'no_compass' inertial/compass ports will not be opened.\n");
+        printf("'no_start' do not automatically enables pwm.\n");
+        printf("'laser <filename>' starts the laser with the specified configuration file.\n");
+        printf("\n");
+        return 0;
     }
 
     Network yarp;
 
     if (!yarp.checkNetwork())
-	{
-		fprintf(stderr, "Sorry YARP network does not seem to be available, is the yarp server available?\n");
+    {
+        fprintf(stderr, "Sorry YARP network does not seem to be available, is the yarp server available?\n");
         return -1;
-	}
+    }
 
     YARP_REGISTER_DEVICES(icubmod)
 
@@ -333,6 +335,3 @@ int main(int argc, char *argv[])
 
     return mod.runModule(rf);
 }
-
-
-

@@ -60,12 +60,7 @@ private:
     int                 mov_timeout_counter;
     int                 joy_timeout_counter;
 
-    //movement control variables
-    double              linear_speed;
-    double              angular_speed;
-    double              desired_direction;
-    double              pwm_gain;
-
+    //movement control variables (input from external)
     double              joy_linear_speed;
     double              joy_angular_speed;
     double              joy_desired_direction;
@@ -75,6 +70,17 @@ private:
     double              cmd_angular_speed;
     double              cmd_desired_direction;
     double              cmd_pwm_gain;
+
+    double              aux_linear_speed;
+    double              aux_angular_speed;
+    double              aux_desired_direction;
+    double              aux_pwm_gain;
+
+    //movement control variables (internally computed)
+    double              linear_speed;
+    double              angular_speed;
+    double              desired_direction;
+    double              pwm_gain;
 
     double              exec_linear_speed;
     double              exec_angular_speed;
@@ -90,6 +96,7 @@ protected:
     ResourceFinder            &rf;
     PolyDriver                *control_board_driver;
     BufferedPort<Bottle>      port_movement_control;
+    BufferedPort<Bottle>      port_auxiliary_control;
     BufferedPort<Bottle>      port_joystick_control;
 
     bool   filter_enabled;
@@ -214,6 +221,7 @@ public:
         }
         // open control input ports
         port_movement_control.open((localName+"/control:i").c_str());
+        port_auxiliary_control.open((localName+"/aux_control:i").c_str());
         port_joystick_control.open((localName+"/joystick:i").c_str());
 
         //set the control type
@@ -222,7 +230,7 @@ public:
             printf("starting motors...");
             iamp->enableAmp(0);
             iamp->enableAmp(1);
-        iamp->enableAmp(2);			
+            iamp->enableAmp(2);
         }
         set_ikart_control_type(IKART_CONTROL_SPEED);
 
@@ -425,6 +433,8 @@ public:
 
         port_movement_control.interrupt();
         port_movement_control.close();
+        port_auxiliary_control.interrupt();
+        port_auxiliary_control.close();
         port_joystick_control.interrupt();
         port_joystick_control.close();
     }

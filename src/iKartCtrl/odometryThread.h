@@ -123,8 +123,8 @@ public:
            vel_theta=0;	
            traveled_distance=0;
            traveled_angle=0;	
-           geom_r = 62.5;     //mm
-           geom_L = 297.16;   //mm
+           geom_r = 62.5/1000.0;     //m
+           geom_L = 297.16/1000.0;   //m
            localName = "/ikart";
            encvel_estimator =new iCub::ctrl::AWLinEstimator(3,1.0);
     }
@@ -233,8 +233,8 @@ public:
 
         yarp::sig::Vector cart_vels;
 	cart_vels = m*ikin*encv;
-        vel_x     = cart_vels[1];
-        vel_y     = cart_vels[0];
+        vel_x     = cart_vels[1]*geom_r;
+        vel_y     = cart_vels[0]*geom_r;
         vel_lin   = vel_x*vel_x + vel_y*vel_y;
         vel_theta = cart_vels[2];
 

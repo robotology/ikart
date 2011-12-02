@@ -88,8 +88,8 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 double scale =100; //global scale factor 
-int robot_radius = 715/2; //mm
-int laser_position = 245; //mm
+double robot_radius = 715.0/2.0/1000.0; //m
+double laser_position = 245.0/1000.0; //m
 bool verbose = false;
 bool absolute = false;
 bool compass  = true;
@@ -108,7 +108,7 @@ void drawGrid(IplImage *img)
     cvLine(img,cvPoint(img->width,0),cvPoint(0,img->height),color_black);
     cvLine(img,cvPoint(img->width/2,0),cvPoint(img->width/2,img->height),color_black);
     cvLine(img,cvPoint(0,img->height/2),cvPoint(img->width,img->height/2),color_black);
-    const int step = (int)(500.0 * scale); //mm
+    const int step = (int)(0.5 * scale); //mm
 /*
     for (int xi=0; xi<img->width; xi+=step)
         cvLine(img,cvPoint(xi,0),cvPoint(xi,img->height),color_black);
@@ -117,7 +117,7 @@ void drawGrid(IplImage *img)
 */
     char buff [10];
     int  rad_step=0;
-    if   (scale>0.06) 
+    if   (scale>60) 
         rad_step=1;
     else             
         rad_step=2;
@@ -194,7 +194,7 @@ void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
     }
 
     double curr_time=yarp::os::Time::now();
-    if (verbose) fprintf(stderr,"received vector size:%d ",las->size());
+    if (verbose) fprintf(stderr,"received vector size:%d ",int(las->size()));
     static int timeout_count=0;
     if (curr_time-old_time > 0.40) timeout_count++;
     if (verbose) fprintf(stderr,"time:%f timeout:%d\n",curr_time-old_time, timeout_count);

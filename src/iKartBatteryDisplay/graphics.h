@@ -2,12 +2,13 @@
 #define GRAPHICS_H
 
 #include <gtkmm.h>
+#include <string>
 #define N_IMAGES 10
 
 class GraphicsManager : public Gtk::Window
 {
 public:
-  GraphicsManager();
+  GraphicsManager(std::string pictures_path);
   virtual ~GraphicsManager();
   void update_graphics(double voltage, double current, double charge);
 
@@ -28,6 +29,7 @@ protected:
 
   guint m_back_width, m_back_height;
   gint m_frame_num;
+  std::string pics_path;
 };
 
 #endif

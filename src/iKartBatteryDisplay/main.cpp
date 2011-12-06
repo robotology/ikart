@@ -109,7 +109,6 @@ public:
     CtrlModule() 
 	{
 		gtk_main = new Gtk::Main(0,0);
-		graphics = new GraphicsManager();
 	}
 
     virtual bool on_timeout()
@@ -120,9 +119,10 @@ public:
 		Bottle *b = monitor_input.read(false);
 		if (b)
 		{
-			voltage = b->get(0).asDouble();
-			current = b->get(0).asDouble();
-			charge  = b->get(0).asDouble();
+                        fprintf(stderr,"received battery info\n");
+			voltage = b->get(3).asDouble();
+			current = b->get(5).asDouble();
+			charge  = b->get(7).asDouble();
 		}
 		else
 		{
@@ -153,7 +153,9 @@ public:
 			//return false;
 		}
 
-  	    m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 500);
+                yarp::os::ConstString pics_path =rf.check("pics_path",Value("/usr/local/src/robot/iCub/contrib/src/iKart/src/iKartBatteryDisplay/pictures/")).asString();
+		graphics = new GraphicsManager(pics_path.c_str());
+  	        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 11000);
 
 		//start GTK loop
 		gtk_main->run(*graphics);

@@ -1,18 +1,20 @@
 #include <math.h>
-#include <cstring>
 #include "graphics.h"
 
 #ifndef M_PI
 #define M_PI 3.1415927
 #endif
 
+using namespace std;
+
 //Called by DemoWindow;
 Gtk::Window* do_pixbufs()
 {
-  return new GraphicsManager();
+  fprintf(stderr,"ERROR: program should not reach this point \n");
+  return new GraphicsManager("default");
 }
 
-GraphicsManager::GraphicsManager()
+GraphicsManager::GraphicsManager(string pictures_path)
 {
   m_back_width = 0;
   m_back_height = 0;
@@ -24,6 +26,7 @@ GraphicsManager::GraphicsManager()
   set_keep_above(true);
   stick();
 
+  pics_path = pictures_path;
   load_pixbufs();
 
   set_size_request(m_back_width, m_back_height);
@@ -44,16 +47,25 @@ void GraphicsManager::load_pixbufs()
   if(m_refPixbuf_Background)
     return; /* already loaded earlier */
 
-  m_refPixbuf_Background = Gdk::Pixbuf::create_from_file("..//pictures//background.bmp");
-  m_refPixbuf_Numbers    = Gdk::Pixbuf::create_from_file("..//pictures//numbers.bmp");
-  m_refPixbuf_Blocks     = Gdk::Pixbuf::create_from_file("..//pictures//batt_blocks.bmp");
+  string filename;
+  filename = pics_path+"background.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Background = Gdk::Pixbuf::create_from_file(filename.c_str());
+  filename = pics_path+"numbers.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Numbers    = Gdk::Pixbuf::create_from_file(filename.c_str());
+  filename = pics_path+"batt_blocks.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Blocks     = Gdk::Pixbuf::create_from_file(filename.c_str());
 
   m_back_width = m_refPixbuf_Background->get_width();
   m_back_height = m_refPixbuf_Background->get_height();
 
   for(unsigned i = 0; i < N_IMAGES; ++i)
   {
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file("..//pictures//battery.bmp");
+    filename = pics_path+"numbers.bmp";
+    printf ("loading: %s\n", filename.c_str());
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file(filename.c_str());
     m_images[i] = pixbuf;
   }
 }

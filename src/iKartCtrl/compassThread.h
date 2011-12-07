@@ -41,67 +41,67 @@ using namespace yarp::dev;
 
 class CompassThread: public yarp::os::RateThread
 {
-	protected:
-	Property iKartCtrl_options;
+    protected:
+    Property iKartCtrl_options;
 
-	ResourceFinder      &rf;
-	BufferedPort<yarp::sig::Vector> port_inertial_input;
-	BufferedPort<yarp::sig::Vector> port_compass_output;
-	yarp::sig::Vector compass_data;
-	yarp::sig::Vector inertial_data;
-	string remoteName;
+    ResourceFinder      &rf;
+    BufferedPort<yarp::sig::Vector> port_inertial_input;
+    BufferedPort<yarp::sig::Vector> port_compass_output;
+    yarp::sig::Vector compass_data;
+    yarp::sig::Vector inertial_data;
+    string remoteName;
     string localName;
-	int                 timeout_counter;
+    int                 timeout_counter;
 
-	public:
+    public:
     
-	CompassThread(unsigned int _period, ResourceFinder &_rf, Property options,
+    CompassThread(unsigned int _period, ResourceFinder &_rf, Property options,
                string _remoteName, string _localName) :
                RateThread(_period),     rf(_rf),
-			   iKartCtrl_options (options),
+               iKartCtrl_options (options),
                remoteName(_remoteName), localName(_localName) 
-	{
-		timeout_counter     = 0;
-		inertial_data.resize(12,0.0);
-		compass_data.resize(3,0.0);	
-	}
+    {
+        timeout_counter     = 0;
+        inertial_data.resize(12,0.0);
+        compass_data.resize(3,0.0);    
+    }
 
     virtual bool threadInit()
     {
-		port_inertial_input.open((localName+"/inertial:i").c_str());
-		port_compass_output.open((localName+"/compass:o").c_str());
-		Network::connect("/icub/inertial",(localName+"/inertial:i").c_str());
-		return true;
-	}
+        port_inertial_input.open((localName+"/inertial:i").c_str());
+        port_compass_output.open((localName+"/compass:o").c_str());
+        Network::connect("/icub/inertial",(localName+"/inertial:i").c_str());
+        return true;
+    }
 
-	virtual void run()
-	{		
-		yarp::sig::Vector *iner = port_inertial_input.read(false);
-		if (iner) inertial_data = *iner;
-		else timeout_counter++;
+    virtual void run()
+    {
+        yarp::sig::Vector *iner = port_inertial_input.read(false);
+        if (iner) inertial_data = *iner;
+        else timeout_counter++;
 
-		//add here kinematics computation
-		compass_data[0]=inertial_data[2];
-		compass_data[1]=inertial_data[1];
-		compass_data[2]=inertial_data[0];
+        //add here kinematics computation
+        compass_data[0]=inertial_data[2];
+        compass_data[1]=inertial_data[1];
+        compass_data[2]=inertial_data[0];
 
-		yarp::sig::Vector &pcompass_data=port_compass_output.prepare();
-		pcompass_data=compass_data;
-		//lastStateStamp.update();
-		//port_compass_data.setEnvelope(lastStateStamp);
-		port_compass_output.write();
-	}
+        yarp::sig::Vector &pcompass_data=port_compass_output.prepare();
+        pcompass_data=compass_data;
+        //lastStateStamp.update();
+        //port_compass_data.setEnvelope(lastStateStamp);
+        port_compass_output.write();
+    }
 
-	virtual void threadRelease()
+    virtual void threadRelease()
     {    
-		port_inertial_input.interrupt();
+        port_inertial_input.interrupt();
         port_inertial_input.close();
-		port_compass_output.interrupt();
+        port_compass_output.interrupt();
         port_compass_output.close();
     }
     void printStats()
     {
-		fprintf (stdout,"Compass thread timeouts: %d\n",timeout_counter);
+        fprintf (stdout,"Compass thread timeouts: %d\n",timeout_counter);
     }
 };
 

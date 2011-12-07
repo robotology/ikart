@@ -53,11 +53,14 @@ private:
  
     int                 board_control_modes[3];
     int                 ikart_control_type;
-    double              wdt_mov_timeout;
-    double              wdt_joy_timeout;
-    int                 timeout_counter;
-    int                 joystick_counter;
+    int                 thread_timeout_counter;
+
+    int                 command_received;
+    int                 auxiliary_received;
+    int                 joystick_received;
+
     int                 mov_timeout_counter;
+    int                 aux_timeout_counter;
     int                 joy_timeout_counter;
 
     //movement control variables (input from external)
@@ -121,15 +124,19 @@ public:
                string _remoteName, string _localName) :
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options),
-               remoteName(_remoteName), localName(_localName) 
+               remoteName(_remoteName), localName(_localName)
     {
         ikart_control_type  = IKART_CONTROL_NONE;
-        wdt_mov_timeout     = 0.200;
-        wdt_joy_timeout     = 0.200;
-        timeout_counter     = 0;
-        joystick_counter    = 0;
+
+        thread_timeout_counter     = 0;
+
+        command_received    = 0;
+        joystick_received   = 0;
+        auxiliary_received  = 0;
+
         mov_timeout_counter = 0;
         joy_timeout_counter = 0;
+        aux_timeout_counter = 0;
 
         linear_speed        = 1;
         angular_speed       = 0;
@@ -282,8 +289,10 @@ public:
     {
         static double wdt_old_mov_cmd=Time::now();
         static double wdt_old_joy_cmd=Time::now();
+        static double wdt_old_aux_cmd=Time::now();
         static double wdt_mov_cmd=Time::now();
         static double wdt_joy_cmd=Time::now();
+        static double wdt_aux_cmd=Time::now();
 
         if (Bottle *b = port_joystick_control.read(false))
         {                
@@ -299,7 +308,7 @@ public:
 
                 //Joystick commands have higher priorty respect to movement commands.
                 //this make the joystick to take control for 100*20 ms
-                if (joy_pwm_gain>10) joystick_counter = 100;
+                if (joy_pwm_gain>10) joystick_received = 100;
             }
         }
         if (Bottle *b = port_movement_control.read(false))
@@ -312,13 +321,33 @@ public:
                 cmd_pwm_gain          = b->get(4).asDouble();
                 wdt_old_mov_cmd = wdt_mov_cmd;
                 wdt_mov_cmd = Time::now();
+                command_received = 100;
+            }
+        }
+       if (Bottle *b = port_auxiliary_control.read(false))
+        {
+            if (b->get(0).asInt()==1)
+            {
+                aux_desired_direction = b->get(1).asDouble();
+                aux_linear_speed      = b->get(2).asDouble();
+                aux_angular_speed     = b->get(3).asDouble();
+                aux_pwm_gain          = b->get(4).asDouble();
+                wdt_old_aux_cmd = wdt_aux_cmd;
+                wdt_aux_cmd = Time::now();
+                auxiliary_received = 100;
             }
         }
 
         //priority test 
-        if (joystick_counter==0)
+        if (joystick_received>0)
         {
-            //execute the command only if the joystick is not controlling!
+            desired_direction  = joy_desired_direction;
+            linear_speed       = joy_linear_speed;
+            angular_speed      = joy_angular_speed;
+            pwm_gain           = joy_pwm_gain;
+        }
+        else if (command_received>0)
+        {
             desired_direction  = cmd_desired_direction;
             linear_speed       = cmd_linear_speed;
             angular_speed      = cmd_angular_speed;
@@ -326,10 +355,10 @@ public:
         }
         else
         {
-            desired_direction  = joy_desired_direction;
-            linear_speed       = joy_linear_speed;
-            angular_speed      = joy_angular_speed;
-            pwm_gain           = joy_pwm_gain;
+            desired_direction  = aux_desired_direction;
+            linear_speed       = aux_linear_speed;
+            angular_speed      = aux_angular_speed;
+            pwm_gain           = aux_pwm_gain;
         }
 
         //watchdog on received commands
@@ -352,10 +381,21 @@ public:
             joy_pwm_gain=0;
             joy_timeout_counter++;
         }
+        if (wdt-wdt_aux_cmd > 0.200)
+        {
+            aux_desired_direction=0;
+            aux_linear_speed=0;
+            aux_angular_speed=0;
+            aux_pwm_gain=0;
+            aux_timeout_counter++;
+        }
 
-        if (wdt-wdt_old > 0.040) { timeout_counter++;  }
+        if (wdt-wdt_old > 0.040) { thread_timeout_counter++;  }
         wdt_old=wdt;
-        if (joystick_counter>0)  { joystick_counter--; }
+
+        if (joystick_received>0)   { joystick_received--; }
+        if (command_received>0)    { command_received--; }
+        if (auxiliary_received>0)  { auxiliary_received--; }
 
         //saturators
         int MAX_VALUE = 0;
@@ -460,10 +500,10 @@ public:
 
     void printStats()
     {
-        fprintf (stdout,"Motor thread timeouts: %d joy: %d cmd %d\n",timeout_counter, joy_timeout_counter,mov_timeout_counter);
+        fprintf (stdout,"Motor thread timeouts: %d joy: %d cmd %d\n",thread_timeout_counter, joy_timeout_counter,mov_timeout_counter);
 
-        if (joystick_counter>0) 
-            fprintf (stdout,"Under joystick control (%d)\n",joystick_counter);
+        if (joystick_received>0) 
+            fprintf (stdout,"Under joystick control (%d)\n",joystick_received);
 
         double val = 0;
         for (int i=0; i<3; i++)

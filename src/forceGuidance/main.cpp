@@ -91,25 +91,25 @@ using namespace yarp::dev;
 class CtrlThread: public RateThread
 {
 
-private:		 
-    Network				yarp;
+private:         
+    Network             yarp;
 
 protected:
     ResourceFinder      &rf;
     PolyDriver          *control_board_driver;
-	IVelocityControl    *iVel;
-	double              lx0;
-	double              ly0;
-	double              rx0;
-	double              ry0;
-	double              lx;
-	double              ly;
-	double              rx;
-	double              ry;
+    IVelocityControl    *iVel;
+    double              lx0;
+    double              ly0;
+    double              rx0;
+    double              ry0;
+    double              lx;
+    double              ly;
+    double              rx;
+    double              ry;
 
-	Port                            commands_out_port;
-	BufferedPort<yarp::sig::Vector> l_wrench_in_port;
-	BufferedPort<yarp::sig::Vector> r_wrench_in_port;
+    Port                            commands_out_port;
+    BufferedPort<yarp::sig::Vector> l_wrench_in_port;
+    BufferedPort<yarp::sig::Vector> r_wrench_in_port;
 
     string remoteName;
     string localName;
@@ -119,25 +119,25 @@ public:
                string _remoteName, string _localName) :
                RateThread(_period),     rf(_rf),
                remoteName(_remoteName), localName(_localName) 
-	{
+    {
     }
 
 
     virtual bool threadInit()
     {
-		l_wrench_in_port.open ("/forceGuidance/l_wrenches:i");
-		r_wrench_in_port.open ("/forceGuidance/r_wrenches:i");
-		commands_out_port.open("/forceGuidance/commands:o");
-		Network::connect("/ftObs/left_arm/wrench:o","/forceGuidance/l_wrenches:i");
-		Network::connect("/ftObs/right_arm/wrench:o","/forceGuidance/r_wrenches:i");
+        l_wrench_in_port.open ("/forceGuidance/l_wrenches:i");
+        r_wrench_in_port.open ("/forceGuidance/r_wrenches:i");
+        commands_out_port.open("/forceGuidance/commands:o");
+        Network::connect("/wholeBodyDynamics/left_arm/cartesianEndEffectorWrench:o","/forceGuidance/l_wrenches:i");
+        Network::connect("/wholeBodyDynamics/right_arm/cartesianEndEffectorWrench:o","/forceGuidance/r_wrenches:i");
 
-		yarp::sig::Vector* l_wrench = l_wrench_in_port.read(true);
-		yarp::sig::Vector* r_wrench = r_wrench_in_port.read(true);
+        yarp::sig::Vector* l_wrench = l_wrench_in_port.read(true);
+        yarp::sig::Vector* r_wrench = r_wrench_in_port.read(true);
 
-		lx0=l_wrench->data()[0];
-		ly0=l_wrench->data()[1];
-		rx0=r_wrench->data()[0];
-		ry0=r_wrench->data()[1];
+        lx0=l_wrench->data()[0];
+        ly0=l_wrench->data()[1];
+        rx0=r_wrench->data()[0];
+        ry0=r_wrench->data()[1];
         return true;
     }
 
@@ -149,10 +149,10 @@ public:
             fprintf(stderr, "Thread did not start\n");
     }
 
-	double lp_filter_1Hz(double input, int i)
+    double lp_filter_1Hz(double input, int i)
     {
-	   //This is a butterworth low pass first order, with a cut off freqency of 1Hz
-	   //It must be used with a sampling frequency of 50Hz (20ms)
+       //This is a butterworth low pass first order, with a cut off freqency of 1Hz
+       //It must be used with a sampling frequency of 50Hz (20ms)
        static double xv[2][10], yv[2][10];
        xv[0][i] = xv[1][i]; 
        xv[1][i] = input /1.689454484e+01;
@@ -162,8 +162,8 @@ public:
     }
     double lp_filter_0_5Hz(double input, int i)
     {
-	   //This is a butterworth low pass first order, with a cut off freqency of 0.5Hz
-	   //It must be used with a sampling frequency of 50Hz (20ms)
+       //This is a butterworth low pass first order, with a cut off freqency of 0.5Hz
+       //It must be used with a sampling frequency of 50Hz (20ms)
        static double xv[2][10], yv[2][10];
        xv[0][i] = xv[1][i]; 
        xv[1][i] = input /3.282051595e+01;
@@ -174,56 +174,56 @@ public:
 
     virtual void run()
     {
-		yarp::sig::Vector* l_wrench = l_wrench_in_port.read(false);
-		yarp::sig::Vector* r_wrench = r_wrench_in_port.read(false);
-		
-		if (l_wrench!=0)
-		{
-			ly=-(l_wrench->data()[0]-lx0);
-			lx=+(l_wrench->data()[1]-ly0);
-		}
+        yarp::sig::Vector* l_wrench = l_wrench_in_port.read(false);
+        yarp::sig::Vector* r_wrench = r_wrench_in_port.read(false);
+        
+        if (l_wrench!=0)
+        {
+            ly=-(l_wrench->data()[0]-lx0);
+            lx=+(l_wrench->data()[1]-ly0);
+        }
 
-		if (r_wrench!=0)
-		{
-			ry=-(r_wrench->data()[0]-rx0);
-			rx=+(r_wrench->data()[1]-ry0);
-		}
+        if (r_wrench!=0)
+        {
+            ry=-(r_wrench->data()[0]-rx0);
+            rx=+(r_wrench->data()[1]-ry0);
+        }
 
-		lx = lp_filter_0_5Hz(lx,0);
-		ly = lp_filter_0_5Hz(ly,1);
-		rx = lp_filter_0_5Hz(rx,2);
-		ry = lp_filter_0_5Hz(ry,3);
+        lx = lp_filter_0_5Hz(lx,0);
+        ly = lp_filter_0_5Hz(ly,1);
+        rx = lp_filter_0_5Hz(rx,2);
+        ry = lp_filter_0_5Hz(ry,3);
 
-		double desired_direction = atan2( lx+rx, ly+ry ) * 180.0 / 3.14159265;
-		double linear_speed      = sqrt ( pow(lx+rx,2)+ pow(ly+ry,2) ) / 60 * 65000;
-		double angular_speed     = (ly-ry) / 60 * 65000;
-		double pwm_gain = 48000;
+        double desired_direction = atan2( lx+rx, ly+ry ) * 180.0 / 3.14159265;
+        double linear_speed      = sqrt ( pow(lx+rx,2)+ pow(ly+ry,2) ) / 60 * 65000;
+        double angular_speed     = (ly-ry) / 60 * 65000;
+        double pwm_gain = 48000;
 
-		//dead band
-		if (fabs(angular_speed)<4000) angular_speed = 0;
-		if (fabs(linear_speed) <4000) linear_speed = 0;
-		printf ("(%+8.2f %+8.2f)(%+8.2f %+8.2f)      %+9.1f %+9.1f %+9.1f %+8.0f\n",lx,ly,rx,ry,desired_direction,linear_speed,angular_speed,pwm_gain);
+        //dead band
+        if (fabs(angular_speed)<4000) angular_speed = 0;
+        if (fabs(linear_speed) <4000) linear_speed = 0;
+        printf ("(%+8.2f %+8.2f)(%+8.2f %+8.2f)      %+9.1f %+9.1f %+9.1f %+8.0f\n",lx,ly,rx,ry,desired_direction,linear_speed,angular_speed,pwm_gain);
 
 
-		//send data to yarp output port
-		Bottle bot; 
-		bot.addInt(1);
-		bot.addDouble(desired_direction);
-		bot.addDouble(linear_speed);
-		bot.addDouble(angular_speed);
-		bot.addDouble(pwm_gain);
-		commands_out_port.write(bot);
+        //send data to yarp output port
+        Bottle bot; 
+        bot.addInt(1);
+        bot.addDouble(desired_direction);
+        bot.addDouble(linear_speed);
+        bot.addDouble(angular_speed);
+        bot.addDouble(pwm_gain);
+        commands_out_port.write(bot);
 
     }
 
     virtual void threadRelease()
     {    
-		commands_out_port.interrupt();
+        commands_out_port.interrupt();
         commands_out_port.close();
-		l_wrench_in_port.interrupt();
-		l_wrench_in_port.close();
-		r_wrench_in_port.interrupt();
-		r_wrench_in_port.close();
+        l_wrench_in_port.interrupt();
+        l_wrench_in_port.close();
+        r_wrench_in_port.interrupt();
+        r_wrench_in_port.close();
     }
 
 };
@@ -265,7 +265,7 @@ public:
         }
 
         //rpcPort.open((localName+"/rpc").c_str());
-		//attach(rpcPort);
+        //attach(rpcPort);
 
         return true;
     }

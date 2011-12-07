@@ -108,6 +108,7 @@ private:
     bool                logEnable;
     bool                verboseEnable;
     bool                screenEnable;
+    bool                debugEnable;
     char                log_buffer[255];
     FILE                *logFile;
     bool                yarp_found;
@@ -135,6 +136,12 @@ public:
         //yarp.setVerbosity(-1);
         logEnable=false;
         for (int i=0; i<255; i++) serial_buff[i]=0;
+
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+        battery_data.timestamp=asctime (timeinfo);
     }
 
 
@@ -144,6 +151,7 @@ public:
         logEnable=rf.check("logToFile");
         verboseEnable=rf.check("verbose");
         screenEnable=rf.check("screen");
+        debugEnable=rf.check("debug");
 
         //check for alternate COM ports
         ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /ttyUSB0 etc.)").asString();
@@ -168,7 +176,7 @@ public:
         prop.put("baudrate",     38400);
         prop.put("xonlim ",      0);
         prop.put("xofflim",      0);
-        prop.put("readmincharacters", 1);
+        prop.put("readmincharacters", 0);
         prop.put("readtimeoutmsec",   2);
         prop.put("paritymode",   "none");
         prop.put("ctsenb",       0);
@@ -216,9 +224,9 @@ public:
     void notify_message(string msg)
     {
     #ifdef WIN32
-        fprintf(stderr,msg.c_str());
+        fprintf(stderr,"%s", msg.c_str());
     #else
-        fprintf(stderr,msg.c_str());
+        fprintf(stderr,"%s", msg.c_str());
         string cmd = "wall " +msg;
         system(cmd.c_str());
     #endif
@@ -228,11 +236,11 @@ public:
     {
     #ifdef WIN32
         string cmd = "shutdown /s /t 120 /c "+msg;
-        fprintf(stderr,msg.c_str());
+        fprintf(stderr,"%s", msg.c_str());
         system(cmd.c_str());
     #else
         string cmd = "shutdown -h -t 120 "+msg;
-        fprintf(stderr,msg.c_str());
+        fprintf(stderr,"%s", msg.c_str());
         system(cmd.c_str());
     #endif
     }
@@ -254,6 +262,11 @@ public:
         }
     }
 
+    void print_battery_status()
+    {
+        fprintf(stdout,"%s", log_buffer);
+    }
+
     virtual void run()
     {
         //network checks
@@ -266,44 +279,48 @@ public:
                 port_battery_output.open((localName+"/battery:o").c_str());
 
         }
-        //read battery data
+        //read battery data.
+        //if nothing is received, rec=0, the while exits immediately. The string will be not valid, so the parser will skip it and it will leave unchanged the battery status (voltage/current/charge)
+        //if a text line is received, then try to receive more text to empty the buffer. If nothing else is received, serial_buff will be left unchanged from the previous value. The loop will exit and the sting will be parsed.
         serial_buff[0]=0;
         int rec = 0;
         do
         {
             rec = pSerial->receiveLine(serial_buff,250);
+            if (verboseEnable) fprintf(stderr,"%d ", rec);
+            if (debugEnable) fprintf(stderr,"<%s> ", serial_buff);
         }
         while
             (rec>0);
+        if (verboseEnable) fprintf(stderr,"\n");
 
         int len = strlen(serial_buff);
         if (len>0)
         {
-    //        if (verboseEnable)
-                fprintf(stderr,"%s", serial_buff);
-        }
+            if (verboseEnable)
+                fprintf(stderr,"%s", serial_buff);   
         
-        int pars = 0;
-        pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
+            int pars = 0;
+            pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
 
-        if (pars == 3)
-        {
-            time_t rawtime;
-            struct tm * timeinfo;
-            time ( &rawtime );
-            timeinfo = localtime ( &rawtime );
-            battery_data.timestamp=asctime (timeinfo);
-            battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
-            battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
-                                                                                   //when the current is 20A.
-            battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
-            sprintf(log_buffer,"%f - %f -  %f - %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
+            if (pars == 3)
+            {
+                time_t rawtime;
+                struct tm * timeinfo;
+                time ( &rawtime );
+                timeinfo = localtime ( &rawtime );
+                battery_data.timestamp=asctime (timeinfo);
+                battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
+                battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
+                                                                                       //when the current is 20A.
+                battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
+                sprintf(log_buffer,"battery status: %+6.1fA   % 6.1fV   charge:% 6.1f%%    time: %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
+            }
+            else
+            {
+                fprintf(stderr,"error reading battery data: %d\n", pars);
+            }
         }
-        else
-        {
-            fprintf(stderr,"error reading battery data: %d\n", pars);
-        }
-
         //send data to yarp output port (if available)
         if (yarp_found)
         {
@@ -328,7 +345,7 @@ public:
         }
 
         //print data to screen
-        if (1/*screenEnable*/)
+        if (screenEnable)
         {
             fprintf(stderr,"%s", log_buffer);
         }
@@ -342,12 +359,14 @@ public:
 
     virtual void threadRelease()
     {    
+        fprintf(stdout,"closing ports...\n");
         port_battery_output.interrupt();
         port_battery_output.close();
 
         //close log file
         if (logEnable)
         {
+            fprintf(stdout,"closing logfile...\n");
             fclose(logFile);
         }
     }
@@ -381,7 +400,7 @@ public:
         Time::turboBoost();
 
         // get params from the RF
-        ctrlName=rf.check("ctrlName",Value("iKart")).asString();
+        ctrlName=rf.check("ctrlName",Value("ikart")).asString();
         robotName=rf.check("robot",Value("ikart")).asString();
 
         remoteName=slash+robotName+"/wheels";
@@ -407,7 +426,7 @@ public:
         return true;
     }
 
-    virtual double getPeriod()    { return 10.0;  }
+    virtual double getPeriod()    { if (thr) thr->print_battery_status(); return 60.0;  }
     virtual bool   updateModule() { return true; }
 };
 
@@ -422,7 +441,10 @@ int main(int argc, char *argv[])
     if (rf.check("help"))
     {
         cout << "Options:" << endl << endl;
-        cout << "\tNo options at the moment"<< endl;
+        cout << "--verbose:     show the received raw data from the battery managment board"<< endl;
+        cout << "--debug:       show advanced debug information"<< endl; 
+        cout << "--screen:      show measurments on screen"<< endl;
+        cout << "--logToFile:   save the mesurments to file: batteryLog.txt"<< endl;
         return 0;
     }
 

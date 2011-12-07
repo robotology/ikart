@@ -41,7 +41,6 @@ GraphicsManager::~GraphicsManager()
 {
 }
 
-/* Loads the m_images for the demo and returns whether the operation succeeded */
 void GraphicsManager::load_pixbufs()
 {
   if(m_refPixbuf_Background)
@@ -60,14 +59,6 @@ void GraphicsManager::load_pixbufs()
 
   m_back_width = m_refPixbuf_Background->get_width();
   m_back_height = m_refPixbuf_Background->get_height();
-
-  for(unsigned i = 0; i < N_IMAGES; ++i)
-  {
-    filename = pics_path+"numbers.bmp";
-    printf ("loading: %s\n", filename.c_str());
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file(filename.c_str());
-    m_images[i] = pixbuf;
-  }
 }
 
 /* Expose callback for the drawing area */
@@ -159,7 +150,7 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
       }
   }
 
-  int n_blocks = int (charge / 100.0) * 11;
+  int n_blocks = int (charge*11 / 100.0);
   for (int i=0;i<n_blocks;i++)
   {
       int off;

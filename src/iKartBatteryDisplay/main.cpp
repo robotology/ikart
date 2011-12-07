@@ -119,7 +119,7 @@ public:
         Bottle *b = monitor_input.read(false);
         if (b)
         {
-            fprintf(stderr,"received battery info\n");
+            //fprintf(stderr,"received battery info\n");
             voltage = b->get(3).asDouble();
             current = b->get(5).asDouble();
             charge  = b->get(7).asDouble();
@@ -170,7 +170,7 @@ public:
         return true;
     }
 
-    virtual double getPeriod()    { return 10.0;  }
+    virtual double getPeriod()    { return 60.0;  }
     virtual bool   updateModule() { return true; }
 };
 

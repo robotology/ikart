@@ -90,118 +90,118 @@ using namespace yarp::dev;
 
 struct struct_battery_data
 {
-	int count;
-	int raw_voltage;
-	int raw_current;
-	int raw_charge;
-	
-	double voltage;
-	double current;
-	double charge;
-	char* timestamp;
+    int count;
+    int raw_voltage;
+    int raw_current;
+    int raw_charge;
+    
+    double voltage;
+    double current;
+    double charge;
+    char* timestamp;
 };
 
 class CtrlThread: public RateThread
 {
 
-private:		 
-	bool                logEnable;
-	bool                verboseEnable;
-	bool                screenEnable;
-	char                log_buffer[255];
-	FILE				*logFile;
-	bool                yarp_found;
-    Network				yarp;
+private:         
+    bool                logEnable;
+    bool                verboseEnable;
+    bool                screenEnable;
+    char                log_buffer[255];
+    FILE                *logFile;
+    bool                yarp_found;
+    Network             yarp;
 
 protected:
     ResourceFinder      &rf;
     PolyDriver          driver;
-	ISerialDevice       *pSerial;
-	char				serial_buff[255];
-	Port                port_battery_output;
-	Port                port_shutdown;
+    ISerialDevice       *pSerial;
+    char                serial_buff[255];
+    Port                port_battery_output;
+    Port                port_shutdown;
 
     string remoteName;
     string localName;
 
-	struct_battery_data battery_data;
+    struct_battery_data battery_data;
 
 public:
     CtrlThread(unsigned int _period, ResourceFinder &_rf,
                string _remoteName, string _localName) :
                RateThread(_period),     rf(_rf),
                remoteName(_remoteName), localName(_localName) 
-	{
-		//yarp.setVerbosity(-1);
-		logEnable=false;
-		for (int i=0; i<255; i++) serial_buff[i]=0;
+    {
+        //yarp.setVerbosity(-1);
+        logEnable=false;
+        for (int i=0; i<255; i++) serial_buff[i]=0;
     }
 
 
     virtual bool threadInit()
     {
-		//open the logfile if requested
-		logEnable=rf.check("logToFile");
-		verboseEnable=rf.check("verbose");
-		screenEnable=rf.check("screen");
+        //open the logfile if requested
+        logEnable=rf.check("logToFile");
+        verboseEnable=rf.check("verbose");
+        screenEnable=rf.check("screen");
 
-		//check for alternate COM ports
-		ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /ttyUSB0 etc.)").asString();
+        //check for alternate COM ports
+        ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /ttyUSB0 etc.)").asString();
 
-		//serial port configuration parameters
-	    Property prop;
-		prop.put("device",       "serialport");
-		prop.put("verbose",      "0");
-		if (COMport=="none")
-		{
-			//default values
-			#ifdef WIN32
-				prop.put("comport",      "COM3");
-			#else
-				prop.put("comport",      "/ttyUSB0");
-			#endif
-		}
-		else
-		{
-			prop.put("comport",      COMport.c_str());
-		}
-		prop.put("baudrate",     38400);
-		prop.put("xonlim ",      0);
-		prop.put("xofflim",      0);
-		prop.put("readmincharacters", 1);
-		prop.put("readtimeoutmsec",   2);
-		prop.put("paritymode",   "none");
-		prop.put("ctsenb",       0);
-		prop.put("rtsenb",       0);
-		prop.put("xinenb",       0);
-		prop.put("xoutenb",      0);
-		prop.put("modem",        0);
-		prop.put("rcvenb",       0);
-		prop.put("dsrenb",       0);
-		prop.put("dtrdisable",   0);
-		prop.put("databits",     8);
-		prop.put("stopbits",     1);
+        //serial port configuration parameters
+        Property prop;
+        prop.put("device",       "serialport");
+        prop.put("verbose",      "0");
+        if (COMport=="none")
+        {
+            //default values
+            #ifdef WIN32
+                prop.put("comport",      "COM3");
+            #else
+                prop.put("comport",      "/dev/ttyUSB0");
+            #endif
+        }
+        else
+        {
+            prop.put("comport",      COMport.c_str());
+        }
+        prop.put("baudrate",     38400);
+        prop.put("xonlim ",      0);
+        prop.put("xofflim",      0);
+        prop.put("readmincharacters", 1);
+        prop.put("readtimeoutmsec",   2);
+        prop.put("paritymode",   "none");
+        prop.put("ctsenb",       0);
+        prop.put("rtsenb",       0);
+        prop.put("xinenb",       0);
+        prop.put("xoutenb",      0);
+        prop.put("modem",        0);
+        prop.put("rcvenb",       0);
+        prop.put("dsrenb",       0);
+        prop.put("dtrdisable",   0);
+        prop.put("databits",     8);
+        prop.put("stopbits",     1);
 
-		if (logEnable)
-		{
-			fprintf(stderr, "writing to log file batteryLog.txt\n");
-			logFile = fopen("batteryLog.txt","w");
-		}
+        if (logEnable)
+        {
+            fprintf(stderr, "writing to log file batteryLog.txt\n");
+            logFile = fopen("batteryLog.txt","w");
+        }
 
-		//open serial port driver
-		driver.open(prop);
-		if (!driver.isValid())
-		{
-			fprintf(stderr, "Error opening PolyDriver check parameters\n");
-			return false;
-		}
-		driver.view(pSerial);
-		    
-		if (!pSerial)
-		{
-			fprintf(stderr, "Error opening serial driver. Device not available\n");
-			return false;
-		}
+        //open serial port driver
+        driver.open(prop);
+        if (!driver.isValid())
+        {
+            fprintf(stderr, "Error opening PolyDriver check parameters\n");
+            return false;
+        }
+        driver.view(pSerial);
+            
+        if (!pSerial)
+        {
+            fprintf(stderr, "Error opening serial driver. Device not available\n");
+            return false;
+        }
         return true;
     }
 
@@ -213,148 +213,148 @@ public:
             fprintf(stderr, "Thread did not start\n");
     }
 
-	void notify_message(string msg)
-	{
-	#ifdef WIN32
-		fprintf(stderr,msg.c_str());
-	#else
-		fprintf(stderr,msg.c_str());
-		string cmd = "wall " +msg;
-		system(cmd.c_str());
-	#endif
-	}
+    void notify_message(string msg)
+    {
+    #ifdef WIN32
+        fprintf(stderr,msg.c_str());
+    #else
+        fprintf(stderr,msg.c_str());
+        string cmd = "wall " +msg;
+        system(cmd.c_str());
+    #endif
+    }
 
-	void emergency_shutdown(string msg)
-	{
-	#ifdef WIN32
-		string cmd = "shutdown /s /t 120 /c "+msg;
-		fprintf(stderr,msg.c_str());
-		system(cmd.c_str());
-	#else
-		string cmd = "shutdown -h -t 120 "+msg;
-		fprintf(stderr,msg.c_str());
-		system(cmd.c_str());
-	#endif
-	}
+    void emergency_shutdown(string msg)
+    {
+    #ifdef WIN32
+        string cmd = "shutdown /s /t 120 /c "+msg;
+        fprintf(stderr,msg.c_str());
+        system(cmd.c_str());
+    #else
+        string cmd = "shutdown -h -t 120 "+msg;
+        fprintf(stderr,msg.c_str());
+        system(cmd.c_str());
+    #endif
+    }
 
-	void stop_robot(string quit_port)
-	{
-		//typical quit_port:
-		// "/icub/quit"
-		// "/ikart/quit"
-		if (yarp_found)
-		{
-			port_shutdown.open((localName+"/shutdown").c_str());
-			yarp.connect((localName+"/shutdown").c_str(),quit_port.c_str());
-			Bottle bot;
-			bot.addString("quit");
-			port_shutdown.write(bot);
-			port_shutdown.interrupt();
-			port_shutdown.close();
-		}
-	}
+    void stop_robot(string quit_port)
+    {
+        //typical quit_port:
+        // "/icub/quit"
+        // "/ikart/quit"
+        if (yarp_found)
+        {
+            port_shutdown.open((localName+"/shutdown").c_str());
+            yarp.connect((localName+"/shutdown").c_str(),quit_port.c_str());
+            Bottle bot;
+            bot.addString("quit");
+            port_shutdown.write(bot);
+            port_shutdown.interrupt();
+            port_shutdown.close();
+        }
+    }
 
     virtual void run()
     {
-		//network checks
-		//is yarp server available?
-		yarp_found = yarp.checkNetwork();
-		if (yarp_found)
-		{
-			//is output port already open? if not, open it
-			if (!yarp.exists((localName+"/battery:o").c_str()))
-				port_battery_output.open((localName+"/battery:o").c_str());
+        //network checks
+        //is yarp server available?
+        yarp_found = yarp.checkNetwork();
+        if (yarp_found)
+        {
+            //is output port already open? if not, open it
+            if (!yarp.exists((localName+"/battery:o").c_str()))
+                port_battery_output.open((localName+"/battery:o").c_str());
 
-		}
-		//read battery data
-		serial_buff[0]=0;
-		int rec = 0;
-		do
-		{
-			rec = pSerial->receiveLine(serial_buff,250);
-		}
-		while
-			(rec>0);
+        }
+        //read battery data
+        serial_buff[0]=0;
+        int rec = 0;
+        do
+        {
+            rec = pSerial->receiveLine(serial_buff,250);
+        }
+        while
+            (rec>0);
 
-		int len = strlen(serial_buff);
-		if (len>0)
-		{
-	//		if (verboseEnable)
-				fprintf(stderr,"%s", serial_buff);
-		}
-		
-		int pars = 0;
-		pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
+        int len = strlen(serial_buff);
+        if (len>0)
+        {
+    //        if (verboseEnable)
+                fprintf(stderr,"%s", serial_buff);
+        }
+        
+        int pars = 0;
+        pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
 
-		if (pars == 3)
-		{
-			time_t rawtime;
-			struct tm * timeinfo;
-			time ( &rawtime );
-			timeinfo = localtime ( &rawtime );
-			battery_data.timestamp=asctime (timeinfo);
-			battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
-			battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
-																					//when the current is 20A.		
-			battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
-			sprintf(log_buffer,"%f - %f -  %f - %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
-		}
-		else
-		{
-			fprintf(stderr,"error reading battery data: %d\n", pars);
-		}
+        if (pars == 3)
+        {
+            time_t rawtime;
+            struct tm * timeinfo;
+            time ( &rawtime );
+            timeinfo = localtime ( &rawtime );
+            battery_data.timestamp=asctime (timeinfo);
+            battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
+            battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
+                                                                                   //when the current is 20A.
+            battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
+            sprintf(log_buffer,"%f - %f -  %f - %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
+        }
+        else
+        {
+            fprintf(stderr,"error reading battery data: %d\n", pars);
+        }
 
-		//send data to yarp output port (if available)
-		if (yarp_found)
-		{	
-			Bottle bot; 
-			bot.addString("count");
-			bot.addInt(battery_data.count);
-			bot.addString("voltage");
-			bot.addDouble(battery_data.voltage);
-			bot.addString("current");
-			bot.addDouble(battery_data.current);
-			bot.addString("charge");
-			bot.addDouble(battery_data.charge);
-			bot.addString("time");
-			bot.addString(battery_data.timestamp);
-			port_battery_output.write(bot);
-		}
+        //send data to yarp output port (if available)
+        if (yarp_found)
+        {
+            Bottle bot; 
+            bot.addString("count");
+            bot.addInt(battery_data.count);
+            bot.addString("voltage");
+            bot.addDouble(battery_data.voltage);
+            bot.addString("current");
+            bot.addDouble(battery_data.current);
+            bot.addString("charge");
+            bot.addDouble(battery_data.charge);
+            bot.addString("time");
+            bot.addString(battery_data.timestamp);
+            port_battery_output.write(bot);
+        }
 
-		// The core part: checks on the status of charge of the battery
-		{
-			//stop_robot("/icub/quit");
-			//stop_robot("/ikart/quit");
-		}
+        // The core part: checks on the status of charge of the battery
+        {
+            //stop_robot("/icub/quit");
+            //stop_robot("/ikart/quit");
+        }
 
-		//print data to screen
-		if (1/*screenEnable*/)
-		{
-			fprintf(stderr,"%s", log_buffer);
-		}
-		//save data to file
-		if (logEnable)
-		{
-			fprintf(logFile,"%s", log_buffer);
-		}
+        //print data to screen
+        if (1/*screenEnable*/)
+        {
+            fprintf(stderr,"%s", log_buffer);
+        }
+        //save data to file
+        if (logEnable)
+        {
+            fprintf(logFile,"%s", log_buffer);
+        }
 
     }
 
     virtual void threadRelease()
     {    
-		port_battery_output.interrupt();
+        port_battery_output.interrupt();
         port_battery_output.close();
 
-		//close log file
-		if (logEnable)
-		{
-			fclose(logFile);
-		}
+        //close log file
+        if (logEnable)
+        {
+            fclose(logFile);
+        }
     }
 
-	void turn_off_control()
-	{
-	}
+    void turn_off_control()
+    {
+    }
 
 };
 
@@ -395,7 +395,7 @@ public:
         }
 
         //rpcPort.open((localName+"/rpc").c_str());
-		//attach(rpcPort);
+        //attach(rpcPort);
 
         return true;
     }

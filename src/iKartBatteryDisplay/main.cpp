@@ -123,12 +123,13 @@ public:
             voltage = b->get(3).asDouble();
             current = b->get(5).asDouble();
             charge  = b->get(7).asDouble();
+            graphics->update_graphics(voltage,current,charge,true);
         }
         else
         {
             fprintf(stderr,"TIMEOUT: unable to receive data from iKart battery manager \n");
+            graphics->update_graphics(voltage,current,charge,false);
         }
-        graphics->update_graphics(voltage,current,charge);
         return true;
     }
 

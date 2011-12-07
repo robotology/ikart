@@ -56,6 +56,9 @@ void GraphicsManager::load_pixbufs()
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
   m_refPixbuf_Blocks     = Gdk::Pixbuf::create_from_file(filename.c_str());
+  filename = pics_path+"batt_blocks.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Connected  = Gdk::Pixbuf::create_from_file(filename.c_str());
 
   m_back_width = m_refPixbuf_Background->get_width();
   m_back_height = m_refPixbuf_Background->get_height();
@@ -82,7 +85,7 @@ bool GraphicsManager::on_drawingarea_expose(GdkEventExpose *event)
 }
 
 
-void GraphicsManager::update_graphics(double voltage, double current, double charge)
+void GraphicsManager::update_graphics(double voltage, double current, double charge, bool connected)
 {
   m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
  
@@ -172,7 +175,50 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
                                     xpos, ypos,
                                     1, 1, Gdk::INTERP_NEAREST,255);
   }
+/*
+  if (connected)
+  {
+      int off;
+      int xpos;
+      int ypos;
+      GdkRectangle dest;
 
+      off=0;    
+      dest.x=166;
+      dest.y=135-i*6;
+      dest.width=14;
+      dest.height=7;
+      xpos=166;
+      ypos=135-i*6-off;
+      
+      m_refPixbuf_Connected->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+  }
+  else
+  {
+      int off;
+      int xpos;
+      int ypos;
+      GdkRectangle dest;
+
+      off=0;    
+      dest.x=166;
+      dest.y=135-i*6;
+      dest.width=14;
+      dest.height=7;
+      xpos=166;
+      ypos=135-i*6-off;
+      
+      m_refPixbuf_Connected->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+  }
+*/
   m_DrawingArea.queue_draw();
   m_frame_num++;
 }

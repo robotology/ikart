@@ -81,11 +81,11 @@ bool GraphicsManager::on_drawingarea_expose(GdkEventExpose *event)
   Glib::RefPtr<Gdk::GC> refGC = m_DrawingArea.get_style()->get_black_gc();
 
   refWindow->draw_rgb_image_dithalign(refGC,
-				event->area.x, event->area.y,
-				event->area.width, event->area.height,
-				Gdk::RGB_DITHER_NORMAL,
-				pixels, rowstride,
-				event->area.x, event->area.y);
+                event->area.x, event->area.y,
+                event->area.width, event->area.height,
+                Gdk::RGB_DITHER_NORMAL,
+                pixels, rowstride,
+                event->area.x, event->area.y);
 
   return true;
 }
@@ -104,29 +104,29 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
   int point_off=0;
   for (int i=0;i<len;i++)
   {
-	  int off;
-	  int xpos;
-	  int ypos;
-	  GdkRectangle dest;
-	  if (buff[i]=='.')
-		  point_off=17;
+      int off;
+      int xpos;
+      int ypos;
+      GdkRectangle dest;
+      if (buff[i]=='.')
+          point_off=17;
 
-	  if (buff[i]>='0' && buff[i]<='9')
-	  {
-		off=(buff[i]-'0')*29+point_off;	
-		dest.x=19+i*29-point_off;
-		dest.y=21;
-		dest.width=29;
-		dest.height=52;
-		xpos=19+i*29-off;
-		ypos=21;
-	  
-	    m_refPixbuf_Numbers->composite(m_refPixbuf,
-									dest.x, dest.y,
-									dest.width, dest.height,
-									xpos, ypos,
-									1, 1, Gdk::INTERP_NEAREST,255);
-	  }
+      if (buff[i]>='0' && buff[i]<='9')
+      {
+        off=(buff[i]-'0')*29+point_off;    
+        dest.x=19+i*29-point_off;
+        dest.y=21;
+        dest.width=29;
+        dest.height=52;
+        xpos=19+i*29-off;
+        ypos=21;
+      
+        m_refPixbuf_Numbers->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+      }
   }
 
   sprintf(buff,"%4.1f",current);
@@ -134,52 +134,52 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
   point_off=0;
   for (int i=0;i<len;i++)
   {
-	  int off;
-	  int xpos;
-	  int ypos;
-	  GdkRectangle dest;
-	  if (buff[i]=='.')
-		  point_off=17;
+      int off;
+      int xpos;
+      int ypos;
+      GdkRectangle dest;
+      if (buff[i]=='.')
+          point_off=17;
 
-	  if (buff[i]>='0' && buff[i]<='9')
-	  {
-		off=(buff[i]-'0')*29+point_off;	
-		dest.x=19+i*29-point_off;
-		dest.y=88;
-		dest.width=29;
-		dest.height=52;
-		xpos=19+i*29-off;
-		ypos=88;
-	  
-	    m_refPixbuf_Numbers->composite(m_refPixbuf,
-									dest.x, dest.y,
-									dest.width, dest.height,
-									xpos, ypos,
-									1, 1, Gdk::INTERP_NEAREST,255);
-	  }
+      if (buff[i]>='0' && buff[i]<='9')
+      {
+        off=(buff[i]-'0')*29+point_off;    
+        dest.x=19+i*29-point_off;
+        dest.y=88;
+        dest.width=29;
+        dest.height=52;
+        xpos=19+i*29-off;
+        ypos=88;
+      
+        m_refPixbuf_Numbers->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+      }
   }
 
-  int n_blocks = charge / 100 * 11;
+  int n_blocks = int (charge / 100.0) * 11;
   for (int i=0;i<n_blocks;i++)
   {
-	  int off;
-	  int xpos;
-	  int ypos;
-	  GdkRectangle dest;
+      int off;
+      int xpos;
+      int ypos;
+      GdkRectangle dest;
 
-	  off=0;	
-	  dest.x=166;
-	  dest.y=135-i*6;
-	  dest.width=14;
-	  dest.height=7;
-	  xpos=166;
-	  ypos=135-i*6-off;
-	  
-	  m_refPixbuf_Blocks->composite(m_refPixbuf,
-									dest.x, dest.y,
-									dest.width, dest.height,
-									xpos, ypos,
-									1, 1, Gdk::INTERP_NEAREST,255);
+      off=0;    
+      dest.x=166;
+      dest.y=135-i*6;
+      dest.width=14;
+      dest.height=7;
+      xpos=166;
+      ypos=135-i*6-off;
+      
+      m_refPixbuf_Blocks->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
   }
 
   m_DrawingArea.queue_draw();

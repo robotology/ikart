@@ -88,86 +88,86 @@ using namespace yarp::dev;
 
 struct struct_battery_data
 {
-	int count;
-	int raw_voltage;
-	
-	double voltage;
-	char* timestamp;
+    int count;
+    int raw_voltage;
+    
+    double voltage;
+    char* timestamp;
 };
 
 class CtrlModule: public RFModule
 {
 public:
-	Network		  yarp;
-	Gtk::Main	  *gtk_main;
-	GraphicsManager* graphics;
-    //Port        rpcPort;
-	BufferedPort<yarp::os::Bottle> monitor_input;
-	sigc::connection m_timer;
+    Network                         yarp;
+    Gtk::Main*                      gtk_main;
+    GraphicsManager*                graphics;
+    //Port                          rpcPort;
+    BufferedPort<yarp::os::Bottle>  monitor_input;
+    sigc::connection                m_timer;
 
 public:
     CtrlModule() 
-	{
-		gtk_main = new Gtk::Main(0,0);
-	}
+    {
+        gtk_main = new Gtk::Main(0,0);
+    }
 
     virtual bool on_timeout()
-	{
-		static double voltage =0;
-		static double current =0;
-		static double charge  =0;
-		Bottle *b = monitor_input.read(false);
-		if (b)
-		{
-                        fprintf(stderr,"received battery info\n");
-			voltage = b->get(3).asDouble();
-			current = b->get(5).asDouble();
-			charge  = b->get(7).asDouble();
-		}
-		else
-		{
-			fprintf(stderr,"TIMEOUT: unable to receive data from iKart battery manager \n");
-		}
-		graphics->update_graphics(voltage,current,charge);
-		return true;
-	}
+    {
+        static double voltage =0;
+        static double current =0;
+        static double charge  =0;
+        Bottle *b = monitor_input.read(false);
+        if (b)
+        {
+            fprintf(stderr,"received battery info\n");
+            voltage = b->get(3).asDouble();
+            current = b->get(5).asDouble();
+            charge  = b->get(7).asDouble();
+        }
+        else
+        {
+            fprintf(stderr,"TIMEOUT: unable to receive data from iKart battery manager \n");
+        }
+        graphics->update_graphics(voltage,current,charge);
+        return true;
+    }
 
     virtual bool configure(ResourceFinder &rf)
     {
         Time::turboBoost();
 
-		//check if the yarp networ is running
-		if (yarp.checkNetwork()==false)
-		{
-			return false;
-		}
+        //check if the yarp networ is running
+        if (yarp.checkNetwork()==false)
+        {
+            return false;
+        }
 
         //rpcPort.open((localName+"/rpc").c_str());
-		//attach(rpcPort);
+        //attach(rpcPort);
 
-		monitor_input.open("/batteryMonitor:i");
-		bool connection_ok = yarp.connect("/ikart/battery:o","/batteryMonitor:i");
-		if (!connection_ok)
-		{
-			fprintf(stderr,"ERROR: unable to connect to iKart battery manager! (looking for port /ikart/battery:o) \n");
-			//return false;
-		}
+        monitor_input.open("/batteryMonitor:i");
+        bool connection_ok = yarp.connect("/ikart/battery:o","/batteryMonitor:i");
+        if (!connection_ok)
+        {
+            fprintf(stderr,"ERROR: unable to connect to iKart battery manager! (looking for port /ikart/battery:o) \n");
+            //return false;
+        }
 
-                yarp::os::ConstString pics_path =rf.check("pics_path",Value("/usr/local/src/robot/iCub/contrib/src/iKart/src/iKartBatteryDisplay/pictures/")).asString();
-		graphics = new GraphicsManager(pics_path.c_str());
-  	        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 11000);
+        yarp::os::ConstString pics_path =rf.check("pics_path",Value("/usr/local/src/robot/iCub/contrib/src/iKart/src/iKartBatteryDisplay/pictures/")).asString();
+        graphics = new GraphicsManager(pics_path.c_str());
+        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 11000);
 
-		//start GTK loop
-		gtk_main->run(*graphics);
+        //start GTK loop
+        gtk_main->run(*graphics);
 
         return true;
     }
 
     virtual bool close()
     {
-		m_timer.disconnect();
-		if (graphics) delete graphics;
-		return true;
+        m_timer.disconnect();
+        if (graphics) delete graphics;
+        return true;
     }
 
     virtual double getPeriod()    { return 10.0;  }

@@ -20,7 +20,7 @@ ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
 
 TARGET_LINK_LIBRARIES(${PROJECTNAME} 
                       ${GtkMM_LINK_FLAGS}
-		      ${GtkMM_LIBRARIES}
+                      ${GtkMM_LIBRARIES}
                       ${YARP_LIBRARIES})
 
 INSTALL(TARGETS ${PROJECTNAME} DESTINATION bin)

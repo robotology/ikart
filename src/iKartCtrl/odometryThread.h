@@ -129,6 +129,14 @@ public:
            encvel_estimator =new iCub::ctrl::AWLinEstimator(3,1.0);
     }
 
+    bool reset_odometry()
+    {
+        ienc->getEncoder(0,&encA_offset);
+        ienc->getEncoder(1,&encB_offset);
+        ienc->getEncoder(2,&encC_offset);
+        return true;
+    }
+
     virtual bool threadInit()
     {
 
@@ -153,9 +161,8 @@ public:
         port_odometry.open((localName+"/odometry:o").c_str());
         port_odometer.open((localName+"/odometer:o").c_str());
 
-        ienc->getEncoder(0,&encA_offset);
-        ienc->getEncoder(1,&encB_offset);
-        ienc->getEncoder(2,&encC_offset);
+        //reset odometry
+        reset_odometry();
 
         return true;
     }

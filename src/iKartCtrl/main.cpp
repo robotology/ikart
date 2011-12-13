@@ -217,10 +217,42 @@ public:
 
     bool respond(const Bottle& command, Bottle& reply) 
     {
-        fprintf(stdout,"rpc respond\n");
-        Bottle cmd;
         reply.clear(); 
+        if (command.get(0).asString()=="run")
+        {
+            if (control_thr)
+            {
+                if (control_thr->turn_on_speed_control())
+                    {reply.addString("Motors now on");
+                    fprintf(stderr,"Motors now on\n");}
+                else
+                    {reply.addString("Unable to turn motors on! fault pressed?");
+                    fprintf(stderr,"Unable to turn motors on! fault pressed?\n");}
 
+            }
+            return true;
+        }
+        else if (command.get(0).asString()=="idle")
+        {
+            if (control_thr)
+            {
+                control_thr->turn_off_control();
+                reply.addString("Motors now off.");
+                fprintf(stderr,"Motors now off\n");
+            }
+            return true;
+        }
+        else if (command.get(0).asString()=="reset_odometry")
+        {
+            if (odometry_thr)
+            {
+                odometry_thr->reset_odometry();
+                reply.addString("Odometry reset done.");
+                fprintf(stderr,"Odometry reset done\n");
+            }
+            return true;
+        }
+        reply.addString("Unknown command.");
         return true;
     }
 

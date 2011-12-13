@@ -479,9 +479,31 @@ public:
         port_joystick_control.close();
     }
 
-    void turn_off_control()
+    bool turn_off_control()
     {
+        iamp->disableAmp(0);
+        iamp->disableAmp(1);
+        iamp->disableAmp(2);
         set_ikart_control_type (IKART_CONTROL_NONE);
+        return true;
+    }
+
+    bool turn_on_speed_control()
+    {
+        iamp->enableAmp(0);
+        iamp->enableAmp(1);
+        iamp->enableAmp(2);
+        set_ikart_control_type(IKART_CONTROL_SPEED);
+        int c0(0),c1(0),c2(0);
+        icmd->getControlMode(0,&c0);
+        icmd->getControlMode(0,&c1);
+        icmd->getControlMode(0,&c2);
+        if (c0==VOCAB_CM_VELOCITY && 
+            c1==VOCAB_CM_VELOCITY && 
+            c2==VOCAB_CM_VELOCITY) 
+            return true;
+        else
+            return false;
     }
 
     void updateControlMode()

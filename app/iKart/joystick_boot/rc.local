@@ -16,21 +16,9 @@ ip link set can0 up type can bitrate 1000000
 
 #start the joystick driver
 xboxdrv --silent &
+sleep 0.5
 
-/usr/local/src/robot/iCub/main/build/bin/joystickCheck
-if [ "$?" -eq "1" ]; then
-    echo "joystick boot requested"
-    sudo -u icub -i yarp server &
-    sleep 2
-    sudo -u icub -i iCubInterface --context iKart --config conf/iKart.ini &
-    sleep 2
-    sudo -u icub -i iKartCtrl --no_compass &
-    sleep 2
-    sudo -u icub -i joystickCtrl --context joystickCtrl --from conf/xbox_linux.ini --silent &
-    sleep 2
-    sudo -u icub -i yarp connect /joystickCtrl:o /ikart/joystick:i
-else
-    echo "No joystick boot requested"
-fi
+#start ikart
+sudo -u icub -i start_ikart.sh
 
 exit 0

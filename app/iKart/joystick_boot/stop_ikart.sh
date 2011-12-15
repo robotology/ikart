@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh 
 
 killall iCubInterface &
 killall iKartCtrl &

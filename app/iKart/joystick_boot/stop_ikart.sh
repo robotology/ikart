@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
 killall iCubInterface &
-killall IKartCtrl &
+killall iKartCtrl &
 killall joystickCtrl &
 

@@ -203,16 +203,47 @@ public:
 
         // open the control board driver
         printf("\nOpening the motors interface...\n");
-        control_board_driver=new PolyDriver;
+        int trials=0;
+        double start_time = yarp::os::Time::now();
         Property control_board_options("(device remote_controlboard)");
         control_board_options.put("remote",remoteName.c_str());
         control_board_options.put("local",localName.c_str());
-        if (!control_board_driver->open(control_board_options))
+        do
         {
-            fprintf(stderr,"ERROR: cannot open control board driver...\n");
-            delete control_board_driver;    
-            return false;
+            double current_time = yarp::os::Time::now();
+
+            //remove previously existing drivers
+            if (control_board_driver)
+            {
+                delete control_board_driver;
+                control_board_driver=0;
+            }
+
+            //creates the new device driver
+            control_board_driver=new PolyDriver(control_board_options);
+            bool connected =control_board_driver->isValid();
+
+            //check if the driver is connected
+            if (connected) break;
+        
+            //check if the timeout (10s) is expired
+            if (current_time-start_time > 10.0)
+            {
+                fprintf(stderr,"It is not possible to instantiate the device driver. I tried %d times!\n", trials);
+                if (control_board_driver)
+                {
+                    delete control_board_driver;
+                    control_board_driver=0;
+                }
+                return false;
+            }
+
+            yarp::os::Time::delay(0.5);
+            trials++;
+            fprintf(stderr,"\nUnable to connect the device driver, trying again...\n");
         }
+        while (true);
+
         // open the interfaces for the control boards
         bool ok = true;
         ok = ok & control_board_driver->view(ivel);

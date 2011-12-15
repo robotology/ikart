@@ -1,0 +1,36 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# start the can interface
+ip link set can0 up type can bitrate 1000000
+
+#start the joystick driver
+xboxdrv --silent &
+
+/usr/local/src/robot/iCub/main/build/bin/joystickCheck
+if [ "$?" -eq "1" ]; then
+    echo "joystick boot requested"
+    sudo -u icub -i yarp server &
+    sleep 2
+    sudo -u icub -i iCubInterface --context iKart --config conf/iKart.ini &
+    sleep 2
+    sudo -u icub -i iKartCtrl --no_compass &
+    sleep 2
+    sudo -u icub -i joystickCtrl --context joystickCtrl --from conf/xbox_linux.ini --silent &
+    sleep 2
+    sudo -u icub -i yarp connect /joystickCtrl:o /ikart/joystick:i
+else
+    echo "No joystick boot requested"
+fi
+
+exit 0

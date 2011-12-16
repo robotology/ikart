@@ -19,7 +19,7 @@ xboxdrv --silent &
 sleep 0.5
 
 #start the battery manager
-sudo -u icub -i iKartBatteryManager
+sudo -u icub -i iKartBatteryManager &
 
 #start ikart
 sudo -u icub -i ikart_start.sh

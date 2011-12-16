@@ -18,6 +18,9 @@ ip link set can0 up type can bitrate 1000000
 xboxdrv --silent &
 sleep 0.5
 
+#start the battery manager
+sudo -u icub -i iKartBatteryManager
+
 #start ikart
 sudo -u icub -i start_ikart.sh
 

@@ -22,6 +22,6 @@ sleep 0.5
 sudo -u icub -i iKartBatteryManager
 
 #start ikart
-sudo -u icub -i start_ikart.sh
+sudo -u icub -i ikart_start.sh
 
 exit 0

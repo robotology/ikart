@@ -25,6 +25,7 @@ protected:
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Numbers;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Blocks;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Connected;
+  Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Charge;
   Gtk::DrawingArea m_DrawingArea;
 
   guint m_back_width, m_back_height;

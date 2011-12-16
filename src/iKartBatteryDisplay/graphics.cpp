@@ -59,6 +59,9 @@ void GraphicsManager::load_pixbufs()
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
   m_refPixbuf_Connected  = Gdk::Pixbuf::create_from_file(filename.c_str());
+  filename = pics_path+"charge.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Charge  = Gdk::Pixbuf::create_from_file(filename.c_str());
 
   m_back_width = m_refPixbuf_Background->get_width();
   m_back_height = m_refPixbuf_Background->get_height();
@@ -92,6 +95,8 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
   //voltage = 24.2;
   //current = 20.8;
   //charge = 100;
+  
+   //draw numbers
   char buff[10];
   sprintf(buff,"%4.1f",voltage);
   int len = strlen(buff);
@@ -123,27 +128,28 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
       }
   }
 
-  sprintf(buff,"%4.1f",current);
+  sprintf(buff,"%4.1f",fabs(current));
   len = strlen(buff);
   point_off=0;
   for (int i=0;i<len;i++)
   {
-      int off;
-      int xpos;
-      int ypos;
+      int xoff=0;
+      int yoff=0;
+      int xpos=0;
+      int ypos=0;
       GdkRectangle dest;
       if (buff[i]=='.')
           point_off=17;
 
       if (buff[i]>='0' && buff[i]<='9')
       {
-        off=(buff[i]-'0')*29+point_off;    
+        xoff=(buff[i]-'0')*29+point_off;    
         dest.x=19+i*29-point_off;
-        dest.y=88;
+        dest.y=88-yoff;
         dest.width=29;
         dest.height=52;
-        xpos=19+i*29-off;
-        ypos=88;
+        xpos=19+i*29-xoff;
+        ypos=88-yoff;
       
         m_refPixbuf_Numbers->composite(m_refPixbuf,
                                     dest.x, dest.y,
@@ -153,21 +159,72 @@ void GraphicsManager::update_graphics(double voltage, double current, double cha
       }
   }
 
+  //Draw charge/discharge text
+  if (current<-0.3) 
+  {
+      int xoff=0;
+      int yoff=8;
+      int xpos=0;
+      int ypos=0;
+
+      GdkRectangle dest;
+
+      dest.x=56-xoff;
+      dest.y=77;
+      dest.width=48;
+      dest.height=8;
+      xpos=56-xoff;
+      ypos=77-yoff;
+      
+      m_refPixbuf_Charge->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+  }
+  else
+  {
+      int xoff=0;
+      int yoff=0;
+      int xpos=0;
+      int ypos=0;
+
+      GdkRectangle dest;
+
+      dest.x=56-xoff;
+      dest.y=77-yoff;
+      dest.width=48;
+      dest.height=8;
+      xpos=56-xoff;
+      ypos=77-yoff;
+      
+      m_refPixbuf_Charge->composite(m_refPixbuf,
+                                    dest.x, dest.y,
+                                    dest.width, dest.height,
+                                    xpos, ypos,
+                                    1, 1, Gdk::INTERP_NEAREST,255);
+  }
+
+  //draw charge indicator
   int n_blocks = int (charge*11 / 100.0);
   for (int i=0;i<n_blocks;i++)
   {
-      int off;
-      int xpos;
-      int ypos;
+      int xoff=0;
+      int yoff=0;
+      int xpos=0;
+      int ypos=0;
+
+      if    (current<-0.3) yoff=0;   //draw charging arrows
+      else                 yoff=15;  //draw standard boxes
+
       GdkRectangle dest;
 
-      off=0;    
-      dest.x=166;
+      dest.x=166-xoff;
       dest.y=135-i*6;
       dest.width=14;
       dest.height=7;
-      xpos=166;
-      ypos=135-i*6-off;
+      xpos=166-xoff;
+      ypos=135-i*6-yoff;
       
       m_refPixbuf_Blocks->composite(m_refPixbuf,
                                     dest.x, dest.y,

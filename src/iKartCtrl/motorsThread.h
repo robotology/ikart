@@ -334,6 +334,12 @@ public:
                 joy_linear_speed      = b->get(2).asDouble();
                 joy_angular_speed     = b->get(3).asDouble();
                 joy_pwm_gain          = b->get(4).asDouble();
+                joy_linear_speed = (joy_linear_speed<+100) ? joy_linear_speed : +100; 
+                joy_linear_speed = (joy_linear_speed>-100) ? joy_linear_speed : -100;
+                joy_angular_speed = (joy_angular_speed<+100) ? joy_angular_speed : +100; 
+                joy_angular_speed = (joy_angular_speed>-100) ? joy_angular_speed : -100;
+                joy_pwm_gain = (joy_pwm_gain<+100) ? joy_pwm_gain : +100; 
+                joy_pwm_gain = (joy_pwm_gain>0) ? joy_pwm_gain : 0;
                 wdt_old_joy_cmd = wdt_joy_cmd;
                 wdt_joy_cmd = Time::now();
 
@@ -350,6 +356,12 @@ public:
                 cmd_linear_speed      = b->get(2).asDouble();
                 cmd_angular_speed     = b->get(3).asDouble();
                 cmd_pwm_gain          = b->get(4).asDouble();
+                cmd_linear_speed = (cmd_linear_speed<+100) ? cmd_linear_speed : +100; 
+                cmd_linear_speed = (cmd_linear_speed>-100) ? cmd_linear_speed : -100;
+                cmd_angular_speed = (cmd_angular_speed<+100) ? cmd_angular_speed : +100; 
+                cmd_angular_speed = (cmd_angular_speed>-100) ? cmd_angular_speed : -100;
+                cmd_pwm_gain = (cmd_pwm_gain<+100) ? cmd_pwm_gain : +100; 
+                cmd_pwm_gain = (cmd_pwm_gain>0) ? cmd_pwm_gain : 0;
                 wdt_old_mov_cmd = wdt_mov_cmd;
                 wdt_mov_cmd = Time::now();
                 command_received = 100;
@@ -363,6 +375,12 @@ public:
                 aux_linear_speed      = b->get(2).asDouble();
                 aux_angular_speed     = b->get(3).asDouble();
                 aux_pwm_gain          = b->get(4).asDouble();
+                aux_linear_speed = (aux_linear_speed<+100) ? aux_linear_speed : +100; 
+                aux_linear_speed = (aux_linear_speed>-100) ? aux_linear_speed : -100;
+                aux_angular_speed = (aux_angular_speed<+100) ? aux_angular_speed : +100; 
+                aux_angular_speed = (aux_angular_speed>-100) ? aux_angular_speed : -100;
+                aux_pwm_gain = (aux_pwm_gain<+100) ? aux_pwm_gain : +100; 
+                aux_pwm_gain = (aux_pwm_gain>0) ? aux_pwm_gain : 0;
                 wdt_old_aux_cmd = wdt_aux_cmd;
                 wdt_aux_cmd = Time::now();
                 auxiliary_received = 100;
@@ -429,7 +447,7 @@ public:
         if (auxiliary_received>0)  { auxiliary_received--; }
 
         //saturators
-        int MAX_VALUE = 0;
+        double MAX_VALUE = 0;
         if (ikart_control_type == IKART_CONTROL_OPENLOOP)
         {
             MAX_VALUE = 1333; // Maximum joint PWM
@@ -439,10 +457,12 @@ public:
             MAX_VALUE = 200; // Maximum joint speed (deg/s)
         }
 
-        exec_linear_speed = linear_speed / 46000 * MAX_VALUE;
-        exec_angular_speed = angular_speed / 46000 * MAX_VALUE;
-        exec_pwm_gain = pwm_gain / 65000 * 1.0;
+        //Here we suppouse that values are already in the format 0-100%
+        exec_linear_speed = linear_speed / 100.0 * MAX_VALUE;
+        exec_angular_speed = angular_speed / 100.0 * MAX_VALUE;
+        exec_pwm_gain = pwm_gain / 100.0 * 1.0;
         exec_desired_direction = desired_direction;
+
         if (ikart_control_type == IKART_CONTROL_OPENLOOP)
         {
             const double ratio = 0.7; // This value must be < 1 
@@ -451,8 +471,6 @@ public:
             if (exec_angular_speed >  MAX_VALUE*(1-ratio)) exec_angular_speed = MAX_VALUE*(1-ratio);
             if (exec_angular_speed < -MAX_VALUE*(1-ratio)) exec_angular_speed = -MAX_VALUE*(1-ratio);
         }
-        if (exec_pwm_gain<0) exec_pwm_gain = 0;
-        if (exec_pwm_gain>1) exec_pwm_gain = 1;
 
         //wheel contribution calculation
         FA = exec_linear_speed * cos ((150-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;

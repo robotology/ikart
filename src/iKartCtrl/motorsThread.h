@@ -544,6 +544,7 @@ public:
         iamp->enableAmp(2);
         set_ikart_control_type(IKART_CONTROL_SPEED);
         int c0(0),c1(0),c2(0);
+        yarp::os::Time::delay(0.05);
         icmd->getControlMode(0,&c0);
         icmd->getControlMode(0,&c1);
         icmd->getControlMode(0,&c2);

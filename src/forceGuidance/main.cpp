@@ -194,14 +194,23 @@ public:
         rx = lp_filter_0_5Hz(rx,2);
         ry = lp_filter_0_5Hz(ry,3);
 
+        double linear_gain = 60;   // 60N  = 100%
+        double angular_gain = 60;  // 60Nm = 100%
         double desired_direction = atan2( lx+rx, ly+ry ) * 180.0 / 3.14159265;
-        double linear_speed      = sqrt ( pow(lx+rx,2)+ pow(ly+ry,2) ) / 60 * 65000;
-        double angular_speed     = (ly-ry) / 60 * 65000;
-        double pwm_gain = 48000;
+        double linear_speed      = sqrt ( pow(lx+rx,2)+ pow(ly+ry,2) ) / linear_gain * 100;
+        double angular_speed     = (ly-ry) / angular_gain * 100;
+        const double pwm_gain = 100;
 
         //dead band
-        if (fabs(angular_speed)<4000) angular_speed = 0;
-        if (fabs(linear_speed) <4000) linear_speed = 0;
+        if (fabs(angular_speed)<10) angular_speed = 0;
+        if (fabs(linear_speed) <10) linear_speed = 0;
+
+        //saturation
+        linear_speed=  (linear_speed > +100) ? +100:linear_speed;
+        linear_speed=  (linear_speed < -100) ? -100:linear_speed;
+        angular_speed= (angular_speed > +100) ? +100:angular_speed;
+        angular_speed= (angular_speed < -100) ? -100:angular_speed;
+        
         printf ("(%+8.2f %+8.2f)(%+8.2f %+8.2f)      %+9.1f %+9.1f %+9.1f %+8.0f\n",lx,ly,rx,ry,desired_direction,linear_speed,angular_speed,pwm_gain);
 
 

@@ -39,6 +39,9 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+#define MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
+#define MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
+
 class CtrlThread: public yarp::os::RateThread
 {
 private:
@@ -362,6 +365,25 @@ public:
                 cmd_angular_speed = (cmd_angular_speed>-100) ? cmd_angular_speed : -100;
                 cmd_pwm_gain = (cmd_pwm_gain<+100) ? cmd_pwm_gain : +100; 
                 cmd_pwm_gain = (cmd_pwm_gain>0) ? cmd_pwm_gain : 0;
+                wdt_old_mov_cmd = wdt_mov_cmd;
+                wdt_mov_cmd = Time::now();
+                command_received = 100;
+            }
+            else if (b->get(0).asInt()==2)
+            {
+                double x_speed        = b->get(1).asDouble() * 100.0 / MAX_LINEAR_VEL;
+                double y_speed        = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
+                double t_speed        = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
+                //t_speed = (t_speed<+100) ? t_speed : +100; 
+                //t_speed = (t_speed>-100) ? t_speed : -100;
+                cmd_desired_direction = atan2(x_speed,y_speed) * 180.0 / 3.14159265;
+                cmd_linear_speed      = sqrt (x_speed*x_speed+y_speed*y_speed);
+                cmd_angular_speed     = t_speed;
+                cmd_pwm_gain          = 100;
+                cmd_linear_speed = (cmd_linear_speed<+100) ? cmd_linear_speed : +100; 
+                cmd_linear_speed = (cmd_linear_speed>-100) ? cmd_linear_speed : -100;
+                cmd_angular_speed = (cmd_angular_speed<+100) ? cmd_angular_speed : +100; 
+                cmd_angular_speed = (cmd_angular_speed>-100) ? cmd_angular_speed : -100;
                 wdt_old_mov_cmd = wdt_mov_cmd;
                 wdt_mov_cmd = Time::now();
                 command_received = 100;

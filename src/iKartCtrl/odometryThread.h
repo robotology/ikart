@@ -250,12 +250,12 @@ public:
         double si3m = cos (M_PI/3-odom_theta);*/
     
         //the integration step
-        odom_x=odom_x + (vel_x * period/1000);
-        odom_y=odom_y + (vel_y * period/1000);
+        odom_x=odom_x + (vel_x * period/1000.0);
+        odom_y=odom_y + (vel_y * period/1000.0);
 
         //compute traveled distance (odometer)
-        traveled_distance = traveled_distance + fabs(vel_lin * period/1000);
-        traveled_angle = traveled_angle + fabs(vel_theta * period/1000);
+        traveled_distance = traveled_distance + fabs(vel_lin * period/1000.0);
+        traveled_angle = traveled_angle + fabs(vel_theta * period/1000.0);
 
        /* [ -(3^(1/2)*r)/3, (3^(1/2)*r)/3,        0]
           [            r/3,           r/3, -(2*r)/3]

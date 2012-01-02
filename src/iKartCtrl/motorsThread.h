@@ -495,9 +495,9 @@ public:
         }
 
         //wheel contribution calculation
-        FA = exec_linear_speed * cos ((150-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
-        FB = exec_linear_speed * cos ((030-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
-        FC = exec_linear_speed * cos ((270-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+        FA = exec_linear_speed * cos ((150.0-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+        FB = exec_linear_speed * cos ((030.0-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
+        FC = exec_linear_speed * cos ((270.0-exec_desired_direction)/ 180.0 * 3.14159265) + exec_angular_speed;
         FA *= exec_pwm_gain;
         FB *= exec_pwm_gain;
         FC *= exec_pwm_gain;
@@ -505,12 +505,12 @@ public:
         //Use a low pass filter to obtain smooth control
         if (filter_enabled)
         {
-            FA  = lp_filter_0_5Hz(FA,0);
-            FB  = lp_filter_0_5Hz(FB,1);
-            FC  = lp_filter_0_5Hz(FC,2);
-            //FA  = ratelim_filter_0(FA,0);
-            //FB  = ratelim_filter_0(FB,1);
-            //FC  = ratelim_filter_0(FC,2);
+            //FA  = lp_filter_0_5Hz(FA,0);
+            //FB  = lp_filter_0_5Hz(FB,1);
+            //FC  = lp_filter_0_5Hz(FC,2);
+            FA  = ratelim_filter_0(FA,0);
+            FB  = ratelim_filter_0(FB,1);
+            FC  = ratelim_filter_0(FC,2);
         }
 
         //Apply the commands
@@ -524,7 +524,7 @@ public:
         {
 //#define CONTROL_DEBUG
 #ifdef  CONTROL_DEBUG
-            fprintf (stdout,">**: %+6.6f **** %+6.6f %+6.6f %+6.6f\n",exec_linear_speed,-FA,-FB,-FC);
+            fprintf (stdout,">**: %+6.6f %+6.6f **** %+6.6f %+6.6f %+6.6f\n",exec_linear_speed,exec_desired_direction,-FA,-FB,-FC);
 #endif
             ivel->velocityMove(0,-FA);
             ivel->velocityMove(1,-FB);

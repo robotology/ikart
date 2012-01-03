@@ -109,6 +109,7 @@ private:
     bool                verboseEnable;
     bool                screenEnable;
     bool                debugEnable;
+    bool                shutdownEnable;
     char                log_buffer[255];
     FILE                *logFile;
     bool                yarp_found;
@@ -135,6 +136,7 @@ public:
     {
         //yarp.setVerbosity(-1);
         logEnable=false;
+        shutdownEnable=true;
         for (int i=0; i<255; i++) serial_buff[i]=0;
 
         time_t rawtime;
@@ -144,14 +146,55 @@ public:
         battery_data.timestamp=asctime (timeinfo);
     }
 
+    void check_battery_status()
+    {
+        static bool notify_15=true;
+        static bool notify_12=true;
+        static bool notify_10=true;
+
+        if (battery_data.charge > 20)
+        {
+            notify_15 = true;
+            notify_12 = true;
+            notify_10 = true;
+        }
+
+        if (battery_data.charge < 15)
+        {
+            if (notify_15) {notify_message ("WARNING: battery charge below 15%"); notify_15=false;}
+        }
+        if (battery_data.charge < 12)
+        {
+            if (notify_12) {notify_message ("WARNING: battery charge below 12%"); notify_12=false;}
+        }
+        if (battery_data.charge < 10)
+        {
+            if (notify_10) {notify_message ("WARNING: battery charge below 10%"); notify_10=false;}
+        }
+
+        if (battery_data.charge < 5)
+        {
+            if (shutdownEnable)
+            {
+                emergency_shutdown ("CRITICAL WARNING: battery charge below critical level 5%. The robor will be stopped and the system will shutdown in 2mins.");
+                stop_robot("/icub/quit");
+                stop_robot("/ikart/quit");
+            }
+            else
+            {
+                notify_message ("CRITICAL WARNING: battery charge reached critical level 5%, but the emergency shutodown is currently disabled!");
+            }
+        }
+    }
 
     virtual bool threadInit()
     {
-        //open the logfile if requested
+        //user options
         logEnable=rf.check("logToFile");
         verboseEnable=rf.check("verbose");
         screenEnable=rf.check("screen");
         debugEnable=rf.check("debug");
+        shutdownEnable=(rf.check("noShutdown")); //final test: must be enabled putting a !
 
         //check for alternate COM ports
         ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /ttyUSB0 etc.)").asString();
@@ -338,18 +381,15 @@ public:
             port_battery_output.write(bot);
         }
 
-        // The core part: checks on the status of charge of the battery
-        {
-            //stop_robot("/icub/quit");
-            //stop_robot("/ikart/quit");
-        }
+        // if the battery is not charging, checks its status of charge
+        if (battery_data.current>0) check_battery_status();
 
-        //print data to screen
+        // print data to screen
         if (screenEnable)
         {
             fprintf(stderr,"%s", log_buffer);
         }
-        //save data to file
+        // save data to file
         if (logEnable)
         {
             fprintf(logFile,"%s", log_buffer);
@@ -369,10 +409,6 @@ public:
             fprintf(stdout,"closing logfile...\n");
             fclose(logFile);
         }
-    }
-
-    void turn_off_control()
-    {
     }
 
 };
@@ -445,6 +481,7 @@ int main(int argc, char *argv[])
         cout << "--debug:       show advanced debug information"<< endl; 
         cout << "--screen:      show measurments on screen"<< endl;
         cout << "--logToFile:   save the mesurments to file: batteryLog.txt"<< endl;
+        cout << "--noShutdown:  do not not shutdown even if the battery reaches the critical level"<< endl;
         return 0;
     }
 

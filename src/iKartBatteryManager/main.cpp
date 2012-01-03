@@ -113,6 +113,7 @@ private:
     char                log_buffer[255];
     FILE                *logFile;
     bool                yarp_found;
+    bool                first_reading;
     Network             yarp;
 
 protected:
@@ -137,6 +138,7 @@ public:
         //yarp.setVerbosity(-1);
         logEnable=false;
         shutdownEnable=true;
+        first_reading=false;
         for (int i=0; i<255; i++) serial_buff[i]=0;
 
         time_t rawtime;
@@ -270,7 +272,7 @@ public:
         fprintf(stderr,"%s", msg.c_str());
     #else
         fprintf(stderr,"%s", msg.c_str());
-        string cmd = "wall " +msg;
+        string cmd = "echo "+msg+" | wall";
         system(cmd.c_str());
     #endif
     }
@@ -358,6 +360,7 @@ public:
                                                                                        //when the current is 20A.
                 battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
                 sprintf(log_buffer,"battery status: %+6.1fA   % 6.1fV   charge:% 6.1f%%    time: %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
+                first_reading = true;
             }
             else
             {
@@ -382,7 +385,7 @@ public:
         }
 
         // if the battery is not charging, checks its status of charge
-        if (battery_data.current>0) check_battery_status();
+        if (first_reading && battery_data.current>0) check_battery_status();
 
         // print data to screen
         if (screenEnable)

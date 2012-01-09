@@ -134,6 +134,12 @@ public:
         ienc->getEncoder(0,&encA_offset);
         ienc->getEncoder(1,&encB_offset);
         ienc->getEncoder(2,&encC_offset);
+        odom_x=0;
+        odom_y=0;
+        odom_theta=0;	
+        encvel_estimator->reset();
+        traveled_distance=0;
+        traveled_angle=0;
         return true;
     }
 

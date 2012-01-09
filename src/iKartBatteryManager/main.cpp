@@ -385,7 +385,7 @@ public:
         }
 
         // if the battery is not charging, checks its status of charge
-        if (first_reading && battery_data.current>0) check_battery_status();
+        if (first_reading && battery_data.current>0.05) check_battery_status();
 
         // print data to screen
         if (screenEnable)

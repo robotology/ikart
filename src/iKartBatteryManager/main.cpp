@@ -94,6 +94,7 @@ struct struct_battery_data
     int raw_voltage;
     int raw_current;
     int raw_charge;
+    int raw_checksum;
     
     double voltage;
     double current;
@@ -312,6 +313,13 @@ public:
         fprintf(stdout,"%s", log_buffer);
     }
 
+    bool verify_checksum(struct_battery_data& b)
+    {
+        if (b.raw_checksum==b.raw_voltage+b.raw_current+b.raw_charge)
+            return true;
+        return false;
+    }
+
     virtual void run()
     {
         //network checks
@@ -346,21 +354,28 @@ public:
                 fprintf(stderr,"%s", serial_buff);   
         
             int pars = 0;
-            pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge);
+            pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge,&battery_data.raw_checksum);
 
-            if (pars == 3)
+            if (pars == 4)
             {
-                time_t rawtime;
-                struct tm * timeinfo;
-                time ( &rawtime );
-                timeinfo = localtime ( &rawtime );
-                battery_data.timestamp=asctime (timeinfo);
-                battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
-                battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
-                                                                                       //when the current is 20A.
-                battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
-                sprintf(log_buffer,"battery status: %+6.1fA   % 6.1fV   charge:% 6.1f%%    time: %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
-                first_reading = true;
+                if (verify_checksum(battery_data))
+                {
+                    time_t rawtime;
+                    struct tm * timeinfo;
+                    time ( &rawtime );
+                    timeinfo = localtime ( &rawtime );
+                    battery_data.timestamp=asctime (timeinfo);
+                    battery_data.voltage = double(battery_data.raw_voltage)/1024 * 66;
+                    battery_data.current = (double(battery_data.raw_current)-512)/128 *20; //+- 60 is the maximum current that the sensor can read. 128+512 is the value of the AD 
+                                                                                           //when the current is 20A.
+                    battery_data.charge =  double(battery_data.raw_charge)/100; // the value coming from the BCS board goes from 0 to 100%
+                    sprintf(log_buffer,"battery status: %+6.1fA   % 6.1fV   charge:% 6.1f%%    time: %s", battery_data.current,battery_data.voltage,battery_data.charge, battery_data.timestamp);
+                    first_reading = true;
+                }
+                else
+                {
+                    fprintf(stderr,"checksum error while reading battery data\n");
+                }
             }
             else
             {

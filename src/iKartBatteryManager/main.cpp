@@ -200,7 +200,7 @@ public:
         shutdownEnable=(rf.check("noShutdown")); //final test: must be enabled putting a !
 
         //check for alternate COM ports
-        ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /ttyUSB0 etc.)").asString();
+        ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /dev/ttyUSB0 etc.)").asString();
 
         //serial port configuration parameters
         Property prop;

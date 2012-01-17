@@ -93,6 +93,10 @@ private:
     double              exec_desired_direction;
     double              exec_pwm_gain;
 
+    //controller parameters
+    double              lin_ang_ratio;
+    bool                both_lin_ang_enabled;
+
     //motor variables
     double              FA;
     double              FB;
@@ -151,6 +155,8 @@ public:
         FC = 0;
 
         filter_enabled = true;
+        lin_ang_ratio = 0.7;
+        both_lin_ang_enabled = true;
     }
 
     void set_ikart_control_type(int type)
@@ -203,6 +209,8 @@ public:
             printf("\n'no_filter' option found. Turning off PWM filter.\n");
             filter_enabled=false;
         }
+
+        lin_ang_ratio = iKartCtrl_options.check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
         // open the control board driver
         printf("\nOpening the motors interface...\n");
@@ -487,11 +495,12 @@ public:
 
         if (ikart_control_type == IKART_CONTROL_OPENLOOP)
         {
-            const double ratio = 0.7; // This value must be < 1 
-            if (exec_linear_speed  >  MAX_VALUE*ratio) exec_linear_speed  = MAX_VALUE*ratio;
-            if (exec_linear_speed  < -MAX_VALUE*ratio) exec_linear_speed  = -MAX_VALUE*ratio;
-            if (exec_angular_speed >  MAX_VALUE*(1-ratio)) exec_angular_speed = MAX_VALUE*(1-ratio);
-            if (exec_angular_speed < -MAX_VALUE*(1-ratio)) exec_angular_speed = -MAX_VALUE*(1-ratio);
+            if (lin_ang_ratio<0.0)  lin_ang_ratio = 0.0;
+            if (lin_ang_ratio>1.0)  lin_ang_ratio = 1.0;
+            if (exec_linear_speed  >  MAX_VALUE*lin_ang_ratio) exec_linear_speed  = MAX_VALUE*lin_ang_ratio;
+            if (exec_linear_speed  < -MAX_VALUE*lin_ang_ratio) exec_linear_speed  = -MAX_VALUE*lin_ang_ratio;
+            if (exec_angular_speed >  MAX_VALUE*(1-lin_ang_ratio)) exec_angular_speed = MAX_VALUE*(1-lin_ang_ratio);
+            if (exec_angular_speed < -MAX_VALUE*(1-lin_ang_ratio)) exec_angular_speed = -MAX_VALUE*(1-lin_ang_ratio);
         }
 
         //wheel contribution calculation

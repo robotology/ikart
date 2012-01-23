@@ -72,10 +72,22 @@ private:
     double              velC_est;
     iCub::ctrl::AWLinEstimator      *encvel_estimator;
 
+    //robot geometry
+    double              geom_r;
+    double              geom_L;
+
+    //thread period
+    double              period;
+
+    yarp::sig::Vector enc;
+    yarp::sig::Vector encv;
+
+public:
     //estimated cartesian velocity
     double              vel_x;
     double              vel_y;
     double              vel_lin;
+    double              vel_heading;
     double              vel_theta;
 
     //estimated odometer 
@@ -86,16 +98,6 @@ private:
     double              odom_x;
     double              odom_y;
     double              odom_theta;
-
-    //robot geometry
-    double              geom_r;
-    double              geom_L;
-
-    //thread period
-    double              period;
-
-    yarp::sig::Vector enc;
-    yarp::sig::Vector encv;
 
 private:
     ResourceFinder                  &rf;

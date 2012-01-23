@@ -65,7 +65,7 @@ class LaserThread: public yarp::os::RateThread
 
     virtual bool threadInit()
     {
-        ConstString laser_filename = iKartCtrl_options.find("laser").asString();
+        ConstString laser_filename = iKartCtrl_options.findGroup("GENERAL").find("laser").asString();
         ConstString laser_config_filename =rf.findFile(laser_filename);        
         if (laser_config_filename=="") 
         {

@@ -43,18 +43,20 @@ using namespace yarp::dev;
 #define MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
 #define MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
 
+enum
+{
+    IKART_CONTROL_NONE = 0,
+    IKART_CONTROL_OPENLOOP_NO_PID = 1,
+    IKART_CONTROL_OPENLOOP_PID = 2,
+    IKART_CONTROL_SPEED_NO_PID = 3,
+    IKART_CONTROL_SPEED_PID = 4
+};
+
 class MotorControl
 {
 private:
     Property iKartCtrl_options;
 
-    enum
-    {
-        IKART_CONTROL_NONE = 0,
-        IKART_CONTROL_OPENLOOP = 1,
-        IKART_CONTROL_SPEED = 2
-    };
- 
     double              thread_period;
 
     int                 board_control_modes[3];
@@ -86,7 +88,6 @@ private:
     double              aux_pwm_gain;
 
     //controller parameters
-    double              lin_ang_ratio;
     bool                both_lin_ang_enabled;
 
     //motor variables

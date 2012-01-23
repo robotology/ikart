@@ -27,7 +27,8 @@ void MotorControl::set_ikart_control_type(int type)
 {
     ikart_control_type = type;
 
-    if (ikart_control_type == IKART_CONTROL_OPENLOOP)
+    if (ikart_control_type == IKART_CONTROL_OPENLOOP_PID || 
+        ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID)
     {
         fprintf(stdout,"iKart in openloop control mode\n");
         icmd->setOpenLoopMode(0);
@@ -37,12 +38,16 @@ void MotorControl::set_ikart_control_type(int type)
         iopl->setOutput(1,0);
         iopl->setOutput(2,0);
     }
-    else if (ikart_control_type == IKART_CONTROL_SPEED)
+    else if (ikart_control_type == IKART_CONTROL_SPEED_PID || 
+             ikart_control_type == IKART_CONTROL_SPEED_NO_PID)
     {
         fprintf(stdout,"iKart in speed control mode\n");
         icmd->setVelocityMode(0);
         icmd->setVelocityMode(1);
         icmd->setVelocityMode(2);
+        ivel->velocityMove(0,0);
+        ivel->velocityMove(1,0);
+        ivel->velocityMove(2,0);
     }
     else
     {
@@ -97,7 +102,7 @@ bool MotorControl::turn_on_speed_control()
     iamp->enableAmp(0);
     iamp->enableAmp(1);
     iamp->enableAmp(2);
-    set_ikart_control_type(IKART_CONTROL_SPEED);
+    set_ikart_control_type(IKART_CONTROL_SPEED_NO_PID);
     int c0(0),c1(0),c2(0);
     yarp::os::Time::delay(0.05);
     icmd->getControlMode(0,&c0);
@@ -164,10 +169,12 @@ MotorControl::~MotorControl()
 
 bool MotorControl::open()
 {
-    ConstString control_type = iKartCtrl_options.check("control_mode",Value("none"),"type of control for the wheels").asString();
+    ConstString control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
     if      (control_type == "none")     ikart_control_type = IKART_CONTROL_NONE;
-    else if (control_type == "speed")    ikart_control_type = IKART_CONTROL_SPEED;
-    else if (control_type == "openloop") ikart_control_type = IKART_CONTROL_OPENLOOP;
+    else if (control_type == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
+    else if (control_type == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
+    else if (control_type == "speed_pid")    ikart_control_type = IKART_CONTROL_SPEED_PID;
+    else if (control_type == "openloop_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
     else
     {
         fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
@@ -179,8 +186,6 @@ bool MotorControl::open()
         printf("\n'no_filter' option found. Turning off PWM filter.\n");
         filter_enabled=false;
     }
-
-    lin_ang_ratio = iKartCtrl_options.check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
     // open the interfaces for the control boards
     bool ok = true;
@@ -208,7 +213,7 @@ bool MotorControl::open()
         iamp->enableAmp(1);
         iamp->enableAmp(2);
     }
-    set_ikart_control_type(IKART_CONTROL_SPEED);
+    set_ikart_control_type(ikart_control_type);
 
     return true;
 }
@@ -235,8 +240,22 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     FB = 0;
     FC = 0;
 
+    joy_linear_speed = 0;
+    joy_angular_speed = 0;
+    joy_desired_direction = 0;
+    joy_pwm_gain = 0;
+
+    cmd_linear_speed = 0;
+    cmd_angular_speed = 0;
+    cmd_desired_direction = 0;
+    cmd_pwm_gain = 0;
+
+    aux_linear_speed = 0;
+    aux_angular_speed = 0;
+    aux_desired_direction = 0;
+    aux_pwm_gain = 0;
+
     filter_enabled = true;
-    lin_ang_ratio = 0.7;
     both_lin_ang_enabled = true;
     thread_period = _period;
     localName = iKartCtrl_options.find("local").asString();
@@ -411,13 +430,15 @@ void MotorControl::execute(double appl_linear_speed, double appl_desired_directi
     }
 
     //Apply the commands
-    if (ikart_control_type == IKART_CONTROL_OPENLOOP)
+    if (ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID ||
+        ikart_control_type == IKART_CONTROL_OPENLOOP_PID)
     {
         iopl->setOutput(0,-FA);
         iopl->setOutput(1,-FB);
         iopl->setOutput(2,-FC);
     }
-    else if	(ikart_control_type == IKART_CONTROL_SPEED)
+    else if	(ikart_control_type == IKART_CONTROL_SPEED_NO_PID ||
+             ikart_control_type == IKART_CONTROL_SPEED_PID)
     {
 //#define CONTROL_DEBUG
 #ifdef  CONTROL_DEBUG

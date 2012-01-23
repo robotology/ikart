@@ -158,7 +158,7 @@ public:
 
         // the laser thread
         bool laser_enabled=true;
-        if (iKartCtrl_options.check("laser")==false)
+        if (iKartCtrl_options.findGroup("GENERAL").check("laser")==false)
         {
             printf("\nLaser configuration not specified. Turning off laser.\n");
             laser_enabled=false;

@@ -51,13 +51,6 @@ class ControlThread : public yarp::os::RateThread
 private:
     Property iKartCtrl_options;
 
-    enum
-    {
-        IKART_CONTROL_NONE = 0,
-        IKART_CONTROL_OPENLOOP = 1,
-        IKART_CONTROL_SPEED = 2
-    };
- 
     double              thread_period;
 
     int                 thread_timeout_counter;
@@ -69,16 +62,12 @@ private:
     double              exec_pwm_gain;
 
     //ikart pids
-    bool                        pid_control_enabled;
     iCub::ctrl::parallelPID*    linear_speed_pid;
     iCub::ctrl::parallelPID*    angular_speed_pid;
-    iCub::ctrl::parallelPID*    direction_pid;
-    double                      pidout_linear_speed;
-    double                      pidout_angular_speed;
-    double                      pidout_direction;
-    double                      feedback_linear_speed;
-    double                      feedback_angular_speed;
-    double                      feedback_desired_direction;
+    iCub::ctrl::parallelPID*    direction_speed_pid;
+    iCub::ctrl::parallelPID*    linear_ol_pid;
+    iCub::ctrl::parallelPID*    angular_ol_pid;
+    iCub::ctrl::parallelPID*    direction_ol_pid;
 
     //controller parameters
     double              lin_ang_ratio;
@@ -121,15 +110,18 @@ public:
         control_board_driver       = 0;
         thread_timeout_counter     = 0;
 
-        pid_control_enabled = false;
         filter_enabled = true;
-        lin_ang_ratio = 0.7;
+        lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
+
         both_lin_ang_enabled = true;
         thread_period = _period;
 
         linear_speed_pid=0;
         angular_speed_pid=0;
-        direction_pid=0;
+        direction_speed_pid=0;
+        linear_ol_pid=0;
+        angular_ol_pid=0;
+        direction_ol_pid=0;
         remoteName = iKartCtrl_options.find("remote").asString();
         localName = iKartCtrl_options.find("local").asString();
     }
@@ -185,8 +177,23 @@ public:
         odometry_handler->open();
         motor_handler->open();
 
+        printf ("%s",iKartCtrl_options.toString().c_str());
         //create the pid controllers
-        pid_control_enabled =  (bool)(iKartCtrl_options.check("pid_control_enabled",Value(0),"enable the high level PID control on linear speed, angular speed and direction.").asInt());
+        if (!iKartCtrl_options.check("HEADING_SPEED_PID"))
+        {
+            fprintf(stderr,"\nError reading from .ini file, section PID\n");
+            return false;
+        }
+        if (!iKartCtrl_options.check("LINEAR_SPEED_PID"))
+        {
+            fprintf(stderr,"\nError reading from .ini file, section PID\n");
+            return false;
+        }
+        if (!iKartCtrl_options.check("ANGULAR_SPEED_PID"))
+        {
+            fprintf(stderr,"\nError reading from .ini file, section PID\n");
+            return false;
+        }
         yarp::sig::Vector kp[3],ki[3],kd[3];
         yarp::sig::Vector wp[3],wi[3],wd[3];
         yarp::sig::Vector N[3];
@@ -195,12 +202,39 @@ public:
         for (int i=0; i<3; i++)
         {
             kp[i].resize(1); ki[i].resize(1); kd[i].resize(1);
+            kp[i]=ki[i]=kd[i]=0.0;
             wp[i].resize(1); wi[i].resize(1); wd[i].resize(1);
+            wp[i]=wi[i]=wd[i]=1.0;
             N[i].resize(1); Tt[i].resize(1); sat[i].resize(1,2);
+            N[i]=10;
+            Tt[i]=1;
         }
-        linear_speed_pid  = new iCub::ctrl::parallelPID(thread_period,kp[0],ki[0],kd[0],wp[0],wi[0],wd[0],N[0],Tt[0],sat[0]);
-        angular_speed_pid = new iCub::ctrl::parallelPID(thread_period,kp[1],ki[1],kd[1],wp[1],wi[1],wd[1],N[1],Tt[1],sat[1]);
-        direction_pid     = new iCub::ctrl::parallelPID(thread_period,kp[2],ki[2],kd[2],wp[2],wi[2],wd[2],N[2],Tt[2],sat[2]);
+
+        kp[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[0](0,0)=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("min",Value(0),"min").asDouble();
+        sat[0](0,1)=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("max",Value(0),"max").asDouble();
+
+        kp[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[1](0,0)=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("min",Value(0),"min").asDouble();
+        sat[1](0,1)=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("max",Value(0),"max").asDouble();
+
+        kp[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[2](0,0)=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("min",Value(0),"min").asDouble();
+        sat[2](0,1)=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("max",Value(0),"max").asDouble();
+
+        linear_speed_pid    = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[0],ki[0],kd[0],wp[0],wi[0],wd[0],N[0],Tt[0],sat[0]);
+        angular_speed_pid   = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[1],ki[1],kd[1],wp[1],wi[1],wd[1],N[1],Tt[1],sat[1]);
+        direction_speed_pid = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[2],ki[2],kd[2],wp[2],wi[2],wd[2],N[2],Tt[2],sat[2]);
+
+        linear_ol_pid    = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[0],ki[0],kd[0],wp[0],wi[0],wd[0],N[0],Tt[0],sat[0]);
+        angular_ol_pid   = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[1],ki[1],kd[1],wp[1],wi[1],wd[1],N[1],Tt[1],sat[1]);
+        direction_ol_pid = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[2],ki[2],kd[2],wp[2],wi[2],wd[2],N[2],Tt[2],sat[2]);
 
         //debug ports
         if (1)
@@ -261,77 +295,97 @@ public:
         double              linear_speed=0;
         double              angular_speed=0;
         double              desired_direction=0;
+
         double              pwm_gain=0;
         this->motor_handler->read_inputs(&linear_speed, &angular_speed, &desired_direction, &pwm_gain);
 
-        //saturators
+        //Here we suppouse that values are already in the format 0-100%
         double MAX_VALUE = 0;
-        if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP)
+        if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP_NO_PID)
         {
             MAX_VALUE = 1333; // Maximum joint PWM
-        }
-        else if (motor_handler->get_ikart_control_type() == IKART_CONTROL_SPEED)
-        {
-            MAX_VALUE = 200; // Maximum joint speed (deg/s)
-        }
-
-        //Here we suppouse that values are already in the format 0-100%
-        exec_linear_speed = linear_speed / 100.0 * MAX_VALUE;
-        exec_angular_speed = angular_speed / 100.0 * MAX_VALUE;
-        exec_pwm_gain = pwm_gain / 100.0 * 1.0;
-        exec_desired_direction = desired_direction;
-
-        if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP)
-        {
+            exec_linear_speed  = linear_speed  / 100.0 * 1300.0;
+            exec_angular_speed = angular_speed / 100.0 * 1300.0;
+            exec_pwm_gain = pwm_gain / 100.0 * 1.0;
+            exec_desired_direction = desired_direction;
             if (lin_ang_ratio<0.0)  lin_ang_ratio = 0.0;
             if (lin_ang_ratio>1.0)  lin_ang_ratio = 1.0;
             if (exec_linear_speed  >  MAX_VALUE*lin_ang_ratio) exec_linear_speed  = MAX_VALUE*lin_ang_ratio;
             if (exec_linear_speed  < -MAX_VALUE*lin_ang_ratio) exec_linear_speed  = -MAX_VALUE*lin_ang_ratio;
             if (exec_angular_speed >  MAX_VALUE*(1-lin_ang_ratio)) exec_angular_speed = MAX_VALUE*(1-lin_ang_ratio);
             if (exec_angular_speed < -MAX_VALUE*(1-lin_ang_ratio)) exec_angular_speed = -MAX_VALUE*(1-lin_ang_ratio);
+            double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
+            double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
+            double pidout_direction     = exec_desired_direction;
+            this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
         }
-
-        double pidout_linear_speed = 0;
-        double pidout_angular_speed = 0;
-        double pidout_direction = 0;
-
-        if (pid_control_enabled==true)
+        else if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP_PID)
         {
-            //feedback_linear_speed = 
+            exec_pwm_gain = pwm_gain / 100.0 * 1.0;
+            exec_linear_speed  = linear_speed  * exec_pwm_gain;
+            exec_angular_speed = angular_speed * exec_pwm_gain;
+            exec_desired_direction = desired_direction;
+
+            double feedback_linear_speed = this->odometry_handler->vel_lin;
+            double feedback_angular_speed = this->odometry_handler->vel_theta;
+            double feedback_desired_direction = this->odometry_handler->vel_heading;
             yarp::sig::Vector tmp;
-            tmp = linear_speed_pid->compute(yarp::sig::Vector(1,&exec_linear_speed),yarp::sig::Vector(1,&feedback_linear_speed));
-            pidout_linear_speed  = exec_pwm_gain * tmp[0];
-            tmp = angular_speed_pid->compute(yarp::sig::Vector(1,&exec_angular_speed),yarp::sig::Vector(1,&feedback_angular_speed));
-            pidout_angular_speed = exec_pwm_gain * tmp[0];
-            tmp = direction_pid->compute(yarp::sig::Vector(1,&exec_desired_direction),yarp::sig::Vector(1,&feedback_desired_direction));
-            pidout_direction     = tmp[0];
-            Bottle &b1=port_debug_linear.prepare();
-            b1.clear();
-            b1.addDouble(exec_linear_speed);
-            b1.addDouble(feedback_linear_speed);
-            //b1.addDouble(exec_linear_speed-feedback_linear_speed);
-            port_debug_linear.write();
-            Bottle &b2=port_debug_angular.prepare();
-            b2.clear();
-            b2.addDouble(exec_angular_speed);
-            b2.addDouble(feedback_angular_speed);
-            b2.addDouble(exec_angular_speed-feedback_angular_speed);
-            port_debug_angular.write();
-            Bottle &b3=port_debug_direction.prepare();
-            b3.clear();
-            b3.addDouble(exec_desired_direction);
-            b3.addDouble(feedback_desired_direction);
-            b3.addDouble(exec_desired_direction-feedback_desired_direction);
-            port_debug_direction.write();
+            tmp = linear_ol_pid->compute(yarp::sig::Vector(1,&exec_linear_speed),yarp::sig::Vector(1,&feedback_linear_speed));
+            double pidout_linear_speed  = exec_pwm_gain * tmp[0];
+            tmp = angular_ol_pid->compute(yarp::sig::Vector(1,&exec_angular_speed),yarp::sig::Vector(1,&feedback_angular_speed));
+            double pidout_angular_speed = exec_pwm_gain * tmp[0];
+            tmp = direction_ol_pid->compute(yarp::sig::Vector(1,&exec_desired_direction),yarp::sig::Vector(1,&feedback_desired_direction));
+            double pidout_direction     = tmp[0];
+                pidout_linear_speed=0;
+                //pidout_angular_speed=0;
+                pidout_direction=0;
+            this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
+            
+            if (1) // debug block
+            {
+                Bottle &b1=port_debug_linear.prepare();
+                b1.clear();
+                //b1.addDouble(exec_linear_speed);
+                //b1.addDouble(feedback_linear_speed);
+                b1.addDouble(exec_linear_speed-feedback_linear_speed);
+                port_debug_linear.write();
+                Bottle &b2=port_debug_angular.prepare();
+                b2.clear();
+                //b2.addDouble(exec_angular_speed);
+                //b2.addDouble(feedback_angular_speed);
+                b2.addDouble(exec_angular_speed-feedback_angular_speed);
+                port_debug_angular.write();
+                Bottle &b3=port_debug_direction.prepare();
+                b3.clear();
+                //b3.addDouble(exec_desired_direction);
+                //b3.addDouble(feedback_desired_direction);
+                b3.addDouble(exec_desired_direction-feedback_desired_direction);
+                port_debug_direction.write();
+            }
+        }
+        else if (motor_handler->get_ikart_control_type() == IKART_CONTROL_SPEED_NO_PID)
+        {
+            MAX_VALUE = 200; // Maximum joint speed (deg/s)
+            //exec_linear_speed = linear_speed / 100.0 * 0.1/*MAX_VALUE*/;  //0.1 m/s
+            //exec_angular_speed = angular_speed / 100.0 * 20/*MAX_VALUE*/; //20 deg/s
+            exec_linear_speed = linear_speed / 100.0 * 200.0/*MAX_VALUE*/;  //0.1 m/s
+            exec_angular_speed = angular_speed / 100.0 * 200.0/*MAX_VALUE*/; //20 deg/s
+            exec_pwm_gain = pwm_gain / 100.0 * 1.0;
+            exec_desired_direction = desired_direction;
+            double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
+            double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
+            double pidout_direction     = exec_desired_direction;
+            this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
         }
         else
         {
-            pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
-            pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
-            pidout_direction     = exec_desired_direction;
+            printf ("ERROR! unknown control mode \n");
+            exec_linear_speed = 0;
+            exec_angular_speed = 0;
+            exec_pwm_gain = 0;
+            exec_desired_direction = 0;
+            this->motor_handler->execute(0,0,0);
         }
-
-        this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
 
     virtual void threadRelease()
@@ -339,9 +393,12 @@ public:
         if (odometry_handler)  {delete odometry_handler; odometry_handler=0;}
         if (motor_handler)     {delete motor_handler; motor_handler=0;}
 
-        if (linear_speed_pid)  {delete linear_speed_pid;  linear_speed_pid=0;}
-        if (angular_speed_pid) {delete angular_speed_pid; angular_speed_pid=0;}
-        if (direction_pid)     {delete direction_pid;     direction_pid=0;}
+        if (linear_speed_pid)    {delete linear_speed_pid;  linear_speed_pid=0;}
+        if (angular_speed_pid)   {delete angular_speed_pid; angular_speed_pid=0;}
+        if (direction_speed_pid) {delete direction_speed_pid; direction_speed_pid=0;}
+        if (linear_ol_pid)    {delete linear_ol_pid;  linear_ol_pid=0;}
+        if (angular_ol_pid)   {delete angular_ol_pid; angular_ol_pid=0;}
+        if (direction_ol_pid) {delete direction_ol_pid; direction_ol_pid=0;}
 
         if (1)
         {

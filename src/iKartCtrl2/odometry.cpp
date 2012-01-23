@@ -64,6 +64,7 @@ Odometry::Odometry(unsigned int _period, ResourceFinder &_rf, Property options, 
     vel_y=0;
     vel_lin=0;
     vel_theta=0;
+    vel_heading=0;
     traveled_distance=0;
     traveled_angle=0;
     geom_r = 62.5/1000.0;     //m
@@ -166,6 +167,8 @@ void Odometry::compute()
     vel_x     = cart_vels[1]*geom_r;
     vel_y     = cart_vels[0]*geom_r;
     vel_lin   = vel_x*vel_x + vel_y*vel_y;
+    if (vel_lin<0.001) vel_heading= 0;
+    else  vel_heading = atan2(vel_x,vel_y)*57.2957795;
     vel_theta = cart_vels[2];
 
     /*double co3p = cos (M_PI/3+odom_theta);

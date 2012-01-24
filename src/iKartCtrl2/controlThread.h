@@ -172,8 +172,8 @@ public:
         }
         while (true);
 
-        odometry_handler = new Odometry (thread_period,rf,iKartCtrl_options,control_board_driver);
-        motor_handler = new MotorControl(thread_period,rf,iKartCtrl_options,control_board_driver);
+        odometry_handler = new Odometry ((int)(thread_period),rf,iKartCtrl_options,control_board_driver);
+        motor_handler = new MotorControl((int)(thread_period),rf,iKartCtrl_options,control_board_driver);
         odometry_handler->open();
         motor_handler->open();
 
@@ -256,6 +256,7 @@ public:
     }
 
     virtual void run();
+    void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
 
     virtual void threadRelease()
     {

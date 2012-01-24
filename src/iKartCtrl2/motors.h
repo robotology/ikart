@@ -120,10 +120,6 @@ public:
     int get_ikart_control_type();
 
     bool   open();
-    double lp_filter_1Hz(double input, int i);
-    double lp_filter_0_5Hz(double input, int i);
-    double ratelim_filter_0(double input, int i);
-
     void read_inputs(double *linear_speed,double *angular_speed,double *desired_direction, double *pwm_gain);
     void execute(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
     void close();

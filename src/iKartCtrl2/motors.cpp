@@ -17,6 +17,7 @@
 */
 
 #include "motors.h"
+#include "filters.h"
 
 int MotorControl::get_ikart_control_type()
 {
@@ -53,39 +54,6 @@ void MotorControl::set_ikart_control_type(int type)
     {
         fprintf(stdout,"invalid iKart control mode\n");
     }
-}
-
-double MotorControl::lp_filter_1Hz(double input, int i)
-{
-    //This is a butterworth low pass first order, with a cut off freqency of 1Hz
-    //It must be used with a sampling frequency of 50Hz (20ms)
-    static double xv[2][10], yv[2][10];
-    xv[0][i] = xv[1][i]; 
-    xv[1][i] = input /1.689454484e+01;
-    yv[0][i] = yv[1][i]; 
-    yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.8816185924 * yv[0][i]);
-    return yv[1][i];
-}
-double MotorControl::lp_filter_0_5Hz(double input, int i)
-{
-    //This is a butterworth low pass first order, with a cut off freqency of 0.5Hz
-    //It must be used with a sampling frequency of 50Hz (20ms)
-    static double xv[2][10], yv[2][10];
-    xv[0][i] = xv[1][i]; 
-    xv[1][i] = input /3.282051595e+01;
-    yv[0][i] = yv[1][i]; 
-    yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.9390625058 * yv[0][i]);
-    return yv[1][i];
-}
-
-double MotorControl::ratelim_filter_0(double input, int i)
-{
-    //This is a rate limiter filter. 
-    static double prev[3];
-    if      (input>prev[i]+10) prev[i]=prev[i]+10;
-    else if (input<prev[i]-10) prev[i]=prev[i]-10;
-    else     prev[i]=input;
-    return prev[i];
 }
 
 bool MotorControl::turn_off_control()

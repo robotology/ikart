@@ -1,0 +1,12 @@
+<package>
+  <description brief="iKartRosBridge">
+     Add description here...
+  </description>
+  <author>Marco Randazzo</author>
+  <license>GPL</license>
+  <review status="unreviewed" notes=""/>
+  <depend package="roscpp"/>
+  <depend package="sensor_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="tf"/>
+</package>

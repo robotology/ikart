@@ -88,6 +88,7 @@ protected:
     MotorControl*             motor_handler;
         
     bool   filter_enabled;
+    bool   lateral_movement_enabled;
 
     string remoteName;
     string localName;
@@ -111,6 +112,7 @@ public:
         thread_timeout_counter     = 0;
 
         filter_enabled = true;
+        lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
         both_lin_ang_enabled = true;
@@ -256,6 +258,7 @@ public:
     }
 
     virtual void run();
+    void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
 
     virtual void threadRelease()

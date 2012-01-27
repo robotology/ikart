@@ -29,6 +29,25 @@ void ControlThread::apply_ratio_limiter (double max, double& linear_speed, doubl
     if (angular_speed < -max*(1-lin_ang_ratio)) angular_speed = -max*(1-lin_ang_ratio);
 }
 
+void ControlThread::set_pid (string id, double kp, double ki, double kd)
+{
+    yarp::os::Bottle old_options;
+    this->angular_speed_pid->getOptions(old_options);
+    printf("Current configuration: %s\n",old_options.toString().c_str());
+    
+    // (Kp (10.0)) (Ki (0.0)) (Kf (0.0)) ... (satLim(-1000.0 1000.0)) (Ts 0.02)
+    yarp::os::Bottle options;
+    options.addString("kp");
+    options.addDouble(kp);
+    options.addString("ki");
+    options.addDouble(ki);
+    options.addString("kd");
+    options.addDouble(kd);
+    this->angular_speed_pid->setOptions(options);
+    yarp::sig::Vector tmp; tmp.resize(1); tmp.zero();
+    this->angular_speed_pid->reset(tmp);
+}
+
 void ControlThread::run()
 {
     this->odometry_handler->compute();
@@ -39,6 +58,12 @@ void ControlThread::run()
 
     double              pwm_gain=0;
     this->motor_handler->read_inputs(&linear_speed, &angular_speed, &desired_direction, &pwm_gain);
+    if (!lateral_movement_enabled) 
+    {
+        if (desired_direction>-90 && desired_direction <90) desired_direction = 0;
+        else if (desired_direction <= -90) desired_direction = 180;
+        else if (desired_direction >= +90) desired_direction = 180;
+    }
 
     //Here we suppouse that values are already in the format 0-100%
     double MAX_VALUE = 0;

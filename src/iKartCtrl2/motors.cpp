@@ -224,7 +224,6 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     aux_pwm_gain = 0;
 
     filter_enabled = true;
-    both_lin_ang_enabled = true;
     thread_period = _period;
     localName = iKartCtrl_options.find("local").asString();
 }

@@ -230,6 +230,20 @@ public:
             }
             return true;
         }
+        else if (command.get(0).asString()=="change_pid")
+        {
+            if (control_thr)
+            {
+                string identif = command.get(1).asString();
+                double kp = command.get(2).asDouble();
+                double ki = command.get(3).asDouble();
+                double kd = command.get(4).asDouble();
+                control_thr->set_pid(identif,kp,ki,kd);
+                reply.addString("New pid parameters set.");
+                fprintf(stderr,"New pid parameters set.\n");
+            }
+            return true;
+        }
         else if (command.get(0).asString()=="reset_odometry")
         {
             if (control_thr)

@@ -87,9 +87,6 @@ private:
     double              aux_desired_direction;
     double              aux_pwm_gain;
 
-    //controller parameters
-    bool                both_lin_ang_enabled;
-
     //motor variables
     double              FA;
     double              FB;

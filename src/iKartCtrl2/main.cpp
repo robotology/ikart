@@ -243,7 +243,7 @@ public:
         {
             if (control_thr)
             {
-                string identif = command.get(1).asString();
+                string identif = command.get(1).asString().c_str();
                 double kp = command.get(2).asDouble();
                 double ki = command.get(3).asDouble();
                 double kd = command.get(4).asDouble();

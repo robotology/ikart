@@ -206,7 +206,16 @@ public:
     bool respond(const Bottle& command, Bottle& reply) 
     {
         reply.clear(); 
-        if (command.get(0).asString()=="run")
+        if (command.get(0).asString()=="help")
+        {
+            reply.addString("Available commands are:");
+            reply.addString("run");
+            reply.addString("idle");
+            reply.addString("reset_odometry");
+            reply.addString("change_pid <identif> <kp> <ki> <kd>");
+            return true;
+        }
+        else if (command.get(0).asString()=="run")
         {
             if (control_thr)
             {

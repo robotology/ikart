@@ -37,12 +37,14 @@ void ControlThread::set_pid (string id, double kp, double ki, double kd)
     
     // (Kp (10.0)) (Ki (0.0)) (Kf (0.0)) ... (satLim(-1000.0 1000.0)) (Ts 0.02)
     yarp::os::Bottle options;
-    options.addString("kp");
-    options.addDouble(kp);
-    options.addString("ki");
-    options.addDouble(ki);
-    options.addString("kd");
-    options.addDouble(kd);
+    yarp::os::Bottle& bkp = options.addList();
+    yarp::os::Bottle& bki = options.addList();
+    yarp::os::Bottle& bkd = options.addList();
+    bkp.addString("Kp");    yarp::os::Bottle& bkp2 = bkp.addList();    bkp2.addDouble(kp);
+    bki.addString("Ki");    yarp::os::Bottle& bki2 = bki.addList();    bki2.addDouble(ki);
+    bkd.addString("Kd");    yarp::os::Bottle& bkd2 = bkd.addList();    bkd2.addDouble(kd);
+    printf("new configuration: %s\n",options.toString().c_str());
+
     this->angular_speed_pid->setOptions(options);
     yarp::sig::Vector tmp; tmp.resize(1); tmp.zero();
     this->angular_speed_pid->reset(tmp);

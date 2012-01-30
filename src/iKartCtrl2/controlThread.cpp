@@ -33,8 +33,8 @@ void ControlThread::apply_pre_filter (double& linear_speed, double& angular_spee
 {
     if (pre_filter_enabled)
     {
-        angular_speed  = ikart_filters::lp_filter_4Hz(angular_speed,7);
-        linear_speed   = ikart_filters::lp_filter_4Hz(linear_speed,8);
+        angular_speed  = ikart_filters::lp_filter_8Hz(angular_speed,7);
+        linear_speed   = ikart_filters::lp_filter_8Hz(linear_speed,8);
     }
 }
 

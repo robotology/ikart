@@ -388,9 +388,9 @@ void MotorControl::execute(double appl_linear_speed, double appl_desired_directi
     //Use a low pass filter to obtain smooth control
     if (filter_enabled)
     {
-        //FA  = lp_filter_0_5Hz(FA,0);
-        //FB  = lp_filter_0_5Hz(FB,1);
-        //FC  = lp_filter_0_5Hz(FC,2);
+        FA  = ikart_filters::lp_filter_4Hz(FA,0);
+        FB  = ikart_filters::lp_filter_4Hz(FB,1);
+        FC  = ikart_filters::lp_filter_4Hz(FC,2);
         //FA  = ratelim_filter_0(FA,0);
         //FB  = ratelim_filter_0(FB,1);
         //FC  = ratelim_filter_0(FC,2);

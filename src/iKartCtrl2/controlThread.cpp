@@ -29,6 +29,15 @@ void ControlThread::apply_ratio_limiter (double max, double& linear_speed, doubl
     if (angular_speed < -max*(1-lin_ang_ratio)) angular_speed = -max*(1-lin_ang_ratio);
 }
 
+void ControlThread::apply_pre_filter (double& linear_speed, double& angular_speed)
+{
+    if (pre_filter_enabled)
+    {
+        angular_speed  = ikart_filters::lp_filter_4Hz(angular_speed,7);
+        linear_speed   = ikart_filters::lp_filter_4Hz(linear_speed,8);
+    }
+}
+
 void ControlThread::set_pid (string id, double kp, double ki, double kd)
 {
     yarp::os::Bottle old_options;
@@ -77,6 +86,7 @@ void ControlThread::run()
         exec_pwm_gain = pwm_gain / 100.0 * 1.0;
         exec_desired_direction = desired_direction;
         apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
+        apply_pre_filter(exec_linear_speed, exec_angular_speed);
         double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
         double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
         double pidout_direction     = exec_desired_direction;
@@ -135,6 +145,7 @@ void ControlThread::run()
         exec_pwm_gain = pwm_gain / 100.0 * 1.0;
         exec_desired_direction = desired_direction;
         apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
+        apply_pre_filter(exec_linear_speed, exec_angular_speed);
         double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
         double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
         double pidout_direction     = exec_desired_direction;

@@ -72,6 +72,7 @@ private:
     //controller parameters
     double              lin_ang_ratio;
     bool                both_lin_ang_enabled;
+    bool                pre_filter_enabled;
 
 protected:
     ResourceFinder            &rf;
@@ -112,6 +113,7 @@ public:
         thread_timeout_counter     = 0;
 
         filter_enabled = true;
+        pre_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("pre_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
         lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
@@ -260,6 +262,7 @@ public:
     virtual void run();
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
+    void apply_pre_filter (double& linear_speed, double& angular_speed);
 
     virtual void threadRelease()
     {

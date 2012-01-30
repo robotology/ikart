@@ -18,6 +18,30 @@
 
 #include "filters.h"
 
+double ikart_filters::lp_filter_4Hz(double input, int i)
+{
+    //This is a butterworth low pass first order, with a cut off freqency of 2Hz
+    //It must be used with a sampling frequency of 50Hz (20ms)
+    static double xv[2][10], yv[2][10];
+    xv[0][i] = xv[1][i]; 
+    xv[1][i] = input /4.894742855e+00;
+    yv[0][i] = yv[1][i]; 
+    yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.5913983514  * yv[0][i]);
+    return yv[1][i];
+}
+
+double ikart_filters::lp_filter_2Hz(double input, int i)
+{
+    //This is a butterworth low pass first order, with a cut off freqency of 2Hz
+    //It must be used with a sampling frequency of 50Hz (20ms)
+    static double xv[2][10], yv[2][10];
+    xv[0][i] = xv[1][i]; 
+    xv[1][i] = input /8.915815088e+00;
+    yv[0][i] = yv[1][i]; 
+    yv[1][i] =   (xv[0][i] + xv[1][i]) + (  0.7756795110 * yv[0][i]);
+    return yv[1][i];
+}
+
 double ikart_filters::lp_filter_1Hz(double input, int i)
 {
     //This is a butterworth low pass first order, with a cut off freqency of 1Hz

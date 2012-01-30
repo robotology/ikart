@@ -23,6 +23,8 @@
 
 namespace ikart_filters
 {
+    double lp_filter_4Hz(double input, int i);
+    double lp_filter_2Hz(double input, int i);
     double lp_filter_1Hz(double input, int i);
     double lp_filter_0_5Hz(double input, int i);
     double ratelim_filter_0(double input, int i);

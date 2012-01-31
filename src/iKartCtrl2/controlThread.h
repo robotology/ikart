@@ -73,6 +73,7 @@ private:
     double              lin_ang_ratio;
     bool                both_lin_ang_enabled;
     bool                pre_filter_enabled;
+    bool                lateral_movement_enabled;
 
 protected:
     ResourceFinder            &rf;
@@ -87,9 +88,6 @@ protected:
 
     Odometry*                 odometry_handler;
     MotorControl*             motor_handler;
-        
-    bool   filter_enabled;
-    bool   lateral_movement_enabled;
 
     string remoteName;
     string localName;
@@ -112,7 +110,6 @@ public:
         control_board_driver       = 0;
         thread_timeout_counter     = 0;
 
-        filter_enabled = true;
         pre_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("pre_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
         lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();

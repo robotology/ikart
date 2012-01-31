@@ -80,9 +80,9 @@ void ControlThread::run()
     double MAX_VALUE = 0;
     if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP_NO_PID)
     {
-        MAX_VALUE = 1333; // Maximum joint PWM
-        exec_linear_speed  = linear_speed  / 100.0 * 1300.0;
-        exec_angular_speed = angular_speed / 100.0 * 1300.0;
+        MAX_VALUE = 1250; // Maximum joint PWM
+        exec_linear_speed  = linear_speed  / 100.0 * MAX_VALUE;
+        exec_angular_speed = angular_speed / 100.0 * MAX_VALUE;
         exec_pwm_gain = pwm_gain / 100.0 * 1.0;
         exec_desired_direction = desired_direction;
         apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);

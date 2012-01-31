@@ -149,10 +149,10 @@ bool MotorControl::open()
         return false;
     }
 
-    if (rf.check("no_filter"))
+    if (rf.check("no_motors_filter"))
     {
         printf("\n'no_filter' option found. Turning off PWM filter.\n");
-        filter_enabled=false;
+        motors_filter_enabled=false;
     }
 
     // open the interfaces for the control boards
@@ -223,7 +223,7 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     aux_desired_direction = 0;
     aux_pwm_gain = 0;
 
-    filter_enabled = true;
+    motors_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("motors_filter_enabled",Value(1),"1= motors low pass filter enabled, 0 = disabled").asInt()>0);
     thread_period = _period;
     localName = iKartCtrl_options.find("local").asString();
 }
@@ -386,7 +386,7 @@ void MotorControl::execute(double appl_linear_speed, double appl_desired_directi
     FC = appl_linear_speed * cos ((270.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
         
     //Use a low pass filter to obtain smooth control
-    if (filter_enabled)
+    if (motors_filter_enabled)
     {
         FA  = ikart_filters::lp_filter_4Hz(FA,0);
         FB  = ikart_filters::lp_filter_4Hz(FB,1);

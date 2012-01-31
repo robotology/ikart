@@ -99,8 +99,8 @@ protected:
     BufferedPort<Bottle>      port_auxiliary_control;
     BufferedPort<Bottle>      port_joystick_control;
 
-    bool   filter_enabled;
-    string localName;
+    bool               motors_filter_enabled;
+    string             localName;
 
     IPidControl       *ipid;
     IVelocityControl  *ivel;

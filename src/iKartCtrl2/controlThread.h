@@ -46,13 +46,22 @@ using namespace yarp::dev;
 #define MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
 #define MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
 
+enum
+{
+    IKART_CONTROL_NONE = 0,
+    IKART_CONTROL_OPENLOOP_NO_PID = 1,
+    IKART_CONTROL_OPENLOOP_PID = 2,
+    IKART_CONTROL_SPEED_NO_PID = 3,
+    IKART_CONTROL_SPEED_PID = 4
+};
+
 class ControlThread : public yarp::os::RateThread
 {
 private:
-    Property iKartCtrl_options;
+    Property            iKartCtrl_options;
 
     double              thread_period;
-
+    int                 ikart_control_type;
     int                 thread_timeout_counter;
 
     //movement control variables (internally computed)
@@ -74,6 +83,9 @@ private:
     bool                both_lin_ang_enabled;
     bool                pre_filter_enabled;
     bool                lateral_movement_enabled;
+    
+    //debug variables
+    bool                debug_enabled;
 
 protected:
     ResourceFinder            &rf;
@@ -89,19 +101,13 @@ protected:
     Odometry*                 odometry_handler;
     MotorControl*             motor_handler;
 
-    string remoteName;
-    string localName;
-
-    IPidControl       *ipid;
-    IVelocityControl  *ivel;
-    IEncoders         *ienc;
-    IAmplifierControl *iamp;
-    IOpenLoopControl  *iopl;
-    IControlMode      *icmd;
+    string                    remoteName;
+    string                    localName;
 
 public:
     Odometry* const     get_odometry_handler() {return odometry_handler;}
     MotorControl* const get_motor_handler()    {return motor_handler;}
+    void                set_prefilter(bool b)  {pre_filter_enabled=b;}
 
     ControlThread(unsigned int _period, ResourceFinder &_rf, Property options) :
                RateThread(_period),     rf(_rf),
@@ -109,11 +115,13 @@ public:
     {
         control_board_driver       = 0;
         thread_timeout_counter     = 0;
+        ikart_control_type         = IKART_CONTROL_NONE;
 
         pre_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("pre_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
         lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
+        debug_enabled = true;
         both_lin_ang_enabled = true;
         thread_period = _period;
 
@@ -129,7 +137,19 @@ public:
 
     virtual bool threadInit()
     {
-       // open the control board driver
+        ConstString control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
+        if      (control_type == "none")            ikart_control_type = IKART_CONTROL_NONE;
+        else if (control_type == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
+        else if (control_type == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
+        else if (control_type == "speed_pid")       ikart_control_type = IKART_CONTROL_SPEED_PID;
+        else if (control_type == "openloop_pid")    ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
+        else
+        {
+            fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
+            return false;
+        }
+
+        // open the control board driver
         printf("\nOpening the motors interface...\n");
         int trials=0;
         double start_time = yarp::os::Time::now();
@@ -173,6 +193,7 @@ public:
         }
         while (true);
 
+        //create the odometry and the motor handlers
         odometry_handler = new Odometry ((int)(thread_period),rf,iKartCtrl_options,control_board_driver);
         motor_handler = new MotorControl((int)(thread_period),rf,iKartCtrl_options,control_board_driver);
         odometry_handler->open();
@@ -238,11 +259,17 @@ public:
         direction_ol_pid = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[2],ki[2],kd[2],wp[2],wi[2],wd[2],N[2],Tt[2],sat[2]);
 
         //debug ports
-        if (1)
+        if (debug_enabled)
         {
             port_debug_direction.open((localName+"/debug/direction:o").c_str());
             port_debug_linear.open((localName+"/debug/linear:o").c_str());
             port_debug_angular.open((localName+"/debug/angular:o").c_str());
+        }
+
+        //start the motors
+        if (!rf.check("no_start"))
+        {
+            motor_handler->turn_on_control();
         }
 
         return true;
@@ -260,6 +287,7 @@ public:
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
     void apply_pre_filter (double& linear_speed, double& angular_speed);
+    void set_pre_filter(bool b) {pre_filter_enabled=b;}
 
     virtual void threadRelease()
     {
@@ -273,7 +301,7 @@ public:
         if (angular_ol_pid)   {delete angular_ol_pid; angular_ol_pid=0;}
         if (direction_ol_pid) {delete direction_ol_pid; direction_ol_pid=0;}
 
-        if (1)
+        if (debug_enabled)
         {
             port_debug_linear.interrupt();
             port_debug_linear.close();

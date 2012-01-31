@@ -43,15 +43,6 @@ using namespace yarp::dev;
 #define MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
 #define MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
 
-enum
-{
-    IKART_CONTROL_NONE = 0,
-    IKART_CONTROL_OPENLOOP_NO_PID = 1,
-    IKART_CONTROL_OPENLOOP_PID = 2,
-    IKART_CONTROL_SPEED_NO_PID = 3,
-    IKART_CONTROL_SPEED_PID = 4
-};
-
 class MotorControl
 {
 private:
@@ -60,7 +51,6 @@ private:
     double              thread_period;
 
     int                 board_control_modes[3];
-    int                 ikart_control_type;
     int                 thread_timeout_counter;
 
     int                 command_received;
@@ -113,17 +103,21 @@ public:
 
     MotorControl(unsigned int _period, ResourceFinder &_rf, Property options, PolyDriver* _driver);
     ~MotorControl();
-    void set_ikart_control_type(int type);
-    int get_ikart_control_type();
+    bool set_ikart_control_speed();
+    bool set_ikart_control_openloop();
 
     bool   open();
     void read_inputs(double *linear_speed,double *angular_speed,double *desired_direction, double *pwm_gain);
-    void execute(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
+    void execute_none();
+    void execute_openloop(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
+    void execute_speed(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
+    void decouple(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
     void close();
     bool turn_off_control();
-    bool turn_on_speed_control();
+    bool turn_on_control();
     void updateControlMode();
     void printStats();
+    void set_motors_filter(bool b) {motors_filter_enabled=b;}
  
 };
 

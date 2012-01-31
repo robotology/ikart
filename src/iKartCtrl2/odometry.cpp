@@ -23,6 +23,7 @@ bool Odometry::reset_odometry()
     ienc->getEncoder(0,&encA_offset);
     ienc->getEncoder(1,&encB_offset);
     ienc->getEncoder(2,&encC_offset);
+    fprintf(stderr,"Odometry reset done\n");
     return true;
 }
 

@@ -19,41 +19,26 @@
 #include "motors.h"
 #include "filters.h"
 
-int MotorControl::get_ikart_control_type()
+bool MotorControl::set_ikart_control_openloop()
 {
-    return ikart_control_type;
+    icmd->setOpenLoopMode(0);
+    icmd->setOpenLoopMode(1);
+    icmd->setOpenLoopMode(2);
+    iopl->setOutput(0,0);
+    iopl->setOutput(1,0);
+    iopl->setOutput(2,0);
+    return true;
 }
 
-void MotorControl::set_ikart_control_type(int type)
+bool MotorControl::set_ikart_control_speed()
 {
-    ikart_control_type = type;
-
-    if (ikart_control_type == IKART_CONTROL_OPENLOOP_PID || 
-        ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID)
-    {
-        fprintf(stdout,"iKart in openloop control mode\n");
-        icmd->setOpenLoopMode(0);
-        icmd->setOpenLoopMode(1);
-        icmd->setOpenLoopMode(2);
-        iopl->setOutput(0,0);
-        iopl->setOutput(1,0);
-        iopl->setOutput(2,0);
-    }
-    else if (ikart_control_type == IKART_CONTROL_SPEED_PID || 
-             ikart_control_type == IKART_CONTROL_SPEED_NO_PID)
-    {
-        fprintf(stdout,"iKart in speed control mode\n");
-        icmd->setVelocityMode(0);
-        icmd->setVelocityMode(1);
-        icmd->setVelocityMode(2);
-        ivel->velocityMove(0,0);
-        ivel->velocityMove(1,0);
-        ivel->velocityMove(2,0);
-    }
-    else
-    {
-        fprintf(stdout,"invalid iKart control mode\n");
-    }
+    icmd->setVelocityMode(0);
+    icmd->setVelocityMode(1);
+    icmd->setVelocityMode(2);
+    ivel->velocityMove(0,0);
+    ivel->velocityMove(1,0);
+    ivel->velocityMove(2,0);
+    return true;
 }
 
 bool MotorControl::turn_off_control()
@@ -61,27 +46,31 @@ bool MotorControl::turn_off_control()
     iamp->disableAmp(0);
     iamp->disableAmp(1);
     iamp->disableAmp(2);
-    set_ikart_control_type (IKART_CONTROL_NONE);
+    fprintf(stderr,"Motors now off\n");
     return true;
 }
 
-bool MotorControl::turn_on_speed_control()
+bool MotorControl::turn_on_control()
 {
     iamp->enableAmp(0);
     iamp->enableAmp(1);
     iamp->enableAmp(2);
-    set_ikart_control_type(IKART_CONTROL_SPEED_NO_PID);
     int c0(0),c1(0),c2(0);
     yarp::os::Time::delay(0.05);
     icmd->getControlMode(0,&c0);
     icmd->getControlMode(0,&c1);
     icmd->getControlMode(0,&c2);
-    if (c0==VOCAB_CM_VELOCITY && 
-        c1==VOCAB_CM_VELOCITY && 
-        c2==VOCAB_CM_VELOCITY) 
+    if ((c0==VOCAB_CM_VELOCITY && c1==VOCAB_CM_VELOCITY && c2==VOCAB_CM_VELOCITY)||
+        (c0==VOCAB_CM_OPENLOOP && c1==VOCAB_CM_OPENLOOP && c2==VOCAB_CM_OPENLOOP))
+    {
+        fprintf(stderr,"Motors now on\n");
         return true;
+    }
     else
+    {
+        fprintf(stderr,"Unable to turn motors on! fault pressed?\n");
         return false;
+    }
 }
 
 void MotorControl::updateControlMode()
@@ -137,18 +126,6 @@ MotorControl::~MotorControl()
 
 bool MotorControl::open()
 {
-    ConstString control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
-    if      (control_type == "none")     ikart_control_type = IKART_CONTROL_NONE;
-    else if (control_type == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
-    else if (control_type == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
-    else if (control_type == "speed_pid")    ikart_control_type = IKART_CONTROL_SPEED_PID;
-    else if (control_type == "openloop_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
-    else
-    {
-        fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
-        return false;
-    }
-
     if (rf.check("no_motors_filter"))
     {
         printf("\n'no_filter' option found. Turning off PWM filter.\n");
@@ -173,16 +150,6 @@ bool MotorControl::open()
     port_auxiliary_control.open((localName+"/aux_control:i").c_str());
     port_joystick_control.open((localName+"/joystick:i").c_str());
 
-    //set the control type
-    if (!rf.check("no_start"))
-    {
-        printf("starting motors...");
-        iamp->enableAmp(0);
-        iamp->enableAmp(1);
-        iamp->enableAmp(2);
-    }
-    set_ikart_control_type(ikart_control_type);
-
     return true;
 }
 
@@ -192,7 +159,6 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
             iKartCtrl_options (options)
     {
     control_board_driver= _driver;
-    ikart_control_type  = IKART_CONTROL_NONE;
 
     thread_timeout_counter     = 0;
 
@@ -378,13 +344,18 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
     if (auxiliary_received>0)  { auxiliary_received--; }
 }
 
-void MotorControl::execute(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
+void MotorControl::decouple(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
 {
     //wheel contribution calculation
     FA = appl_linear_speed * cos ((150.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
     FB = appl_linear_speed * cos ((030.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
     FC = appl_linear_speed * cos ((270.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
-        
+}
+
+void MotorControl::execute_speed(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
+{
+    decouple(appl_linear_speed,appl_desired_direction,appl_angular_speed);
+
     //Use a low pass filter to obtain smooth control
     if (motors_filter_enabled)
     {
@@ -397,28 +368,38 @@ void MotorControl::execute(double appl_linear_speed, double appl_desired_directi
     }
 
     //Apply the commands
-    if (ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID ||
-        ikart_control_type == IKART_CONTROL_OPENLOOP_PID)
-    {
-        iopl->setOutput(0,-FA);
-        iopl->setOutput(1,-FB);
-        iopl->setOutput(2,-FC);
-    }
-    else if	(ikart_control_type == IKART_CONTROL_SPEED_NO_PID ||
-             ikart_control_type == IKART_CONTROL_SPEED_PID)
-    {
-//#define CONTROL_DEBUG
 #ifdef  CONTROL_DEBUG
-        fprintf (stdout,">**: %+6.6f %+6.6f **** %+6.6f %+6.6f %+6.6f\n",exec_linear_speed,exec_desired_direction,-FA,-FB,-FC);
+    fprintf (stdout,">**: %+6.6f %+6.6f **** %+6.6f %+6.6f %+6.6f\n",exec_linear_speed,exec_desired_direction,-FA,-FB,-FC);
 #endif
-        ivel->velocityMove(0,-FA);
-        ivel->velocityMove(1,-FB);
-        ivel->velocityMove(2,-FC);
-    }
-    else if (ikart_control_type == IKART_CONTROL_NONE)
+    ivel->velocityMove(0,-FA);
+    ivel->velocityMove(1,-FB);
+    ivel->velocityMove(2,-FC);
+}
+
+void MotorControl::execute_openloop(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
+{
+    decouple(appl_linear_speed,appl_desired_direction,appl_angular_speed);
+
+    //Use a low pass filter to obtain smooth control
+    if (motors_filter_enabled)
     {
-        //iopl->setOutput(0,0);
-        //iopl->setOutput(1,0);
-        //iopl->setOutput(2,0);
+        FA  = ikart_filters::lp_filter_4Hz(FA,0);
+        FB  = ikart_filters::lp_filter_4Hz(FB,1);
+        FC  = ikart_filters::lp_filter_4Hz(FC,2);
+        //FA  = ratelim_filter_0(FA,0);
+        //FB  = ratelim_filter_0(FB,1);
+        //FC  = ratelim_filter_0(FC,2);
     }
+
+    //Apply the commands
+    iopl->setOutput(0,-FA);
+    iopl->setOutput(1,-FB);
+    iopl->setOutput(2,-FC);
+}
+
+void MotorControl::execute_none()
+{
+    iopl->setOutput(0,0);
+    iopl->setOutput(1,0);
+    iopl->setOutput(2,0);
 }

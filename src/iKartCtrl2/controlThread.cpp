@@ -78,7 +78,7 @@ void ControlThread::run()
 
     //Here we suppouse that values are already in the format 0-100%
     double MAX_VALUE = 0;
-    if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP_NO_PID)
+    if (ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID)
     {
         MAX_VALUE = 1250; // Maximum joint PWM
         exec_linear_speed  = linear_speed  / 100.0 * MAX_VALUE;
@@ -90,9 +90,23 @@ void ControlThread::run()
         double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
         double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
         double pidout_direction     = exec_desired_direction;
-        this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
+        this->motor_handler->execute_openloop(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
-    else if (motor_handler->get_ikart_control_type() == IKART_CONTROL_OPENLOOP_PID)
+    else if (ikart_control_type == IKART_CONTROL_SPEED_NO_PID)
+    {
+        MAX_VALUE = 200; // Maximum joint speed (deg/s)
+        exec_linear_speed = linear_speed / 100.0 * MAX_VALUE;
+        exec_angular_speed = angular_speed / 100.0 * MAX_VALUE;
+        exec_pwm_gain = pwm_gain / 100.0 * 1.0;
+        exec_desired_direction = desired_direction;
+        apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
+        apply_pre_filter(exec_linear_speed, exec_angular_speed);
+        double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
+        double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
+        double pidout_direction     = exec_desired_direction;
+        this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
+    }
+    else if (ikart_control_type == IKART_CONTROL_OPENLOOP_PID)
     {
         exec_pwm_gain = pwm_gain / 100.0 * 1.0;
         exec_linear_speed  = linear_speed  * exec_pwm_gain;
@@ -113,9 +127,9 @@ void ControlThread::run()
             pidout_linear_speed=0;
             //pidout_angular_speed=0;
             pidout_direction=0;
-        this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
+        this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
             
-        if (1) // debug block
+        if (debug_enabled) // debug block
         {
             Bottle &b1=port_debug_linear.prepare();
             b1.clear();
@@ -137,20 +151,6 @@ void ControlThread::run()
             port_debug_direction.write();
         }
     }
-    else if (motor_handler->get_ikart_control_type() == IKART_CONTROL_SPEED_NO_PID)
-    {
-        MAX_VALUE = 200; // Maximum joint speed (deg/s)
-        exec_linear_speed = linear_speed / 100.0 * MAX_VALUE;
-        exec_angular_speed = angular_speed / 100.0 * MAX_VALUE;
-        exec_pwm_gain = pwm_gain / 100.0 * 1.0;
-        exec_desired_direction = desired_direction;
-        apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
-        apply_pre_filter(exec_linear_speed, exec_angular_speed);
-        double pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
-        double pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
-        double pidout_direction     = exec_desired_direction;
-        this->motor_handler->execute(pidout_linear_speed,pidout_direction,pidout_angular_speed);
-    }
     else
     {
         printf ("ERROR! unknown control mode \n");
@@ -158,6 +158,6 @@ void ControlThread::run()
         exec_angular_speed = 0;
         exec_pwm_gain = 0;
         exec_desired_direction = 0;
-        this->motor_handler->execute(0,0,0);
+        this->motor_handler->execute_none();
     }
 }

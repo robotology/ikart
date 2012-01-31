@@ -212,19 +212,40 @@ public:
             reply.addString("run");
             reply.addString("idle");
             reply.addString("reset_odometry");
+            reply.addString("set_prefilter 0/1");
+            reply.addString("set_motors_filter 0/1");
             reply.addString("change_pid <identif> <kp> <ki> <kd>");
             return true;
+        }
+        else if (command.get(0).asString()=="set_prefilter")
+        {
+            if (control_thr)
+            {
+                if (command.get(1).asInt()>0) 
+                    {control_thr->set_prefilter(true); reply.addString("Prefilter on");}
+                else
+                    {control_thr->set_prefilter(false); reply.addString("Prefilter off");}
+            }
+            return true;
+        }
+        else if (command.get(0).asString()=="set_motors_filter")
+        {
+            if (control_thr)
+            {
+                if (command.get(1).asInt()>0) 
+                    {control_thr->get_motor_handler()->set_motors_filter(true); reply.addString("Motors filter on");}
+                else
+                    {control_thr->get_motor_handler()->set_motors_filter(false); reply.addString("Motors filter off");}
+            }
         }
         else if (command.get(0).asString()=="run")
         {
             if (control_thr)
             {
-                if (control_thr->get_motor_handler()->turn_on_speed_control())
-                    {reply.addString("Motors now on");
-                    fprintf(stderr,"Motors now on\n");}
+                if (control_thr->get_motor_handler()->turn_on_control())
+                    {reply.addString("Motors now on");}
                 else
-                    {reply.addString("Unable to turn motors on! fault pressed?");
-                    fprintf(stderr,"Unable to turn motors on! fault pressed?\n");}
+                    {reply.addString("Unable to turn motors on! fault pressed?");}
 
             }
             return true;
@@ -234,8 +255,7 @@ public:
             if (control_thr)
             {
                 control_thr->get_motor_handler()->turn_off_control();
-                reply.addString("Motors now off.");
-                fprintf(stderr,"Motors now off\n");
+                {reply.addString("Motors now off.");}
             }
             return true;
         }
@@ -259,7 +279,6 @@ public:
             {
                 control_thr->get_odometry_handler()->reset_odometry();
                 reply.addString("Odometry reset done.");
-                fprintf(stderr,"Odometry reset done\n");
             }
             return true;
         }

@@ -194,6 +194,64 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     localName = iKartCtrl_options.find("local").asString();
 }
 
+void MotorControl::read_percent_polar(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
+{
+    des_dir  = b->get(1).asDouble();
+    lin_spd  = b->get(2).asDouble();
+    ang_spd  = b->get(3).asDouble();
+    pwm_gain = b->get(4).asDouble();
+    lin_spd  = (lin_spd<+100)  ? lin_spd  : +100; 
+    lin_spd  = (lin_spd>-100)  ? lin_spd  : -100;
+    ang_spd  = (ang_spd<+100)  ? ang_spd  : +100; 
+    ang_spd  = (ang_spd>-100)  ? ang_spd  : -100;
+    pwm_gain = (pwm_gain<+100) ? pwm_gain : +100; 
+    pwm_gain = (pwm_gain>0)    ? pwm_gain : 0;
+}
+
+void MotorControl::read_percent_cart(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
+{
+    double x_speed        = b->get(1).asDouble();
+    double y_speed        = b->get(2).asDouble();
+    double t_speed        = b->get(3).asDouble();
+    pwm_gain = b->get(4).asDouble();
+    des_dir  = atan2(x_speed,y_speed) * 180.0 / 3.14159265;
+    lin_spd  = sqrt (x_speed*x_speed+y_speed*y_speed);
+    ang_spd  = t_speed;
+    lin_spd  = (lin_spd<+100)  ? lin_spd  : +100; 
+    lin_spd  = (lin_spd>-100)  ? lin_spd  : -100;
+    ang_spd  = (ang_spd<+100)  ? ang_spd  : +100; 
+    ang_spd  = (ang_spd>-100)  ? ang_spd  : -100;
+    pwm_gain = (pwm_gain<+100) ? pwm_gain : +100; 
+    pwm_gain = (pwm_gain>0)    ? pwm_gain : 0;
+}
+
+void MotorControl::read_speed_polar(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
+{
+    des_dir  = b->get(1).asDouble();
+    lin_spd  = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
+    ang_spd  = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
+    lin_spd  = (lin_spd<+100)  ? lin_spd  : +100; 
+    lin_spd  = (lin_spd>-100)  ? lin_spd  : -100;
+    ang_spd  = (ang_spd<+100)  ? ang_spd  : +100; 
+    ang_spd  = (ang_spd>-100)  ? ang_spd  : -100;
+    pwm_gain = 100;
+}
+
+void MotorControl::read_speed_cart(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
+{
+    double x_speed        = b->get(1).asDouble() * 100.0 / MAX_LINEAR_VEL;
+    double y_speed        = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
+    double t_speed        = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
+    des_dir  = atan2(x_speed,y_speed) * 180.0 / 3.14159265;
+    lin_spd  = sqrt (x_speed*x_speed+y_speed*y_speed);
+    ang_spd  = t_speed;
+    lin_spd  = (lin_spd<+100) ? lin_spd : +100; 
+    lin_spd  = (lin_spd>-100) ? lin_spd : -100;
+    ang_spd  = (ang_spd<+100) ? ang_spd : +100; 
+    ang_spd  = (ang_spd>-100) ? ang_spd : -100;
+    pwm_gain = 100;
+}
+
 void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double *desired_direction, double *pwm_gain)
 {
     static double wdt_old_mov_cmd=Time::now();
@@ -208,16 +266,7 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
         if (b->get(0).asInt()==1)
         {                                
             //received a joystick command.
-            joy_desired_direction = b->get(1).asDouble();
-            joy_linear_speed      = b->get(2).asDouble();
-            joy_angular_speed     = b->get(3).asDouble();
-            joy_pwm_gain          = b->get(4).asDouble();
-            joy_linear_speed = (joy_linear_speed<+100) ? joy_linear_speed : +100; 
-            joy_linear_speed = (joy_linear_speed>-100) ? joy_linear_speed : -100;
-            joy_angular_speed = (joy_angular_speed<+100) ? joy_angular_speed : +100; 
-            joy_angular_speed = (joy_angular_speed>-100) ? joy_angular_speed : -100;
-            joy_pwm_gain = (joy_pwm_gain<+100) ? joy_pwm_gain : +100; 
-            joy_pwm_gain = (joy_pwm_gain>0) ? joy_pwm_gain : 0;
+            read_percent_polar(b, joy_desired_direction,joy_linear_speed,joy_angular_speed,joy_pwm_gain);
             wdt_old_joy_cmd = wdt_joy_cmd;
             wdt_joy_cmd = Time::now();
 
@@ -230,35 +279,21 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
     {
         if (b->get(0).asInt()==1)
         {
-            cmd_desired_direction = b->get(1).asDouble();
-            cmd_linear_speed      = b->get(2).asDouble();
-            cmd_angular_speed     = b->get(3).asDouble();
-            cmd_pwm_gain          = b->get(4).asDouble();
-            cmd_linear_speed = (cmd_linear_speed<+100) ? cmd_linear_speed : +100; 
-            cmd_linear_speed = (cmd_linear_speed>-100) ? cmd_linear_speed : -100;
-            cmd_angular_speed = (cmd_angular_speed<+100) ? cmd_angular_speed : +100; 
-            cmd_angular_speed = (cmd_angular_speed>-100) ? cmd_angular_speed : -100;
-            cmd_pwm_gain = (cmd_pwm_gain<+100) ? cmd_pwm_gain : +100; 
-            cmd_pwm_gain = (cmd_pwm_gain>0) ? cmd_pwm_gain : 0;
+            read_percent_polar(b, cmd_desired_direction,cmd_linear_speed,cmd_angular_speed,cmd_pwm_gain);
             wdt_old_mov_cmd = wdt_mov_cmd;
             wdt_mov_cmd = Time::now();
             command_received = 100;
         }
         else if (b->get(0).asInt()==2)
         {
-            double x_speed        = b->get(1).asDouble() * 100.0 / MAX_LINEAR_VEL;
-            double y_speed        = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
-            double t_speed        = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
-            //t_speed = (t_speed<+100) ? t_speed : +100; 
-            //t_speed = (t_speed>-100) ? t_speed : -100;
-            cmd_desired_direction = atan2(x_speed,y_speed) * 180.0 / 3.14159265;
-            cmd_linear_speed      = sqrt (x_speed*x_speed+y_speed*y_speed);
-            cmd_angular_speed     = t_speed;
-            cmd_pwm_gain          = 100;
-            cmd_linear_speed = (cmd_linear_speed<+100) ? cmd_linear_speed : +100; 
-            cmd_linear_speed = (cmd_linear_speed>-100) ? cmd_linear_speed : -100;
-            cmd_angular_speed = (cmd_angular_speed<+100) ? cmd_angular_speed : +100; 
-            cmd_angular_speed = (cmd_angular_speed>-100) ? cmd_angular_speed : -100;
+            read_speed_polar(b, cmd_desired_direction,cmd_linear_speed,cmd_angular_speed,cmd_pwm_gain);
+            wdt_old_mov_cmd = wdt_mov_cmd;
+            wdt_mov_cmd = Time::now();
+            command_received = 100;
+        }
+        else if (b->get(0).asInt()==3)
+        {
+            read_speed_cart(b, cmd_desired_direction,cmd_linear_speed,cmd_angular_speed,cmd_pwm_gain);
             wdt_old_mov_cmd = wdt_mov_cmd;
             wdt_mov_cmd = Time::now();
             command_received = 100;
@@ -268,19 +303,24 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
     {
         if (b->get(0).asInt()==1)
         {
-            aux_desired_direction = b->get(1).asDouble();
-            aux_linear_speed      = b->get(2).asDouble();
-            aux_angular_speed     = b->get(3).asDouble();
-            aux_pwm_gain          = b->get(4).asDouble();
-            aux_linear_speed = (aux_linear_speed<+100) ? aux_linear_speed : +100; 
-            aux_linear_speed = (aux_linear_speed>-100) ? aux_linear_speed : -100;
-            aux_angular_speed = (aux_angular_speed<+100) ? aux_angular_speed : +100; 
-            aux_angular_speed = (aux_angular_speed>-100) ? aux_angular_speed : -100;
-            aux_pwm_gain = (aux_pwm_gain<+100) ? aux_pwm_gain : +100; 
-            aux_pwm_gain = (aux_pwm_gain>0) ? aux_pwm_gain : 0;
+            read_percent_polar(b, aux_desired_direction,aux_linear_speed,aux_angular_speed,aux_pwm_gain);
             wdt_old_aux_cmd = wdt_aux_cmd;
             wdt_aux_cmd = Time::now();
             auxiliary_received = 100;
+        }
+        else if (b->get(0).asInt()==2)
+        {
+            read_speed_polar(b, aux_desired_direction,aux_linear_speed,aux_angular_speed,aux_pwm_gain);
+            wdt_old_aux_cmd = wdt_aux_cmd;
+            wdt_aux_cmd = Time::now();
+            auxiliary_received = 100;
+        }
+        else if (b->get(0).asInt()==3)
+        {
+            read_speed_cart(b, aux_desired_direction,aux_linear_speed,aux_angular_speed,aux_pwm_gain);
+            wdt_old_mov_cmd = wdt_mov_cmd;
+            wdt_mov_cmd = Time::now();
+            command_received = 100;
         }
     }
 

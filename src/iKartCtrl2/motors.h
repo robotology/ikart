@@ -119,6 +119,11 @@ public:
     void printStats();
     void set_motors_filter(bool b) {motors_filter_enabled=b;}
  
+    void read_percent_polar (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
+    void read_percent_cart  (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
+    void read_speed_polar   (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
+    void read_speed_cart    (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
+
 };
 
 #endif

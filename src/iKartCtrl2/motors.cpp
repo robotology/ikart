@@ -55,13 +55,15 @@ bool MotorControl::turn_on_control()
     iamp->enableAmp(0);
     iamp->enableAmp(1);
     iamp->enableAmp(2);
+    ipid->enablePid(0);
+    ipid->enablePid(1);
+    ipid->enablePid(2);
     int c0(0),c1(0),c2(0);
     yarp::os::Time::delay(0.05);
     icmd->getControlMode(0,&c0);
     icmd->getControlMode(0,&c1);
     icmd->getControlMode(0,&c2);
-    if ((c0==VOCAB_CM_VELOCITY && c1==VOCAB_CM_VELOCITY && c2==VOCAB_CM_VELOCITY)||
-        (c0==VOCAB_CM_OPENLOOP && c1==VOCAB_CM_OPENLOOP && c2==VOCAB_CM_OPENLOOP))
+    if (c0!=VOCAB_CM_IDLE && c1!=VOCAB_CM_IDLE && c2!=VOCAB_CM_IDLE)
     {
         fprintf(stderr,"Motors now on\n");
         return true;

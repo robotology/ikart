@@ -62,8 +62,8 @@ void ControlThread::set_pid (string id, double kp, double ki, double kd)
 void ControlThread::apply_control_speed_pid(double pidout_linear_speed,double pidout_angular_speed, double pidout_direction,
                            double exec_linear_speed,double exec_angular_speed, double exec_desired_direction)
 {
-    double feedback_linear_speed = this->odometry_handler->vel_lin;
-    double feedback_angular_speed = this->odometry_handler->vel_theta;
+    double feedback_linear_speed = this->odometry_handler->vel_lin / MAX_LINEAR_VEL* 100;
+    double feedback_angular_speed = this->odometry_handler->vel_theta / MAX_ANGULAR_VEL * 100;
     double feedback_desired_direction = this->odometry_handler->vel_heading;
     yarp::sig::Vector tmp;
     tmp = linear_speed_pid->compute(yarp::sig::Vector(1,&exec_linear_speed),yarp::sig::Vector(1,&feedback_linear_speed));
@@ -102,8 +102,8 @@ void ControlThread::apply_control_speed_pid(double pidout_linear_speed,double pi
 void ControlThread::apply_control_openloop_pid(double pidout_linear_speed,double pidout_angular_speed, double pidout_direction,
                            double exec_linear_speed,double exec_angular_speed, double exec_desired_direction)
 {
-    double feedback_linear_speed = this->odometry_handler->vel_lin;
-    double feedback_angular_speed = this->odometry_handler->vel_theta;
+    double feedback_linear_speed = this->odometry_handler->vel_lin / MAX_LINEAR_VEL* 100;
+    double feedback_angular_speed = this->odometry_handler->vel_theta / MAX_ANGULAR_VEL * 100;
     double feedback_desired_direction = this->odometry_handler->vel_heading;
     yarp::sig::Vector tmp;
     tmp = linear_ol_pid->compute(yarp::sig::Vector(1,&exec_linear_speed),yarp::sig::Vector(1,&feedback_linear_speed));

@@ -289,8 +289,8 @@ public:
     void apply_pre_filter (double& linear_speed, double& angular_speed);
     void set_pre_filter(bool b) {pre_filter_enabled=b;}
     
-    void apply_control_openloop_pid(double pidout_linear_speed,double pidout_angular_speed, double pidout_direction, double exec_linear_speed,double exec_angular_speed, double exec_desired_direction);
-    void apply_control_speed_pid(double pidout_linear_speed,double pidout_angular_speed, double pidout_direction, double exec_linear_speed,double exec_angular_speed, double exec_desired_direction);
+    void apply_control_openloop_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction, const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction);
+    void apply_control_speed_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction, const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction);
 
     virtual void threadRelease()
     {

@@ -137,7 +137,7 @@ public:
 
     virtual bool threadInit()
     {
-        string control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
+        string control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString().c_str();
         set_control_type (control_type);
 
         // open the control board driver

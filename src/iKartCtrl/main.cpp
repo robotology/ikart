@@ -215,6 +215,7 @@ public:
             reply.addString("set_prefilter 0/1");
             reply.addString("set_motors_filter 0/1");
             reply.addString("change_pid <identif> <kp> <ki> <kd>");
+            reply.addString("change_ctrl_mode <type_string>");
             return true;
         }
         else if (command.get(0).asString()=="set_prefilter")
@@ -256,6 +257,17 @@ public:
             {
                 control_thr->get_motor_handler()->turn_off_control();
                 {reply.addString("Motors now off.");}
+            }
+            return true;
+        }
+        else if (command.get(0).asString()=="change_ctrl_mode")
+        {
+            if (control_thr)
+            {
+                if (control_thr->set_control_type(command.get(1).asString().c_str()))
+                    {reply.addString("control mode changed");}
+                else
+                    {reply.addString("invalid control mode request");}
             }
             return true;
         }

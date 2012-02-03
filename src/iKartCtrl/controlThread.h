@@ -137,17 +137,8 @@ public:
 
     virtual bool threadInit()
     {
-        ConstString control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
-        if      (control_type == "none")            ikart_control_type = IKART_CONTROL_NONE;
-        else if (control_type == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
-        else if (control_type == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
-        else if (control_type == "speed_pid")       ikart_control_type = IKART_CONTROL_SPEED_PID;
-        else if (control_type == "openloop_pid")    ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
-        else
-        {
-            fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",control_type.c_str());
-            return false;
-        }
+        string control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString();
+        set_control_type (control_type);
 
         // open the control board driver
         printf("\nOpening the motors interface...\n");
@@ -284,6 +275,7 @@ public:
     }
 
     virtual void run();
+    bool set_control_type (string s);
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
     void apply_pre_filter (double& linear_speed, double& angular_speed);

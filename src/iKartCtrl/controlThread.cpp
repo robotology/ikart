@@ -225,3 +225,19 @@ void ControlThread::run()
         this->motor_handler->execute_none();
     }
 }
+
+bool ControlThread::set_control_type (string s)
+{
+    if      (s == "none")            ikart_control_type = IKART_CONTROL_NONE;
+    else if (s == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
+    else if (s == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
+    else if (s == "speed_pid")       ikart_control_type = IKART_CONTROL_SPEED_PID;
+    else if (s == "openloop_pid")    ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
+    else
+    {
+        fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",s.c_str());
+        return false;
+    }
+    fprintf(stderr,"Control type set to: %s\n",s.c_str());
+    return true;
+}

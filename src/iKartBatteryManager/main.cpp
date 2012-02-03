@@ -199,42 +199,14 @@ public:
         debugEnable=rf.check("debug");
         shutdownEnable=(rf.check("noShutdown")); //final test: must be enabled putting a !
 
-        //check for alternate COM ports
-        ConstString COMport = rf.check("COMport",Value("none"),"Name of the COM port (i.e. COM2, /dev/ttyUSB0 etc.)").asString();
-
         //serial port configuration parameters
+        rf.setDefaultContext("iKart/conf");
+        rf.setDefaultConfigFile("batterySerialPort.ini");
+        ConstString configFile=rf.findFile("from");
         Property prop;
-        prop.put("device",       "serialport");
-        prop.put("verbose",      "0");
-        if (COMport=="none")
-        {
-            //default values
-            #ifdef WIN32
-                prop.put("comport",      "COM3");
-            #else
-                prop.put("comport",      "/dev/ttyUSB0");
-            #endif
-        }
-        else
-        {
-            prop.put("comport",      COMport.c_str());
-        }
-        prop.put("baudrate",     38400);
-        prop.put("xonlim ",      0);
-        prop.put("xofflim",      0);
-        prop.put("readmincharacters", 0);
-        prop.put("readtimeoutmsec",   2);
-        prop.put("paritymode",   "none");
-        prop.put("ctsenb",       0);
-        prop.put("rtsenb",       0);
-        prop.put("xinenb",       0);
-        prop.put("xoutenb",      0);
-        prop.put("modem",        0);
-        prop.put("rcvenb",       0);
-        prop.put("dsrenb",       0);
-        prop.put("dtrdisable",   0);
-        prop.put("databits",     8);
-        prop.put("stopbits",     1);
+        prop.fromConfigFile(configFile.c_str());
+        prop.put("device","serialport");
+        printf("\nSerial port configuration:\n%s \n\n",prop.toString().c_str());
 
         if (logEnable)
         {
@@ -497,7 +469,7 @@ int main(int argc, char *argv[])
         cout << "Options:" << endl << endl;
         cout << "--verbose:     show the received raw data from the battery managment board"<< endl;
         cout << "--debug:       show advanced debug information"<< endl; 
-        cout << "--screen:      show measurments on screen"<< endl;
+        cout << "--screen:      show measurements on screen"<< endl;
         cout << "--logToFile:   save the mesurments to file: batteryLog.txt"<< endl;
         cout << "--noShutdown:  do not not shutdown even if the battery reaches the critical level"<< endl;
         return 0;

@@ -197,6 +197,14 @@ public:
             }
         }
 
+        //try to connect to joystickCtrl output
+        if (rf.check("joystick_connect"))
+        {
+            if (yarp::os::Network::connect("/joystickCtrl:o","/ikart/joystick:i"))
+                {printf("Joystick has been automaticallly connected");}
+            else
+                {printf("Unable to find the joystick port");}
+        }
         rpcPort.open((localName+"/rpc").c_str());
         attach(rpcPort);
 
@@ -391,6 +399,7 @@ int main(int argc, char *argv[])
         printf("'no_compass' inertial/compass ports will not be opened.\n");
         printf("'no_start' do not automatically enables pwm.\n");
         printf("'laser <filename>' starts the laser with the specified configuration file.\n");
+        printf("'joystick_connect' tries to automatically connect to the joystickCtrl output.\n");
         printf("\n");
         return 0;
     }

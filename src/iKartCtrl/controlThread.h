@@ -83,6 +83,7 @@ private:
     bool                both_lin_ang_enabled;
     bool                pre_filter_enabled;
     bool                lateral_movement_enabled;
+    bool                debug_enabled;
 
 protected:
     ResourceFinder            &rf;
@@ -105,7 +106,7 @@ public:
     Odometry* const     get_odometry_handler() {return odometry_handler;}
     MotorControl* const get_motor_handler()    {return motor_handler;}
     void                set_prefilter(bool b)  {pre_filter_enabled=b;}
-    bool                debug_enabled;
+    void                enable_debug(bool b);
 
     ControlThread(unsigned int _period, ResourceFinder &_rf, Property options) :
                RateThread(_period),     rf(_rf),

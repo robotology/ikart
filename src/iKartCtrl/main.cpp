@@ -224,10 +224,11 @@ public:
             if (control_thr)
             {
                 if (command.get(1).asInt()>0)
-                    {control_thr->debug_enabled=true; reply.addString("debug mode on");}
+                    {control_thr->enable_debug(true); reply.addString("debug mode on");}
                 else
-                    {control_thr->debug_enabled=false; reply.addString("debug mode off");}
+                    {control_thr->enable_debug(false); reply.addString("debug mode off");}
             }
+            return true;
         }
         else if (command.get(0).asString()=="set_prefilter")
         {

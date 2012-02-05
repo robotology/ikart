@@ -38,6 +38,25 @@ void ControlThread::apply_pre_filter (double& linear_speed, double& angular_spee
     }
 }
 
+void ControlThread::enable_debug(bool b)
+{
+    if (b)
+    {
+        port_debug_direction.open((localName+"/debug/direction:o").c_str());
+        port_debug_linear.open((localName+"/debug/linear:o").c_str());
+        port_debug_angular.open((localName+"/debug/angular:o").c_str());
+    }
+    else
+    {
+        port_debug_linear.interrupt();
+        port_debug_linear.close();
+        port_debug_angular.interrupt();
+        port_debug_angular.close();
+        port_debug_direction.interrupt();
+        port_debug_direction.close();
+    }
+}
+
 void ControlThread::set_pid (string id, double kp, double ki, double kd)
 {
     yarp::os::Bottle old_options;

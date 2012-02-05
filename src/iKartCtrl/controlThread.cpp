@@ -40,6 +40,7 @@ void ControlThread::apply_pre_filter (double& linear_speed, double& angular_spee
 
 void ControlThread::enable_debug(bool b)
 {
+    debug_enabled = b;
     if (b)
     {
         port_debug_direction.open((localName+"/debug/direction:o").c_str());

@@ -142,14 +142,14 @@ void Odometry::compute()
     yarp::sig::Matrix kin;
     kin.resize(3,3);
     kin.zero();
-    kin(0,0) = -sqrt(3.0)/2;
+    kin(0,0) = -sqrt(3.0)/2.0;
     kin(0,1) = 0.5;
     kin(0,2) = geom_L;
-    kin(1,0) = sqrt(3.0)/2;
+    kin(1,0) = sqrt(3.0)/2.0;
     kin(1,1) = 0.5;
     kin(1,2) = geom_L;
     kin(2,0) = 0;
-    kin(2,1) = -1;
+    kin(2,1) = -1.0;
     kin(2,2) = geom_L;
     yarp::sig::Matrix ikin = luinv(kin);
 

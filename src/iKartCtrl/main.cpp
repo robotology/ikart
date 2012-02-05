@@ -205,6 +205,13 @@ public:
             else
                 {printf("Unable to find the joystick port");}
         }
+
+        //check for debug mode
+        if (rf.check("debug"))
+        {
+            this->control_thr->enable_debug(true);
+        }
+
         rpcPort.open((localName+"/rpc").c_str());
         attach(rpcPort);
 

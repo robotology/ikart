@@ -79,23 +79,32 @@ void ControlThread::apply_control_speed_pid(double& pidout_linear_speed,double& 
     if (debug_enabled) // debug block
     {
         char buff [255];
-        Bottle &b1=port_debug_linear.prepare();
-        b1.clear();
-        sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_linear_speed,feedback_linear_speed,ref_linear_speed-feedback_linear_speed,pidout_linear_speed);
-        b1.addString(buff);
-        port_debug_linear.write();
+        if (port_debug_linear.getOutputCount()>0)
+        {
+            Bottle &b1=port_debug_linear.prepare();
+            b1.clear();
+            sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_linear_speed,feedback_linear_speed,ref_linear_speed-feedback_linear_speed,pidout_linear_speed);
+            b1.addString(buff);
+            port_debug_linear.write();
+        }
 
-        Bottle &b2=port_debug_angular.prepare();
-        b2.clear();
-        sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_angular_speed,feedback_angular_speed,ref_angular_speed-feedback_angular_speed,pidout_angular_speed);
-        b2.addString(buff);
-        port_debug_angular.write();
-        
-        Bottle &b3=port_debug_direction.prepare();
-        b3.clear();
-        sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_desired_direction,feedback_desired_direction,ref_desired_direction-feedback_desired_direction,pidout_direction);
-        b3.addString(buff);
-        port_debug_direction.write();
+        if (port_debug_angular.getOutputCount()>0)
+        {
+            Bottle &b2=port_debug_angular.prepare();
+            b2.clear();
+            sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_angular_speed,feedback_angular_speed,ref_angular_speed-feedback_angular_speed,pidout_angular_speed);
+            b2.addString(buff);
+            port_debug_angular.write();
+        }
+
+        if (port_debug_direction.getOutputCount()>0)
+        {
+            Bottle &b3=port_debug_direction.prepare();
+            b3.clear();
+            sprintf(buff,"%+9.4f %+9.4f %+9.4f %+9.4f",ref_desired_direction,feedback_desired_direction,ref_desired_direction-feedback_desired_direction,pidout_direction);
+            b3.addString(buff);
+            port_debug_direction.write();
+        }
     }
 }
 

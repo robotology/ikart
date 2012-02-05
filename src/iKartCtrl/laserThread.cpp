@@ -67,7 +67,7 @@ void LaserThread::run()
     double after_laser=Time::now();
     if (after_laser-before_laser > 0.040) { timeout_counter++;  }
     //fprintf(stderr,"after laser reading\n");
-    if (res == yarp::dev::IAnalogSensor::AS_OK)
+    if (res == yarp::dev::IAnalogSensor::AS_OK && port_laser_output.getOutputCount()>0)
     {
         yarp::sig::Vector &plaser_data=port_laser_output.prepare();
         plaser_data=laser_data;

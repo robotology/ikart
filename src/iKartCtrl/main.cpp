@@ -216,7 +216,18 @@ public:
             reply.addString("set_motors_filter 0/1");
             reply.addString("change_pid <identif> <kp> <ki> <kd>");
             reply.addString("change_ctrl_mode <type_string>");
+            reply.addString("set_debug_mode 0/1");
             return true;
+        }
+        else if (command.get(0).asString()=="set_debug_mode")
+        {
+            if (control_thr)
+            {
+                if (command.get(1).asInt()>0)
+                    {control_thr->debug_enabled=true; reply.addString("debug mode on");}
+                else
+                    {control_thr->debug_enabled=false; reply.addString("debug mode off");}
+            }
         }
         else if (command.get(0).asString()=="set_prefilter")
         {

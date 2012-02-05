@@ -212,19 +212,25 @@ void Odometry::compute()
 
     mutex.post();
 
-	Bottle &b=port_odometry.prepare();
-    b.clear();
-    b.addDouble(odom_x);
-    b.addDouble(odom_y);
-    b.addDouble(odom_theta);
-    b.addDouble(vel_x);
-    b.addDouble(vel_y);
-    b.addDouble(vel_theta);
-    port_odometry.write();
+    if (port_odometry.getOutputCount()>0)
+    {
+        Bottle &b=port_odometry.prepare();
+        b.clear();
+        b.addDouble(odom_x);
+        b.addDouble(odom_y);
+        b.addDouble(odom_theta);
+        b.addDouble(vel_x);
+        b.addDouble(vel_y);
+        b.addDouble(vel_theta);
+        port_odometry.write();
+    }
 
-    Bottle &t=port_odometer.prepare();
-    t.clear();
-    t.addDouble(traveled_distance);
-    t.addDouble(traveled_angle);
-    port_odometer.write();
+    if (port_odometer.getOutputCount()>0)
+    {
+        Bottle &t=port_odometer.prepare();
+        t.clear();
+        t.addDouble(traveled_distance);
+        t.addDouble(traveled_angle);
+        port_odometer.write();
+    }
 }

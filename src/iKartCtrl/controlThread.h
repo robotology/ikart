@@ -83,9 +83,6 @@ private:
     bool                both_lin_ang_enabled;
     bool                pre_filter_enabled;
     bool                lateral_movement_enabled;
-    
-    //debug variables
-    bool                debug_enabled;
 
 protected:
     ResourceFinder            &rf;
@@ -108,31 +105,32 @@ public:
     Odometry* const     get_odometry_handler() {return odometry_handler;}
     MotorControl* const get_motor_handler()    {return motor_handler;}
     void                set_prefilter(bool b)  {pre_filter_enabled=b;}
+    bool                debug_enabled;
 
     ControlThread(unsigned int _period, ResourceFinder &_rf, Property options) :
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
-        control_board_driver       = 0;
-        thread_timeout_counter     = 0;
-        ikart_control_type         = IKART_CONTROL_NONE;
+        control_board_driver     = 0;
+        thread_timeout_counter   = 0;
+        ikart_control_type       = IKART_CONTROL_NONE;
 
-        pre_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("pre_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
+        pre_filter_enabled       = (iKartCtrl_options.findGroup("GENERAL").check("pre_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
         lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
-        lin_ang_ratio = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
+        lin_ang_ratio            = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
-        debug_enabled = true;
-        both_lin_ang_enabled = true;
-        thread_period = _period;
+        debug_enabled            = false;
+        both_lin_ang_enabled     = true;
+        thread_period            = _period;
 
-        linear_speed_pid=0;
-        angular_speed_pid=0;
-        direction_speed_pid=0;
-        linear_ol_pid=0;
-        angular_ol_pid=0;
-        direction_ol_pid=0;
-        remoteName = iKartCtrl_options.find("remote").asString();
-        localName = iKartCtrl_options.find("local").asString();
+        linear_speed_pid         = 0;
+        angular_speed_pid        = 0;
+        direction_speed_pid      = 0;
+        linear_ol_pid            = 0;
+        angular_ol_pid           = 0;
+        direction_ol_pid         = 0;
+        remoteName               = iKartCtrl_options.find("remote").asString();
+        localName                = iKartCtrl_options.find("local").asString();
     }
 
     virtual bool threadInit()

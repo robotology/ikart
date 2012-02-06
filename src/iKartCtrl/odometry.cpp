@@ -31,12 +31,11 @@ void Odometry::printStats()
 {
     mutex.wait();
     //fprintf (stdout,"Odometry Thread: Curr motor velocities: %+3.3f %+3.3f %+3.3f\n", velA, velB, velC);
-    fprintf (stdout,"Odometry Thread: \
-    %+3.3f %+3.3f %+3.3f ******** \
-    %+3.3f %+3.3f %+3.3f ******** \
-    vx:%+3.3f vy:%+3.3f vt:%+3.3f ******** \
-    x: %+3.3f y: %+3.3f t: %+3.3f ******** \
-    \n", enc[0]*57, enc[1]*57, enc[2]*57, encv[0]*57, encv[1]*57, encv[2]*57, odom_vel_x, odom_vel_y, ikart_vel_theta,  odom_x, odom_y,odom_theta );
+    fprintf (stdout,"Odometry Thread:\nenc1:%+9.1f enc2:%+9.1f enc3:%+9.1f ******** env1:%+9.3f env2:%+9.3f env3:%+9.3f\n",
+    enc[0]*57, enc[1]*57, enc[2]*57, encv[0]*57, encv[1]*57, encv[2]*57);
+    
+    fprintf (stdout,"ivlx:%+9.3f ivly:%+9.3f                ******** ovlx:%+9.3f ovly:%+9.3f ovlt:%+9.3f ******** x: %+5.3f y: %+5.3f t: %+5.3f\n",
+    ikart_vel_x, ikart_vel_y, odom_vel_x, odom_vel_y, ikart_vel_theta,  odom_x, odom_y,odom_theta );
     mutex.post();
 }
 
@@ -183,8 +182,8 @@ void Odometry::compute()
     //printf ("%+5.5f, %+5.5f  %+5.5f\n", encv[0], encv[1], encv[2]);
     //BEWARE: the following variables are expressed in the fixed odometry reference frame,
     //not in the relative iKart reference frame.
-    ikart_vel_x    = ikart_cart_vels[0]*geom_r;
-    ikart_vel_y    = ikart_cart_vels[1]*geom_r;
+    ikart_vel_x    = ikart_cart_vels[1]*geom_r;
+    ikart_vel_y    = ikart_cart_vels[0]*geom_r;
     odom_vel_x     = odom_cart_vels[1]*geom_r;
     odom_vel_y     = odom_cart_vels[0]*geom_r;
     ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);

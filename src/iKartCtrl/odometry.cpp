@@ -187,7 +187,7 @@ void Odometry::compute()
     ikart_vel_y    = ikart_cart_vels[1]*geom_r;
     odom_vel_x     = odom_cart_vels[1]*geom_r;
     odom_vel_y     = odom_cart_vels[0]*geom_r;
-    ikart_vel_lin   = odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y;
+    ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);
     if (ikart_vel_lin<0.001)
     {
         odom_vel_heading  = 0;

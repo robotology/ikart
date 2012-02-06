@@ -83,18 +83,23 @@ private:
     yarp::sig::Vector encv;
 
 public:
-    //estimated cartesian velocity
-    double              vel_x;
-    double              vel_y;
-    double              vel_lin;
-    double              vel_heading;
-    double              vel_theta;
+    //estimated cartesian velocity in the fixed odometry reference frame
+    double              odom_vel_x;
+    double              odom_vel_y;
+    double              odom_vel_heading;
+
+    //estimated cartesian velocity in the ikart realtive reference frame
+    double              ikart_vel_lin;
+    double              ikart_vel_x;
+    double              ikart_vel_y;
+    double              ikart_vel_heading;
+    double              ikart_vel_theta;
 
     //estimated odometer 
     double              traveled_distance;
     double              traveled_angle;
 
-    //estimated cartesian pos
+    //estimated cartesian pos in the fixed odometry reference frame
     double              odom_x;
     double              odom_y;
     double              odom_theta;

@@ -19,6 +19,22 @@
 #include "controlThread.h"
 #include "filters.h"
 
+void ControlThread::apply_ratio_limiter (double& linear_speed, double& angular_speed)
+{
+    if (lin_ang_ratio<0.0)  lin_ang_ratio = 0.0;
+    if (lin_ang_ratio>1.0)  lin_ang_ratio = 1.0;
+    if (linear_speed>100)   linear_speed = 100;
+    if (linear_speed<-100)  linear_speed = -100;
+    if (angular_speed>100)  angular_speed = 100;
+    if (angular_speed<-100) angular_speed = -100;
+    
+    if (fabs(linear_speed) + fabs(angular_speed) > 100) 
+    {
+        linear_speed = linear_speed * lin_ang_ratio;
+        angular_speed = angular_speed *(1-lin_ang_ratio);
+    }
+}
+
 void ControlThread::apply_ratio_limiter (double max, double& linear_speed, double& angular_speed)
 {
     if (lin_ang_ratio<0.0)  lin_ang_ratio = 0.0;
@@ -29,12 +45,13 @@ void ControlThread::apply_ratio_limiter (double max, double& linear_speed, doubl
     if (angular_speed < -max*(1-lin_ang_ratio)) angular_speed = -max*(1-lin_ang_ratio);
 }
 
-void ControlThread::apply_pre_filter (double& linear_speed, double& angular_speed)
+void ControlThread::apply_input_filter (double& linear_speed, double& angular_speed, double& desired_direction)
 {
-    if (pre_filter_enabled)
+    if (input_filter_enabled)
     {
-        angular_speed  = ikart_filters::lp_filter_8Hz(angular_speed,7);
-        linear_speed   = ikart_filters::lp_filter_8Hz(linear_speed,8);
+        angular_speed     = ikart_filters::lp_filter_8Hz(angular_speed,7);
+        linear_speed      = ikart_filters::lp_filter_8Hz(linear_speed,8);
+        desired_direction = ikart_filters::lp_filter_8Hz(desired_direction,9);
     }
 }
 
@@ -82,14 +99,16 @@ void ControlThread::set_pid (string id, double kp, double ki, double kd)
 void ControlThread::apply_control_speed_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction,
                            const double ref_linear_speed, const double ref_angular_speed, const double ref_desired_direction)
 {
-    double feedback_linear_speed = this->odometry_handler->vel_lin / MAX_LINEAR_VEL* 100;
-    double feedback_angular_speed = this->odometry_handler->vel_theta / MAX_ANGULAR_VEL * 100;
-    double feedback_desired_direction = this->odometry_handler->vel_heading;
+    double feedback_linear_speed = this->odometry_handler->ikart_vel_lin / MAX_LINEAR_VEL* 200;
+    double feedback_angular_speed = this->odometry_handler->ikart_vel_theta / MAX_ANGULAR_VEL * 200;
+    double feedback_desired_direction = this->odometry_handler->ikart_vel_heading;
     yarp::sig::Vector tmp;
     tmp = linear_speed_pid->compute(yarp::sig::Vector(1,ref_linear_speed),yarp::sig::Vector(1,feedback_linear_speed));
-    pidout_linear_speed  = exec_pwm_gain * tmp[0];
+ //   pidout_linear_speed  = exec_pwm_gain * tmp[0];
+    pidout_linear_speed  = 1.0 * tmp[0];
     tmp = angular_speed_pid->compute(yarp::sig::Vector(1,ref_angular_speed),yarp::sig::Vector(1,feedback_angular_speed));
-    pidout_angular_speed = exec_pwm_gain * tmp[0];
+   // pidout_angular_speed = exec_pwm_gain * tmp[0];
+    pidout_angular_speed = 1.0 * tmp[0];
     tmp = direction_speed_pid->compute(yarp::sig::Vector(1,ref_desired_direction),yarp::sig::Vector(1,feedback_desired_direction));
     pidout_direction     = tmp[0];
         pidout_linear_speed=0;
@@ -131,9 +150,9 @@ void ControlThread::apply_control_speed_pid(double& pidout_linear_speed,double& 
 void ControlThread::apply_control_openloop_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction,
                            const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction)
 {
-    double feedback_linear_speed = this->odometry_handler->vel_lin / MAX_LINEAR_VEL* 100;
-    double feedback_angular_speed = this->odometry_handler->vel_theta / MAX_ANGULAR_VEL * 100;
-    double feedback_desired_direction = this->odometry_handler->vel_heading;
+    double feedback_linear_speed = this->odometry_handler->ikart_vel_lin / MAX_LINEAR_VEL* 100;
+    double feedback_angular_speed = this->odometry_handler->ikart_vel_theta / MAX_ANGULAR_VEL * 100;
+    double feedback_desired_direction = this->odometry_handler->ikart_vel_heading;
     yarp::sig::Vector tmp;
     tmp = linear_ol_pid->compute(yarp::sig::Vector(1,ref_linear_speed),yarp::sig::Vector(1,feedback_linear_speed));
     pidout_linear_speed  = exec_pwm_gain * tmp[0];
@@ -181,8 +200,11 @@ void ControlThread::run()
     double pidout_angular_speed = 0;
     double pidout_direction     = 0;
 
-
+    //input_linear_speed and input_angular speed ranges are: 0-100
     this->motor_handler->read_inputs(&input_linear_speed, &input_angular_speed, &input_desired_direction, &input_pwm_gain);
+    apply_input_filter(input_linear_speed, input_angular_speed,input_desired_direction);
+    apply_ratio_limiter(input_linear_speed, input_angular_speed);
+
     if (!lateral_movement_enabled) 
     {
         if (input_desired_direction>-90 && input_desired_direction <90) input_desired_direction = 0;
@@ -190,7 +212,6 @@ void ControlThread::run()
         else if (input_desired_direction >= +90) input_desired_direction = 180;
     }
 
-    //From here we suppouse that values are already in the format 0-100%
     exec_pwm_gain = input_pwm_gain / 100.0 * 1.0;
     exec_desired_direction = input_desired_direction;
 
@@ -199,49 +220,49 @@ void ControlThread::run()
     if (ikart_control_type == IKART_CONTROL_OPENLOOP_NO_PID)
     {
         MAX_VALUE = 1250; // Maximum joint PWM
-        exec_linear_speed  = input_linear_speed  / 100.0 * MAX_VALUE;
-        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE;
-
-        apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
-        apply_pre_filter(exec_linear_speed, exec_angular_speed);
-        pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
-        pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
+        exec_linear_speed  = input_linear_speed  / 100.0 * MAX_VALUE * exec_pwm_gain;
+        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
+        
+        pidout_linear_speed  = exec_linear_speed;
+        pidout_angular_speed = exec_angular_speed;
         pidout_direction     = exec_desired_direction;
         this->motor_handler->execute_openloop(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
     else if (ikart_control_type == IKART_CONTROL_SPEED_NO_PID)
     {
         MAX_VALUE = 200; // Maximum joint speed (deg/s)
-        exec_linear_speed = input_linear_speed / 100.0 * MAX_VALUE;
-        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE;
+        exec_linear_speed = input_linear_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
+        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
 
-        apply_ratio_limiter(MAX_VALUE, exec_linear_speed, exec_angular_speed);
-        apply_pre_filter(exec_linear_speed, exec_angular_speed);
-        pidout_linear_speed  = exec_pwm_gain * exec_linear_speed;
-        pidout_angular_speed = exec_pwm_gain * exec_angular_speed;
+//#define PRINT_CURRENT_VEL
+#ifdef  PRINT_CURRENT_VEL
+        //printf("%+5.5f, %+5.5f, %+5.5f\n", input_angular_speed /100 * this->motor_handler->get_max_angular_vel(), this->odometry_handler->ikart_vel_theta, exec_angular_speed);
+        printf("%+5.5f, %+5.5f, %+5.5f\n", input_linear_speed /100 * this->motor_handler->get_max_linear_vel(), this->odometry_handler->ikart_vel_lin, exec_linear_speed);
+#endif
+
+        pidout_linear_speed  = exec_linear_speed;
+        pidout_angular_speed = exec_angular_speed;
         pidout_direction     = exec_desired_direction;
         this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
     else if (ikart_control_type == IKART_CONTROL_OPENLOOP_PID)
     {
-        exec_linear_speed  = input_linear_speed  * exec_pwm_gain;
-        exec_angular_speed = input_angular_speed * exec_pwm_gain;
-
-        //exec_linear_speed = linear_speed / 100.0 * 0.1/*MAX_VALUE*/;  //0.1 m/s
-        //exec_angular_speed = angular_speed / 100.0 * 20/*MAX_VALUE*/; //20 deg/s
-
+        MAX_VALUE = 1250; // Maximum joint PWM
+        exec_linear_speed  = input_linear_speed  / 100.0 * MAX_VALUE * exec_pwm_gain;
+        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
+        
         apply_control_openloop_pid(pidout_linear_speed,pidout_angular_speed,pidout_direction,exec_linear_speed,exec_angular_speed,exec_desired_direction);
         this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
     else if (ikart_control_type == IKART_CONTROL_SPEED_PID)
     {
-        exec_linear_speed  = input_linear_speed  * exec_pwm_gain;
-        exec_angular_speed = input_angular_speed * exec_pwm_gain;
-
-        //exec_linear_speed = linear_speed / 100.0 * 0.1/*MAX_VALUE*/;  //0.1 m/s
-        //exec_angular_speed = angular_speed / 100.0 * 20/*MAX_VALUE*/; //20 deg/s
-
+        MAX_VALUE = 200; // Maximum joint speed (deg/s)
+        exec_linear_speed = input_linear_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
+        exec_angular_speed = input_angular_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
+        
         apply_control_speed_pid(pidout_linear_speed,pidout_angular_speed,pidout_direction,exec_linear_speed,exec_angular_speed,exec_desired_direction);
+        
+        pidout_angular_speed += exec_angular_speed;
         this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
     else

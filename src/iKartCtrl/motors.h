@@ -40,8 +40,8 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-#define DEFAULT_MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
-#define DEFAULT_MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
+#define DEFAULT_MAX_LINEAR_VEL  0.42  // maximum linear  velocity (m/s)
+#define DEFAULT_MAX_ANGULAR_VEL 24.0  // maximum angular velocity (deg/s)
 
 class MotorControl
 {
@@ -125,7 +125,8 @@ public:
     void read_percent_cart  (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
     void read_speed_polar   (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
     void read_speed_cart    (const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain);
-
+    double get_max_linear_vel()   {return max_linear_vel;}
+    double get_max_angular_vel()  {return max_angular_vel;}
 };
 
 #endif

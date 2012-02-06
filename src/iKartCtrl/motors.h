@@ -40,8 +40,8 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-#define MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
-#define MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
+#define DEFAULT_MAX_LINEAR_VEL  0.4  // maximum linear  velocity (m/s)
+#define DEFAULT_MAX_ANGULAR_VEL 24.0 // maximum angular velocity (deg/s)
 
 class MotorControl
 {
@@ -81,6 +81,8 @@ private:
     double              FA;
     double              FB;
     double              FC;
+    double              max_linear_vel;
+    double              max_angular_vel;
 
 protected:
     ResourceFinder            &rf;

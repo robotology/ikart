@@ -191,7 +191,15 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     aux_desired_direction = 0;
     aux_pwm_gain = 0;
 
+    max_linear_vel = DEFAULT_MAX_LINEAR_VEL;
+    max_angular_vel = DEFAULT_MAX_ANGULAR_VEL;
     motors_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("motors_filter_enabled",Value(1),"1= motors low pass filter enabled, 0 = disabled").asInt()>0);
+    double tmp =0;
+    tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_angular_vel",Value(0),"maximum angular velocity of the platform [deg/s]")).asDouble();
+    if (tmp>0 && tmp < DEFAULT_MAX_ANGULAR_VEL) max_angular_vel = tmp;
+    tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_linear_vel",Value(0),"maximum linear velocity of the platform [m/s]")).asDouble();
+    if (tmp>0 && tmp < DEFAULT_MAX_LINEAR_VEL) max_linear_vel = tmp;
+
     thread_period = _period;
     localName = iKartCtrl_options.find("local").asString();
 }
@@ -230,8 +238,8 @@ void MotorControl::read_percent_cart(const Bottle *b, double& des_dir, double& l
 void MotorControl::read_speed_polar(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
 {
     des_dir  = b->get(1).asDouble();
-    lin_spd  = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
-    ang_spd  = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
+    lin_spd  = b->get(2).asDouble() * 100.0 / max_linear_vel;
+    ang_spd  = b->get(3).asDouble() * 100.0 / max_angular_vel;
     lin_spd  = (lin_spd<+100)  ? lin_spd  : +100; 
     lin_spd  = (lin_spd>-100)  ? lin_spd  : -100;
     ang_spd  = (ang_spd<+100)  ? ang_spd  : +100; 
@@ -241,9 +249,9 @@ void MotorControl::read_speed_polar(const Bottle *b, double& des_dir, double& li
 
 void MotorControl::read_speed_cart(const Bottle *b, double& des_dir, double& lin_spd, double& ang_spd, double& pwm_gain)
 {
-    double x_speed        = b->get(1).asDouble() * 100.0 / MAX_LINEAR_VEL;
-    double y_speed        = b->get(2).asDouble() * 100.0 / MAX_LINEAR_VEL;
-    double t_speed        = b->get(3).asDouble() * 100.0 / MAX_ANGULAR_VEL;
+    double x_speed        = b->get(1).asDouble() * 100.0 / max_linear_vel;
+    double y_speed        = b->get(2).asDouble() * 100.0 / max_linear_vel;
+    double t_speed        = b->get(3).asDouble() * 100.0 / max_angular_vel;
     des_dir  = atan2(x_speed,y_speed) * 180.0 / 3.14159265;
     lin_spd  = sqrt (x_speed*x_speed+y_speed*y_speed);
     ang_spd  = t_speed;

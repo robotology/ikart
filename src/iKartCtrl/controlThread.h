@@ -262,6 +262,10 @@ public:
             motor_handler->turn_on_control();
         }
 
+        if (rf.check("speed_pid"))            this->set_control_type("speed_pid");
+        else if (rf.check("speed_no_pid"))    this->set_control_type("speed_no_pid");
+        else if (rf.check("openloop_pid"))    this->set_control_type("openloop_pid");
+        else if (rf.check("openloop_no_pid")) this->set_control_type("openloop_no_pid");
         return true;
     }
 
@@ -277,7 +281,8 @@ public:
     bool set_control_type (string s);
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
-    void apply_pre_filter (double& linear_speed, double& angular_speed);
+    void apply_ratio_limiter (double& linear_speed, double& angular_speed);
+    void apply_pre_filter (double& linear_speed, double& angular_speed, double& desired_direction);
     void set_pre_filter(bool b) {pre_filter_enabled=b;}
     
     void apply_control_openloop_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction, const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction);

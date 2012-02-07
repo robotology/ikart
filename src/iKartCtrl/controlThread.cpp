@@ -28,10 +28,12 @@ void ControlThread::apply_ratio_limiter (double& linear_speed, double& angular_s
     if (angular_speed>100)  angular_speed = 100;
     if (angular_speed<-100) angular_speed = -100;
     
-    if (fabs(linear_speed) + fabs(angular_speed) > 100) 
+    double tot = fabs(linear_speed) + fabs(angular_speed);
+    if (tot> 100)
     {
-        linear_speed = linear_speed * lin_ang_ratio;
-        angular_speed = angular_speed *(1-lin_ang_ratio);
+        double computed_lin_ang_ratio = (tot-100.0)/100.0*lin_ang_ratio; 
+        linear_speed = linear_speed * computed_lin_ang_ratio;
+        angular_speed = angular_speed *(1-computed_lin_ang_ratio);
     }
 }
 

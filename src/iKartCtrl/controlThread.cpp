@@ -35,13 +35,16 @@ void ControlThread::apply_ratio_limiter (double& linear_speed, double& angular_s
         //the adaptive limiter will be used (current ratio)
         double coeff = 0.0;
         if (lin_ang_ratio>0.0) coeff = (tot-100.0)/100.0;
+        double angular_speed_A, angular_speed_B, linear_speed_A, linear_speed_B;
 
-        double angular_speed_A = angular_speed *(1-lin_ang_ratio);
-        double linear_speed_A  = linear_speed * lin_ang_ratio;
+        angular_speed_A = angular_speed *(1-lin_ang_ratio);
+        linear_speed_A  = linear_speed * lin_ang_ratio;
 
         double current_ratio = fabs(linear_speed/angular_speed);
-        double angular_speed_B = 100.0/(current_ratio+1.0);
-        double linear_speed_B  = 100.0-angular_speed_B;
+        if (angular_speed>0) angular_speed_B =  100.0/(current_ratio+1.0);
+        else                 angular_speed_B = -100.0/(current_ratio+1.0);
+        if (angular_speed>0) linear_speed_B  =  100.0-fabs(angular_speed_B);
+        else                 linear_speed_B  = -100.0+fabs(angular_speed_B);
 
         linear_speed  = linear_speed_A  *     (coeff) + linear_speed_B  * (1.0-coeff);
         angular_speed = angular_speed_A *     (coeff) + angular_speed_B * (1.0-coeff);

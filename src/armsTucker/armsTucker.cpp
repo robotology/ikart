@@ -1,0 +1,217 @@
+/* 
+ * Copyright (C)2011  Department of Robotics Brain and Cognitive Sciences - Istituto Italiano di Tecnologia
+ * Author: Marco Randazzo
+ * email:  marco.randazzo@iit.it
+ * website: www.robotcub.org
+ * Permission is granted to copy, distribute, and/or modify this program
+ * under the terms of the GNU General Public License, version 2 or any
+ * later version published by the Free Software Foundation.
+ *
+ * A copy of the license can be found at
+ * http://www.robotcub.org/icub/license/gpl.txt
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details
+*/
+
+#include <stdio.h>
+#include <yarp/os/Network.h>
+#include <yarp/dev/ControlBoardInterfaces.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/dev/PolyDriver.h>
+#include <yarp/os/Time.h>
+#include <yarp/sig/Vector.h>
+
+#include <string>
+
+using namespace yarp::dev;
+using namespace yarp::sig;
+using namespace yarp::os;
+
+class TuckerModule: public RFModule
+{
+    enum command_type {CLOSE = 0, OPEN =1};
+    PolyDriver       *left_arm_device;
+    PolyDriver       *right_arm_device;
+    IPositionControl *l_pos ;
+    IEncoders        *l_encs;
+    IPositionControl *r_pos ;
+    IEncoders        *r_encs;
+    bool             running;
+    Port             rpcPort;
+
+public:
+    TuckerModule()
+    {
+        left_arm_device  = 0;
+        right_arm_device = 0;
+        l_pos  = 0;
+        l_encs = 0;
+        r_pos  = 0;
+        r_encs = 0;
+        running = true;
+    }
+
+    void tuck(int tuck_cmd)
+    {
+        Vector command;
+        command.resize  (16,0.0);
+        if (tuck_cmd==OPEN)
+        {
+            command[0]=-30;
+            command[1]=30;
+            command[2]=-0;
+            command[3]=45;
+        }
+        else if (tuck_cmd==CLOSE)
+        {
+            command[0]=10;
+            command[1]=15;
+            command[2]=0;
+            command[3]=25;
+        }
+        if (l_pos) l_pos->positionMove(command.data());
+        if (r_pos) r_pos->positionMove(command.data());
+    }
+
+    virtual bool configure(ResourceFinder &rf)
+    {
+        rpcPort.open("/tucker/rpc");
+        attach(rpcPort);
+
+        std::string robotName = rf.check("robot",yarp::os::Value("icub")).asString().c_str();
+
+        command_type tuck_cmd = CLOSE;
+        if      (rf.check("close")) tuck_cmd = CLOSE;
+        else if (rf.check("open"))  tuck_cmd = OPEN;
+
+        std::string localPorts;
+        std::string remotePorts;
+
+        Property left_options;
+        left_options.put("device", "remote_controlboard");
+        remotePorts="/"+robotName+"/left_arm";
+        localPorts="/tucker/left_arm";
+        left_options.put("local",  localPorts.c_str());
+        left_options.put("remote", remotePorts.c_str());
+
+        Property right_options;
+        right_options.put("device", "remote_controlboard");
+        remotePorts="/"+robotName+"/right_arm";
+        localPorts="/tucker/right_arm";
+        right_options.put("local",  localPorts.c_str());
+        right_options.put("remote", remotePorts.c_str());
+
+        // create the devices
+        left_arm_device  = new PolyDriver (left_options);
+        right_arm_device = new PolyDriver (right_options);
+        if (!left_arm_device->isValid())
+        {
+            printf("Error opening the left arm device\n");
+        }
+        if (!right_arm_device->isValid())
+        {
+            printf("Error opening the right arm device\n");
+        }
+
+        //crate the interfaces
+        bool ok = true;
+        if (left_arm_device)
+        {
+            ok &= left_arm_device->view (l_pos);
+            ok &= left_arm_device->view (l_encs);
+        }
+        if (right_arm_device)
+        {
+            ok &= right_arm_device->view(r_pos);
+            ok &= right_arm_device->view(r_encs);
+        }
+
+        if (!ok)
+        {
+            printf("Problems acquiring interfaces\n");
+            return 0;
+        }
+
+        const int nj=15;
+        Vector encoders;
+        Vector command;
+        Vector accs;
+        Vector spds;
+        encoders.resize (nj,0.0);
+        accs.resize     (nj,50.0);
+        spds.resize     (nj,10.0);
+
+        if (r_pos) r_pos->setRefAccelerations (accs.data());
+        if (l_pos) l_pos->setRefAccelerations (accs.data());
+        if (r_pos) r_pos->setRefSpeeds        (spds.data());
+        if (l_pos) l_pos->setRefSpeeds        (spds.data());
+
+        //execute the position command
+        tuck(tuck_cmd);
+
+        //check for auto closure
+        if (rf.check("quit")) running = false;
+        return true;
+    }
+
+    bool respond(const Bottle& command, Bottle& reply) 
+    {
+        reply.clear(); 
+        if (command.get(0).asString()=="help")
+        {
+            reply.addString("Available commands are:");
+            reply.addString("open");
+            reply.addString("close");
+        }
+        else if (command.get(0).asString()=="open")
+        {
+            tuck(OPEN);
+            reply.addString("opening arms");
+        }
+        else if (command.get(0).asString()=="close")
+        {
+            tuck(CLOSE);
+            reply.addString("closing arms");
+        }
+        else
+        {
+            reply.addString("Unknown command.");
+        }
+        return true;
+    }
+
+    virtual bool close()
+    {
+        if (left_arm_device) left_arm_device->close();
+        if (right_arm_device) right_arm_device->close();
+        rpcPort.close();
+        return true;
+    }
+
+    virtual double getPeriod()    { return 1.0;  }
+    virtual bool   updateModule() { return running; }
+};
+
+int main(int argc, char *argv[]) 
+{
+    Network yarp;
+
+    if (!yarp.checkNetwork())
+    {
+        fprintf(stderr, "Sorry YARP network does not seem to be available, is the yarp server available?\n");
+        return -1;
+    }
+
+    TuckerModule mod;
+
+    ResourceFinder rf;
+    rf.setVerbose(true);
+    rf.configure("ICUB_ROOT",argc,argv);
+
+    return mod.runModule(rf);
+
+    return 0;
+}

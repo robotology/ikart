@@ -91,7 +91,8 @@ void MotorControl::updateControlMode()
 
 void MotorControl::printStats()
 {
-    fprintf (stdout,"Motor thread timeouts: %d joy: %d cmd %d\n",thread_timeout_counter, joy_timeout_counter,mov_timeout_counter);
+    fprintf (stdout,"Motor thread:\n");
+    fprintf (stdout,"timeouts: %d joy: %d cmd %d\n",thread_timeout_counter, joy_timeout_counter,mov_timeout_counter);
 
     if (joystick_received>0) 
         fprintf (stdout,"Under joystick control (%d)\n",joystick_received);
@@ -108,7 +109,7 @@ void MotorControl::printStats()
             fprintf (stdout,"F%d: %+.1f\n",i,val);	
     }
 
-    fprintf (stdout,"\n");
+    //fprintf (stdout,"\n");
 }
 
 void MotorControl::close()

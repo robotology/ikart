@@ -21,19 +21,31 @@
 
 void ControlThread::apply_ratio_limiter (double& linear_speed, double& angular_speed)
 {
-    if (lin_ang_ratio<0.0)  lin_ang_ratio = 0.0;
     if (lin_ang_ratio>1.0)  lin_ang_ratio = 1.0;
     if (linear_speed>100)   linear_speed = 100;
     if (linear_speed<-100)  linear_speed = -100;
     if (angular_speed>100)  angular_speed = 100;
     if (angular_speed<-100) angular_speed = -100;
-    
+
     double tot = fabs(linear_speed) + fabs(angular_speed);
+
     if (tot> 100)
     {
-        double computed_lin_ang_ratio = (tot-100.0)/100.0*lin_ang_ratio; 
-        linear_speed = linear_speed * computed_lin_ang_ratio;
-        angular_speed = angular_speed *(1-computed_lin_ang_ratio);
+        //if lin_ang_ratio is negative, coeff will be 0 and
+        //the adaptive limiter will be used (current ratio)
+        double coeff = 0.0;
+        if (lin_ang_ratio>0.0) coeff = (tot-100.0)/100.0;
+
+        double angular_speed_A = angular_speed *(1-lin_ang_ratio);
+        double linear_speed_A  = linear_speed * lin_ang_ratio;
+
+        double current_ratio = fabs(linear_speed/angular_speed);
+        double angular_speed_B = 100.0/(current_ratio+1.0);
+        double linear_speed_B  = 100.0-angular_speed_B;
+
+        linear_speed  = linear_speed_A  *     (coeff) + linear_speed_B  * (1.0-coeff);
+        angular_speed = angular_speed_A *     (coeff) + angular_speed_B * (1.0-coeff);
+
     }
 }
 
@@ -193,11 +205,6 @@ void ControlThread::run()
 {
     this->odometry_handler->compute();
 
-    double input_linear_speed      = 0;
-    double input_angular_speed     = 0;
-    double input_desired_direction = 0;
-    double input_pwm_gain          = 0;
-
     double pidout_linear_speed  = 0;
     double pidout_angular_speed = 0;
     double pidout_direction     = 0;
@@ -276,6 +283,13 @@ void ControlThread::run()
         exec_desired_direction = 0;
         this->motor_handler->execute_none();
     }
+}
+
+void ControlThread::printStats()
+{
+    fprintf (stdout,"Control thread:\n");
+    fprintf (stdout,"Input command: %+5.0f %+5.0f %+5.0f  %+5.0f      ",input_linear_speed, input_angular_speed, input_desired_direction, input_pwm_gain);
+    fprintf (stdout, "***** %+5.2f %+5.2f\n", input_linear_speed/100.0*this->get_motor_handler()->get_max_linear_vel(), input_angular_speed/100.0*this->get_motor_handler()->get_max_angular_vel());
 }
 
 bool ControlThread::set_control_type (string s)

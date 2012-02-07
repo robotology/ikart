@@ -37,8 +37,6 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-#define PRINT_STATUS_PER    0.5     // [s]
-
 class CompassThread: public yarp::os::RateThread
 {
     protected:
@@ -63,7 +61,7 @@ class CompassThread: public yarp::os::RateThread
     {
         timeout_counter     = 0;
         inertial_data.resize(12,0.0);
-        compass_data.resize(3,0.0);    
+        compass_data.resize(3,0.0);
     }
 
     virtual bool threadInit()
@@ -74,23 +72,7 @@ class CompassThread: public yarp::os::RateThread
         return true;
     }
 
-    virtual void run()
-    {
-        yarp::sig::Vector *iner = port_inertial_input.read(false);
-        if (iner) inertial_data = *iner;
-        else timeout_counter++;
-
-        //add here kinematics computation
-        compass_data[0]=inertial_data[2];
-        compass_data[1]=inertial_data[1];
-        compass_data[2]=inertial_data[0];
-
-        yarp::sig::Vector &pcompass_data=port_compass_output.prepare();
-        pcompass_data=compass_data;
-        //lastStateStamp.update();
-        //port_compass_data.setEnvelope(lastStateStamp);
-        port_compass_output.write();
-    }
+    virtual void run();
 
     virtual void threadRelease()
     {    
@@ -99,10 +81,9 @@ class CompassThread: public yarp::os::RateThread
         port_compass_output.interrupt();
         port_compass_output.close();
     }
-    void printStats()
-    {
-        fprintf (stdout,"Compass thread timeouts: %d\n",timeout_counter);
-    }
+
+    void printStats();
+
 };
 
 #endif

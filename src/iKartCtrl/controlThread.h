@@ -64,6 +64,12 @@ private:
     int                 ikart_control_type;
     int                 thread_timeout_counter;
 
+    //the current command
+    double input_linear_speed;
+    double input_angular_speed;
+    double input_desired_direction;
+    double input_pwm_gain;
+
     //movement control variables (internally computed)
     double              exec_linear_speed;
     double              exec_angular_speed;
@@ -124,6 +130,10 @@ public:
         both_lin_ang_enabled     = true;
         thread_period            = _period;
 
+        input_linear_speed       = 0;
+        input_angular_speed      = 0;
+        input_desired_direction  = 0;
+        input_pwm_gain           = 0;
         linear_speed_pid         = 0;
         angular_speed_pid        = 0;
         direction_speed_pid      = 0;
@@ -279,6 +289,7 @@ public:
 
     virtual void run();
     bool set_control_type (string s);
+    void printStats();
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
     void apply_ratio_limiter (double& linear_speed, double& angular_speed);

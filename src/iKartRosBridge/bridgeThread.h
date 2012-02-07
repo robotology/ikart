@@ -84,8 +84,8 @@ class BridgeThread: public yarp::os::RateThread
     ros::Subscriber          command_sub;
     tf::TransformBroadcaster *tf_broadcaster;
     tf::TransformListener    *tf_listener;
-    Property                 iKartCtrl_options;
     ResourceFinder           &rf;
+    Property                 iKartCtrl_options;
     BufferedPort<Bottle>     input_laser_port; 
     BufferedPort<Bottle>     input_odometry_port; 
     BufferedPort<Bottle>     input_odometer_port; 
@@ -130,7 +130,7 @@ class BridgeThread: public yarp::os::RateThread
         command_x = +event.linear.x;
         command_y = -event.linear.y;
         command_t = -event.angular.z*180.0/M_PI;
-        mutex_mutex.post();
+        mutex_command.post();
     }
 
     virtual bool threadInit()

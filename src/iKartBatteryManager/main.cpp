@@ -259,7 +259,7 @@ public:
     #else
         string cmd;
         fprintf(stderr,"%s", msg.c_str());
-        string cmd = "echo "+msg+" | wall";
+        cmd = "echo "+msg+" | wall";
         system(cmd.c_str());
 
         cmd = "sudo shutdown -h 2 "+msg;

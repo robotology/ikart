@@ -227,7 +227,7 @@ public:
             reply.addString("run");
             reply.addString("idle");
             reply.addString("reset_odometry");
-            reply.addString("set_prefilter 0/1");
+            reply.addString("set_prefilter 0/1/2/4/8");
             reply.addString("set_motors_filter 0/1");
             reply.addString("change_pid <identif> <kp> <ki> <kd>");
             reply.addString("change_ctrl_mode <type_string>");
@@ -250,9 +250,9 @@ public:
             if (control_thr)
             {
                 if (command.get(1).asInt()>0) 
-                    {control_thr->set_prefilter(true); reply.addString("Prefilter on");}
+                    {control_thr->set_input_filter(command.get(1).asInt()); reply.addString("Prefilter on");}
                 else
-                    {control_thr->set_prefilter(false); reply.addString("Prefilter off");}
+                    {control_thr->set_input_filter(0); reply.addString("Prefilter off");}
             }
             return true;
         }

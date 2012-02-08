@@ -87,7 +87,7 @@ private:
     //controller parameters
     double              lin_ang_ratio;
     bool                both_lin_ang_enabled;
-    bool                input_filter_enabled;
+    int                 input_filter_enabled;
     bool                lateral_movement_enabled;
     bool                debug_enabled;
 
@@ -111,7 +111,6 @@ protected:
 public:
     Odometry* const     get_odometry_handler() {return odometry_handler;}
     MotorControl* const get_motor_handler()    {return motor_handler;}
-    void                set_prefilter(bool b)  {input_filter_enabled=b;}
     void                enable_debug(bool b);
 
     ControlThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -122,7 +121,7 @@ public:
         thread_timeout_counter   = 0;
         ikart_control_type       = IKART_CONTROL_NONE;
 
-        input_filter_enabled     = (iKartCtrl_options.findGroup("GENERAL").check("input_filter_enabled",Value(0),"1= pre filter enabled, 0 = disabled").asInt()>0);
+        input_filter_enabled     = iKartCtrl_options.findGroup("GENERAL").check("input_filter_enabled",Value(0),"input  filter frequency (1/2/4/8Hz, 0 = disabled)").asInt();
         lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio            = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
@@ -293,8 +292,8 @@ public:
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);
     void apply_ratio_limiter (double& linear_speed, double& angular_speed);
-    void apply_input_filter (double& linear_speed, double& angular_speed, double& desired_direction);
-    void set_input_filter(bool b) {input_filter_enabled=b;}
+    void apply_input_filter  (double& linear_speed, double& angular_speed, double& desired_direction);
+    void set_input_filter    (int b) {input_filter_enabled=b;}
     
     void apply_control_openloop_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction, const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction);
     void apply_control_speed_pid(double& pidout_linear_speed,double& pidout_angular_speed, double& pidout_direction, const double ref_linear_speed,const double ref_angular_speed, const double ref_desired_direction);

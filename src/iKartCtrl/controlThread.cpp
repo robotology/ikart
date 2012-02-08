@@ -64,12 +64,32 @@ void ControlThread::apply_ratio_limiter (double max, double& linear_speed, doubl
 
 void ControlThread::apply_input_filter (double& linear_speed, double& angular_speed, double& desired_direction)
 {
-    if (input_filter_enabled)
+    if (input_filter_enabled == 8)
     {
         angular_speed     = ikart_filters::lp_filter_8Hz(angular_speed,7);
         linear_speed      = ikart_filters::lp_filter_8Hz(linear_speed,8);
         desired_direction = ikart_filters::lp_filter_8Hz(desired_direction,9);
     }
+    if (input_filter_enabled == 4)
+    {
+        angular_speed     = ikart_filters::lp_filter_4Hz(angular_speed,7);
+        linear_speed      = ikart_filters::lp_filter_4Hz(linear_speed,8);
+        desired_direction = ikart_filters::lp_filter_4Hz(desired_direction,9);
+    }
+    if (input_filter_enabled == 2)
+    {
+        angular_speed     = ikart_filters::lp_filter_2Hz(angular_speed,7);
+        linear_speed      = ikart_filters::lp_filter_2Hz(linear_speed,8);
+        desired_direction = ikart_filters::lp_filter_2Hz(desired_direction,9);
+    }
+    if (input_filter_enabled == 1)
+    {
+        angular_speed     = ikart_filters::lp_filter_1Hz(angular_speed,7);
+        linear_speed      = ikart_filters::lp_filter_1Hz(linear_speed,8);
+        desired_direction = ikart_filters::lp_filter_1Hz(desired_direction,9);
+    }
+
+
 }
 
 void ControlThread::enable_debug(bool b)

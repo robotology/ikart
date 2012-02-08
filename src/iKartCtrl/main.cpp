@@ -358,7 +358,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"Laser thread not running\n");
+            fprintf(stdout,"* Laser thread:\nnot running\n");
         }
         if (control_thr)
         {
@@ -369,7 +369,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"Motor thread not running\n");
+            fprintf(stdout,"* Motor thread:\nnot running\n");
         }
         if (compass_thr)
         {
@@ -377,7 +377,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"Compass thread not running\n");
+            fprintf(stdout,"* Compass thread:\nnot running\n");
         }
         fprintf(stdout,"\n");
 

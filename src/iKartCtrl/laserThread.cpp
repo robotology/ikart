@@ -86,5 +86,6 @@ void LaserThread::run()
 
 void LaserThread::printStats()
 {
-    fprintf (stdout,"Laser thread timeouts: %d\n",timeout_counter);
+    fprintf (stdout,"* Laser thread:\n");
+    fprintf (stdout,"timeouts: %d\n",timeout_counter);
 }

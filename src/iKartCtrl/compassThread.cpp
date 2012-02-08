@@ -57,6 +57,6 @@ void CompassThread::run()
 
 void CompassThread::printStats()
 {
-    fprintf (stdout,"Compass thread:\n");
+    fprintf (stdout,"* Compass thread:\n");
     fprintf (stdout,"timeouts: %d\n",timeout_counter);
 }

@@ -91,7 +91,7 @@ void MotorControl::updateControlMode()
 
 void MotorControl::printStats()
 {
-    fprintf (stdout,"Motor thread:\n");
+    fprintf (stdout,"* Motor thread:\n");
     fprintf (stdout,"timeouts: %d joy: %d cmd %d\n",thread_timeout_counter, joy_timeout_counter,mov_timeout_counter);
 
     if (joystick_received>0) 
@@ -106,7 +106,7 @@ void MotorControl::printStats()
         if (board_control_modes[i]==VOCAB_CM_IDLE)
             fprintf (stdout,"F%d: IDLE\n",i);
         else
-            fprintf (stdout,"F%d: %+.1f\n",i,val);	
+            fprintf (stdout,"F%d: %+.1f\n",i,val);
     }
 
     //fprintf (stdout,"\n");

@@ -290,7 +290,7 @@ void ControlThread::run()
 
 void ControlThread::printStats()
 {
-    fprintf (stdout,"Control thread:\n");
+    fprintf (stdout,"* Control thread:\n");
     fprintf (stdout,"Input command: %+5.0f %+5.0f %+5.0f  %+5.0f      ",input_linear_speed, input_angular_speed, input_desired_direction, input_pwm_gain);
     fprintf (stdout, "***** %+5.2f %+5.2f\n", input_linear_speed/100.0*this->get_motor_handler()->get_max_linear_vel(), input_angular_speed/100.0*this->get_motor_handler()->get_max_angular_vel());
 }

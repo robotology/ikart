@@ -174,7 +174,6 @@ public:
         {
             if (notify_10) {notify_message ("WARNING: battery charge below 10%"); notify_10=false;}
         }
-
         if (battery_data.charge < 5)
         {
             if (shutdownEnable)
@@ -197,7 +196,7 @@ public:
         verboseEnable=rf.check("verbose");
         screenEnable=rf.check("screen");
         debugEnable=rf.check("debug");
-        shutdownEnable=(rf.check("noShutdown")); //final test: must be enabled putting a !
+        shutdownEnable=(!rf.check("noShutdown"));
 
         //serial port configuration parameters
         rf.setDefaultContext("iKart/conf");
@@ -257,7 +256,7 @@ public:
         fprintf(stderr,"%s", msg.c_str());
         system(cmd.c_str());
     #else
-        string cmd = "shutdown -h -t 120 "+msg;
+        string cmd = "shutdown -h 2 "+msg;
         fprintf(stderr,"%s", msg.c_str());
         system(cmd.c_str());
     #endif
@@ -372,7 +371,7 @@ public:
         }
 
         // if the battery is not charging, checks its status of charge
-        if (first_reading && battery_data.current>0.05) check_battery_status();
+        if (first_reading && battery_data.current>0.4) check_battery_status();
 
         // print data to screen
         if (screenEnable)

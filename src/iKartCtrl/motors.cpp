@@ -132,7 +132,7 @@ bool MotorControl::open()
     if (rf.check("no_motors_filter"))
     {
         printf("\n'no_filter' option found. Turning off PWM filter.\n");
-        motors_filter_enabled=false;
+        motors_filter_enabled=0;
     }
 
     // open the interfaces for the control boards
@@ -194,7 +194,7 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
 
     max_linear_vel = DEFAULT_MAX_LINEAR_VEL;
     max_angular_vel = DEFAULT_MAX_ANGULAR_VEL;
-    motors_filter_enabled = (iKartCtrl_options.findGroup("GENERAL").check("motors_filter_enabled",Value(1),"1= motors low pass filter enabled, 0 = disabled").asInt()>0);
+    motors_filter_enabled = iKartCtrl_options.findGroup("GENERAL").check("motors_filter_enabled",Value(4),"motors filter frequency (1/2/4/8Hz, 0 = disabled)").asInt();
     double tmp =0;
     tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_angular_vel",Value(0),"maximum angular velocity of the platform [deg/s]")).asDouble();
     if (tmp>0 && tmp < DEFAULT_MAX_ANGULAR_VEL) max_angular_vel = tmp;
@@ -408,14 +408,29 @@ void MotorControl::execute_speed(double appl_linear_speed, double appl_desired_d
     decouple(appl_linear_speed,appl_desired_direction,appl_angular_speed);
 
     //Use a low pass filter to obtain smooth control
-    if (motors_filter_enabled)
+    if (motors_filter_enabled == 1) 
+    {
+        FA  = ikart_filters::lp_filter_1Hz(FA,0);
+        FB  = ikart_filters::lp_filter_1Hz(FB,1);
+        FC  = ikart_filters::lp_filter_1Hz(FC,2);
+    }
+    else if (motors_filter_enabled == 2) 
+    {
+        FA  = ikart_filters::lp_filter_2Hz(FA,0);
+        FB  = ikart_filters::lp_filter_2Hz(FB,1);
+        FC  = ikart_filters::lp_filter_2Hz(FC,2);
+    }
+    else if (motors_filter_enabled == 4) //default
     {
         FA  = ikart_filters::lp_filter_4Hz(FA,0);
         FB  = ikart_filters::lp_filter_4Hz(FB,1);
         FC  = ikart_filters::lp_filter_4Hz(FC,2);
-        //FA  = ratelim_filter_0(FA,0);
-        //FB  = ratelim_filter_0(FB,1);
-        //FC  = ratelim_filter_0(FC,2);
+    }
+    else if (motors_filter_enabled == 8)
+    {
+        FA  = ikart_filters::lp_filter_8Hz(FA,0);
+        FB  = ikart_filters::lp_filter_8Hz(FB,1);
+        FC  = ikart_filters::lp_filter_8Hz(FC,2);
     }
 
     //Apply the commands
@@ -432,7 +447,7 @@ void MotorControl::execute_openloop(double appl_linear_speed, double appl_desire
     decouple(appl_linear_speed,appl_desired_direction,appl_angular_speed);
 
     //Use a low pass filter to obtain smooth control
-    if (motors_filter_enabled)
+    if (motors_filter_enabled>0)
     {
         FA  = ikart_filters::lp_filter_4Hz(FA,0);
         FB  = ikart_filters::lp_filter_4Hz(FB,1);

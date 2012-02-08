@@ -121,8 +121,8 @@ public:
         thread_timeout_counter   = 0;
         ikart_control_type       = IKART_CONTROL_NONE;
 
-        input_filter_enabled     = iKartCtrl_options.findGroup("GENERAL").check("input_filter_enabled",Value(0),"input  filter frequency (1/2/4/8Hz, 0 = disabled)").asInt();
-        lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1= lateral moevements enabled, 0 = disabled").asInt()>0);
+        input_filter_enabled     = iKartCtrl_options.findGroup("GENERAL").check("input_filter_enabled",Value(0),"input filter frequency (1/2/4/8Hz, 0 = disabled)").asInt();
+        lateral_movement_enabled = (iKartCtrl_options.findGroup("GENERAL").check("lateral_movement_enabled",Value(1),"1 = lateral moevements enabled, 0 = disabled").asInt()>0);
         lin_ang_ratio            = iKartCtrl_options.findGroup("GENERAL").check("linear_angular_ratio",Value(0.7),"ratio (<1.0) between the maximum linear speed and the maximum angular speed.").asDouble();
 
         debug_enabled            = false;

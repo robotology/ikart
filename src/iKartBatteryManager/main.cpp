@@ -178,7 +178,7 @@ public:
         {
             if (shutdownEnable)
             {
-                emergency_shutdown ("CRITICAL WARNING: battery charge below critical level 5%. The robor will be stopped and the system will shutdown in 2mins.");
+                emergency_shutdown ("CRITICAL WARNING: battery charge below critical level 5%. The robot will be stopped and the system will shutdown in 2mins.");
                 stop_robot("/icub/quit");
                 stop_robot("/ikart/quit");
             }
@@ -252,13 +252,21 @@ public:
     void emergency_shutdown(string msg)
     {
     #ifdef WIN32
-        string cmd = "shutdown /s /t 120 /c "+msg;
+        string cmd;
+        cmd = "shutdown /s /t 120 /c "+msg;
         fprintf(stderr,"%s", msg.c_str());
         system(cmd.c_str());
     #else
-        string cmd = "shutdown -h 2 "+msg;
+        string cmd;
         fprintf(stderr,"%s", msg.c_str());
+        string cmd = "echo "+msg+" | wall";
         system(cmd.c_str());
+
+        cmd = "sudo shutdown -h 2 "+msg;
+        system(cmd.c_str());
+
+        cmd = "ssh root@pc104 halt";
+        //system(cmd.c_str());
     #endif
     }
 

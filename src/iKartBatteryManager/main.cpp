@@ -154,12 +154,14 @@ public:
         static bool notify_15=true;
         static bool notify_12=true;
         static bool notify_10=true;
+        static bool notify_0 =true;
 
         if (battery_data.charge > 20)
         {
             notify_15 = true;
             notify_12 = true;
             notify_10 = true;
+            notify_0  = true;
         }
 
         if (battery_data.charge < 15)
@@ -176,15 +178,20 @@ public:
         }
         if (battery_data.charge < 5)
         {
-            if (shutdownEnable)
+            if (notify_0)
             {
-                emergency_shutdown ("CRITICAL WARNING: battery charge below critical level 5%. The robot will be stopped and the system will shutdown in 2mins.");
-                stop_robot("/icub/quit");
-                stop_robot("/ikart/quit");
-            }
-            else
-            {
-                notify_message ("CRITICAL WARNING: battery charge reached critical level 5%, but the emergency shutodown is currently disabled!");
+                if (shutdownEnable)
+                {
+                    emergency_shutdown ("CRITICAL WARNING: battery charge below critical level 5%. The robot will be stopped and the system will shutdown in 2mins.");
+                    stop_robot("/icub/quit");
+                    stop_robot("/ikart/quit");
+                    notify_0=false;
+                }
+                else
+                {
+                    notify_message ("CRITICAL WARNING: battery charge reached critical level 5%, but the emergency shutodown is currently disabled!");
+                    notify_0=false;
+                }
             }
         }
     }
@@ -265,8 +272,8 @@ public:
         cmd = "sudo shutdown -h 2 "+msg;
         system(cmd.c_str());
 
-        cmd = "ssh root@pc104 halt";
-        //system(cmd.c_str());
+        cmd = "ssh icub@pc104 sudo shutdown -h 2";
+        system(cmd.c_str());
     #endif
     }
 

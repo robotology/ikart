@@ -86,15 +86,23 @@ void GraphicsManager::load_pixbufs()
       g_message("Gdk::PixbufError: %d",e.code());
     return;
   }
+
+  filename = pics_path+"background2.bmp";
+  printf ("loading: %s\n", filename.c_str());
+  m_refPixbuf_Background2 = Gdk::Pixbuf::create_from_file(filename.c_str());
+
   filename = pics_path+"numbers.bmp";
   printf ("loading: %s\n", filename.c_str());
   tmp_Pixbuf_Numbers    = Gdk::Pixbuf::create_from_file(filename.c_str());
+
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
   tmp_Pixbuf_Blocks     = Gdk::Pixbuf::create_from_file(filename.c_str());
+
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
   tmp_Pixbuf_Connected  = Gdk::Pixbuf::create_from_file(filename.c_str());
+
   filename = pics_path+"charge.bmp";
   printf ("loading: %s\n", filename.c_str());
   tmp_Pixbuf_Charge  = Gdk::Pixbuf::create_from_file(filename.c_str());
@@ -131,7 +139,21 @@ bool GraphicsManager::on_drawingarea_expose(GdkEventExpose *event)
 
 void GraphicsManager::update_graphics(double voltage, double current, double charge, bool connected)
 {
-  m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
+  if (charge>12)
+  {m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);}
+  else
+  {
+      static bool b = false;
+      if (b)
+      {
+          m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
+      }
+      else
+      {
+          m_refPixbuf_Background2->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
+      }
+      b = !b;
+  }
  
   //voltage = 24.2;
   //current = 20.8;

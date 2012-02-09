@@ -40,6 +40,7 @@ protected:
   //Member widgets:
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Background;
+  Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Background2;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Numbers;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Blocks;
   Glib::RefPtr<Gdk::Pixbuf> m_refPixbuf_Connected;

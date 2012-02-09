@@ -161,6 +161,7 @@ public:
                 char tmp[5];
                 sprintf(tmp,"%d",i);
                 ptot = pname + tmp + pname2;
+                i++;
             }
             while (yarp::os::Network::exists(ptot.c_str()));
             monitor_input.open(ptot.c_str());

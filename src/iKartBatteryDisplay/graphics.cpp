@@ -64,22 +64,45 @@ void GraphicsManager::load_pixbufs()
   if(m_refPixbuf_Background)
     return; /* already loaded earlier */
 
+  Glib::RefPtr<Gdk::Pixbuf> tmp_Pixbuf_Numbers;
+  Glib::RefPtr<Gdk::Pixbuf> tmp_Pixbuf_Blocks;
+  Glib::RefPtr<Gdk::Pixbuf> tmp_Pixbuf_Connected;
+  Glib::RefPtr<Gdk::Pixbuf> tmp_Pixbuf_Charge;
+
   string filename;
   filename = pics_path+"background.bmp";
   printf ("loading: %s\n", filename.c_str());
-  m_refPixbuf_Background = Gdk::Pixbuf::create_from_file(filename.c_str());
+  try
+  {
+    m_refPixbuf_Background = Gdk::Pixbuf::create_from_file(filename.c_str());
+  }
+  catch (Glib::FileError e)
+  {
+    g_message("caught Glib::FileError %d", e.code());
+    return;
+  }
+  catch (Gdk::PixbufError e)
+  {
+      g_message("Gdk::PixbufError: %d",e.code());
+    return;
+  }
   filename = pics_path+"numbers.bmp";
   printf ("loading: %s\n", filename.c_str());
-  m_refPixbuf_Numbers    = Gdk::Pixbuf::create_from_file(filename.c_str());
+  tmp_Pixbuf_Numbers    = Gdk::Pixbuf::create_from_file(filename.c_str());
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
-  m_refPixbuf_Blocks     = Gdk::Pixbuf::create_from_file(filename.c_str());
+  tmp_Pixbuf_Blocks     = Gdk::Pixbuf::create_from_file(filename.c_str());
   filename = pics_path+"batt_blocks.bmp";
   printf ("loading: %s\n", filename.c_str());
-  m_refPixbuf_Connected  = Gdk::Pixbuf::create_from_file(filename.c_str());
+  tmp_Pixbuf_Connected  = Gdk::Pixbuf::create_from_file(filename.c_str());
   filename = pics_path+"charge.bmp";
   printf ("loading: %s\n", filename.c_str());
-  m_refPixbuf_Charge  = Gdk::Pixbuf::create_from_file(filename.c_str());
+  tmp_Pixbuf_Charge  = Gdk::Pixbuf::create_from_file(filename.c_str());
+
+  m_refPixbuf_Numbers   = tmp_Pixbuf_Numbers->add_alpha   (true, 255,0,255);
+  m_refPixbuf_Blocks    = tmp_Pixbuf_Blocks->add_alpha    (true, 255,0,255);
+  m_refPixbuf_Connected = tmp_Pixbuf_Connected->add_alpha (true, 255,0,255);
+  m_refPixbuf_Charge    = tmp_Pixbuf_Charge->add_alpha    (true, 255,0,255);
 
   m_back_width = m_refPixbuf_Background->get_width();
   m_back_height = m_refPixbuf_Background->get_height();

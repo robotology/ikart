@@ -163,6 +163,7 @@ public:
                 ptot = pname + tmp + pname2;
             }
             while (yarp::os::Network::exists(ptot.c_str()));
+            monitor_input.open(ptot.c_str());
         }
 
         bool connection_ok = yarp.connect("/ikart/battery:o",ptot.c_str());

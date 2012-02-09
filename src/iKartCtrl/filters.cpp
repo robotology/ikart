@@ -78,12 +78,12 @@ double ikart_filters::lp_filter_0_5Hz(double input, int i)
     return yv[1][i];
 }
 
-double ikart_filters::ratelim_filter_0(double input, int i)
+double ikart_filters::ratelim_filter_0(double input, int i, double rate)
 {
     //This is a rate limiter filter. 
-    static double prev[3];
-    if      (input>prev[i]+10) prev[i]=prev[i]+10;
-    else if (input<prev[i]-10) prev[i]=prev[i]-10;
+    static double prev[10];
+    if      (input>prev[i]+rate) prev[i]=prev[i]+rate;
+    else if (input<prev[i]-rate) prev[i]=prev[i]-rate;
     else     prev[i]=input;
     return prev[i];
 }

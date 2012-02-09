@@ -265,6 +265,7 @@ public:
                 else
                     {control_thr->get_motor_handler()->set_motors_filter(0); reply.addString("Motors filter off");}
             }
+            return true;
         }
         else if (command.get(0).asString()=="run")
         {

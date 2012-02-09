@@ -43,8 +43,10 @@ void ControlThread::apply_ratio_limiter (double& linear_speed, double& angular_s
         double current_ratio = fabs(linear_speed/angular_speed);
         if (angular_speed>0) angular_speed_B =  100.0/(current_ratio+1.0);
         else                 angular_speed_B = -100.0/(current_ratio+1.0);
-        if (angular_speed>0) linear_speed_B  =  100.0-fabs(angular_speed_B);
-        else                 linear_speed_B  = -100.0+fabs(angular_speed_B);
+
+        linear_speed_B  =  100.0-fabs(angular_speed_B);
+        //if (angular_speed>0) linear_speed_B  =  100.0-fabs(angular_speed_B);
+        //else                 linear_speed_B  = -100.0+fabs(angular_speed_B);
 
         linear_speed  = linear_speed_A  *     (coeff) + linear_speed_B  * (1.0-coeff);
         angular_speed = angular_speed_A *     (coeff) + angular_speed_B * (1.0-coeff);

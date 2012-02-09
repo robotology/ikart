@@ -146,8 +146,26 @@ public:
         //rpcPort.open((localName+"/rpc").c_str());
         //attach(rpcPort);
 
-        monitor_input.open("/batteryMonitor:i");
-        bool connection_ok = yarp.connect("/ikart/battery:o","/batteryMonitor:i");
+        string pname  = "/batteryMonitor";
+        string pname2 = ":i";
+
+        string ptot = pname + pname2;
+        bool b = yarp::os::Network::exists(ptot.c_str());
+        
+        if (!b) monitor_input.open(ptot.c_str());
+        else
+        {
+            int i=0;
+            do 
+            {
+                char tmp[5];
+                sprintf(tmp,"%d",i);
+                ptot = pname + tmp + pname2;
+            }
+            while (yarp::os::Network::exists(ptot.c_str()));
+        }
+
+        bool connection_ok = yarp.connect("/ikart/battery:o",ptot.c_str());
         if (!connection_ok)
         {
             fprintf(stderr,"ERROR: unable to connect to iKart battery manager! (looking for port /ikart/battery:o) \n");

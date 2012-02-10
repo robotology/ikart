@@ -38,6 +38,8 @@
 #include <std_msgs/Float32.h> 
 #include <std_msgs/String.h>
 #include <sensor_msgs/LaserScan.h> 
+#include <move_base_msgs/MoveBaseAction.h>
+#include <actionlib/client/simple_action_client.h>
 #include <nav_msgs/Odometry.h> 
 #include <geometry_msgs/Twist.h>
 #include "odometer.h"
@@ -93,6 +95,8 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<Bottle>     output_localization_port;
     int                      timeout_counter;
     int                      command_wdt;
+
+    actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
     public:
     
@@ -148,6 +152,14 @@ class BridgeThread: public yarp::os::RateThread
         odometry_pub   = nh->advertise<nav_msgs::Odometry>             ("/ikart_ros_bridge/odometry_out",  1);
         tf_broadcaster = new tf::TransformBroadcaster;
         tf_listener    = new tf::TransformListener;
+        ac             = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
+
+        //wait for the action server to come up
+        while(!ac->waitForServer(ros::Duration(5.0)))
+        {
+            ROS_INFO("Waiting for the move_base action server to come up");
+        }
+
         command_sub = nh->subscribe("cmd_vel", 1, &BridgeThread::commandCallback, this);
 
         input_laser_port.open("/ikart_ros_bridge/laser:i");

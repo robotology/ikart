@@ -29,6 +29,18 @@ void BridgeThread::getHome(double &x, double &y, double &angle)
 
 int BridgeThread::setGoal(double x, double y, double angle)
 {
+    move_base_msgs::MoveBaseGoal goal;
+
+    goal.target_pose.header.frame_id = "home";
+    goal.target_pose.header.stamp = ros::Time::now();
+
+    goal.target_pose.pose.position.x = y;
+    goal.target_pose.pose.position.x = -x;
+    goal.target_pose.pose.orientation.w = -angle;
+
+    ROS_INFO("Sending goal");
+    ac->cancelAllGoals();
+    ac->sendGoal(goal);
     return 0;
 }
 

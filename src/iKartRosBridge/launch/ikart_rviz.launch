@@ -1,6 +1,6 @@
 <launch>
 
- <node pkg="rviz" type="rviz" name="ikart_rviz" args="-d $(find ikart_ros_bridge)/launch/ikart_build_map2.vcg">
+ <node pkg="rviz" type="rviz" name="ikart_rviz" args="-d $(find iKartRosBridge)/launch/ikart_build_map.vcg">
   </node>
 
 </launch>

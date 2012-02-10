@@ -92,6 +92,7 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<Bottle>     output_command_port; 
     BufferedPort<Bottle>     output_localization_port;
     int                      timeout_counter;
+    int                      command_wdt;
     
     public:
     
@@ -110,8 +111,9 @@ class BridgeThread: public yarp::os::RateThread
         command_y = 0.0 ;
         command_t = 0.0 ;
         distance_traveled = 0.0;
-        angle_traveled = 0.0;
-        timeout_counter     = 0;
+        angle_traveled    = 0.0;
+        timeout_counter   = 0;
+        command_wdt = 100;
     }
 
     void setHome();  
@@ -127,9 +129,10 @@ class BridgeThread: public yarp::os::RateThread
     void commandCallback(const geometry_msgs::Twist& event)
     {
         mutex_command.wait();
-        command_x = +event.linear.x;
-        command_y = -event.linear.y;
+        command_x = -event.linear.y;
+        command_y = +event.linear.x;
         command_t = -event.angular.z*180.0/M_PI;
+        command_wdt = 100;
         mutex_command.post();
     }
 
@@ -264,13 +267,22 @@ class BridgeThread: public yarp::os::RateThread
         }
          
         //********************************************* COMMAND PART  *********************************************
-        mutex_command.wait();
+        mutex_command.wait();        
+        command_wdt--;
+        if (command_wdt<0)
+        {
+            //if no commands are received, than turn off control
+            command_x = 0;
+            command_y = 0;
+            command_t = 0;
+            command_wdt = 0;
+        }
         Bottle &b=output_command_port.prepare();
         b.clear();
-        b.addInt(2);
-        b.addDouble(+0.2/*command_x*/);
-        b.addDouble(+0.0/*command_y*/);
-        b.addDouble(0/*command_t*/);
+        b.addInt(3);
+        b.addDouble(command_x);
+        b.addDouble(command_y);
+        b.addDouble(command_t);
         output_command_port.write();
         mutex_command.post();
 

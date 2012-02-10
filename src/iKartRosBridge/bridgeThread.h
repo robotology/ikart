@@ -124,6 +124,7 @@ class BridgeThread: public yarp::os::RateThread
     void setHome(double x, double y, double angle);
     void getHome(double &x, double &y, double &angle);  
     int  setGoal(double x, double y, double angle);
+    int  navigationStop();
     int  getGoal(double &x, double &y, double &angle);
     void getLocalizedPos(double &x, double &y, double &angle);
     void printStats();

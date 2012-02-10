@@ -109,6 +109,12 @@ class BridgeModule: public RFModule
                 return  true;
             }
         }
+        else if (command.get(0).asString()=="stop_navigation")
+        {
+            int v = bridge_thr->navigationStop();
+            reply.addString("ack");
+            return  true;        
+        }
         else if (command.get(0).asString()=="get")
         {
             if (command.get(1).asString()=="home")
@@ -125,8 +131,11 @@ class BridgeModule: public RFModule
         else if (command.get(0).asString()=="help")
         {
             reply.addString("Available commands:");
+            reply.addString("set goal <x> <y> <angle>");
             reply.addString("set home <x> <y> <angle>");
             reply.addString("set current_home");
+            reply.addString("get home");
+            reply.addString("stop_navigation");
             return true;
         }
         return true;

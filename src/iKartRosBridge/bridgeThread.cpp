@@ -38,10 +38,15 @@ int BridgeThread::setGoal(double x, double y, double angle)
     goal.target_pose.pose.position.x = -x;
     goal.target_pose.pose.orientation.w = -angle;
 
-    ROS_INFO("Sending goal");
     ac->cancelAllGoals();
     ac->sendGoal(goal);
     return 0;
+}
+
+int BridgeThread::navigationStop()
+{
+    ac->cancelAllGoals();
+    return 0;    
 }
 
 int BridgeThread::getGoal(double &x, double &y, double &angle)

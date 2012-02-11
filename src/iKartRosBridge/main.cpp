@@ -126,7 +126,14 @@ class BridgeModule: public RFModule
                 reply.addDouble(y);
                 reply.addDouble(angle);                    
                 return  true;
-            }        
+            }     
+            else if (command.get(1).asString()=="navigation_status")
+            {
+                string s = bridge_thr->getNavigationStatuts();
+                reply.addString("ack");
+                reply.addString(s);
+                return true;
+            }
         }
         else if (command.get(0).asString()=="help")
         {

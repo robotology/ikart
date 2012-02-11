@@ -49,6 +49,36 @@ int BridgeThread::navigationStop()
     return 0;    
 }
 
+string BridgeThread::getNavigationStatus()
+{
+    string s = "UNKNOWN";
+    int i = ac->getState();
+    switch (i)
+    {
+        case actionlib::SimpleClientGoalState::PENDING:
+        s = "PENDING"; break;
+        case actionlib::SimpleClientGoalState::ACTIVE:
+        s = "ACTIVE"; break;
+        case actionlib::SimpleClientGoalState::PREEMPTED:
+        s = "PREEMPTED"; break;
+        case actionlib::SimpleClientGoalState::SUCCEEDED:
+        s = "SUCCEEDED"; break;
+        case actionlib::SimpleClientGoalState::ABORTED:
+        s = "ABORTED"; break;
+        case actionlib::SimpleClientGoalState::REJECTED:
+        s = "REJECTED"; break;
+        case actionlib::SimpleClientGoalState::PREEMPTING:
+        s = "PREEMPTING"; break;
+        case actionlib::SimpleClientGoalState::RECALLING:
+        s = "RECALLING"; break;
+        case actionlib::SimpleClientGoalState::RECALLED:
+        s = "RECALLED"; break;
+        case actionlib::SimpleClientGoalState::LOST:
+        s = "LOST"; break;     
+    }
+    return s;
+}
+
 int BridgeThread::getGoal(double &x, double &y, double &angle)
 {
     return 0;

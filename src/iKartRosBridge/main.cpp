@@ -129,9 +129,9 @@ class BridgeModule: public RFModule
             }     
             else if (command.get(1).asString()=="navigation_status")
             {
-                string s = bridge_thr->getNavigationStatuts();
+                string s = bridge_thr->getNavigationStatus();
                 reply.addString("ack");
-                reply.addString(s);
+                reply.addString(s.c_str());
                 return true;
             }
         }

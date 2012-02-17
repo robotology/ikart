@@ -52,7 +52,7 @@ int BridgeThread::navigationStop()
 string BridgeThread::getNavigationStatus()
 {
     string s = "UNKNOWN";
-    int i = ac->getState();
+    int i = ac->getState().state_;
     switch (i)
     {
         case actionlib::SimpleClientGoalState::PENDING:
@@ -67,10 +67,10 @@ string BridgeThread::getNavigationStatus()
         s = "ABORTED"; break;
         case actionlib::SimpleClientGoalState::REJECTED:
         s = "REJECTED"; break;
-        case actionlib::SimpleClientGoalState::PREEMPTING:
+        /*case actionlib::SimpleClientGoalState::PREEMPTING:
         s = "PREEMPTING"; break;
         case actionlib::SimpleClientGoalState::RECALLING:
-        s = "RECALLING"; break;
+        s = "RECALLING"; break;*/
         case actionlib::SimpleClientGoalState::RECALLED:
         s = "RECALLED"; break;
         case actionlib::SimpleClientGoalState::LOST:

@@ -126,7 +126,7 @@ class BridgeThread: public yarp::os::RateThread
     int  setGoal(double x, double y, double angle);
     int  navigationStop();
     int  getGoal(double &x, double &y, double &angle);
-    string getNavigationStatuts();
+    string getNavigationStatus();
     void getLocalizedPos(double &x, double &y, double &angle);
     void printStats();
     
@@ -157,7 +157,7 @@ class BridgeThread: public yarp::os::RateThread
         ac             = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
 
         //wait for the action server to come up
-        while(!ac->waitForServer(ros::Duration(5.0)))
+        //while(!ac->waitForServer(ros::Duration(5.0)))
         {
             ROS_INFO("Waiting for the move_base action server to come up");
         }

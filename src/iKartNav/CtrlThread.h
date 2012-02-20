@@ -49,12 +49,13 @@ public:
             // SEND COMMANDS
             yarp::os::Bottle& cmd=mCommandPortO.prepare();
             cmd.clear();
-            cmd.addInt(1);
+            cmd.addInt(2);
             cmd.addDouble(mHead);
             cmd.addDouble(mSpeed);
             cmd.addDouble(mOmega);
-            cmd.addDouble(65000.0); // pwm %
             mCommandPortO.write();
+
+            //printf("H=%lf  S=%lf   W=%lf\n",mHead,mSpeed,mOmega);
         }
 
         mCtrlSem.post();

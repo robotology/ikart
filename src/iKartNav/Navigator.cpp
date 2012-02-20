@@ -95,9 +95,9 @@ bool Navigator::threadInit()
     mRadius=mRF->check("radius",yarp::os::Value(0.3575)).asDouble();
     mRFpos.x=mRF->check("laser_pos",yarp::os::Value(0.245)).asDouble();
     mMaxSpeed=mRF->check("max_speed",yarp::os::Value(0.125)).asDouble();
-    mMaxOmega=mRF->check("max_ang_speed",yarp::os::Value(30.0)).asDouble();
+    mMaxOmega=mRF->check("max_ang_speed",yarp::os::Value(9.0)).asDouble();
     mLinAcc=mRF->check("linear_acc",yarp::os::Value(0.25)).asDouble();
-    mRotAcc=mRF->check("rot_acc",yarp::os::Value(60.0)).asDouble();
+    mRotAcc=mRF->check("rot_acc",yarp::os::Value(18.0)).asDouble();
     mNumPoints=mRF->check("num_range_samples",yarp::os::Value(1081)).asInt();
     mRangeMax=mRF->check("range_max_dist",yarp::os::Value(9.5)).asDouble();
     mAngularRes=mRF->check("range_ang_res",yarp::os::Value(0.25)).asDouble();
@@ -265,14 +265,11 @@ bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
     mPointsBuffOld=mPointsBuffNew;
     mPointsBuffNew=swap;
 
-    double range;
     for (int i=0; i<mNumPoints; ++i)
     {
-        range=0.001*rangeData[i];
-
-        if (range<mRangeMax)
+        if (rangeData[i]<mRangeMax)
         {
-            mPoints[i]=mRFpos+range*mRays[i];
+            mPoints[i]=mRFpos+rangeData[i]*mRays[i];
             mIsValid[i]=true;
         }
         else
@@ -353,7 +350,7 @@ bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
     int xc,yc;
     int Mxc,Myc;
     while(head!=tail)
-	{
+    {
         head%=MODULE;
 
 	    xc=mQueueX[head  ];
@@ -507,15 +504,13 @@ void Navigator::compileZ(Vec2D* points,int N)
 
 void Navigator::run()
 {
-    yarp::sig::Vector *rangeData;
-
     while (mActive)
     {
         for (yarp::os::Bottle* bot; bot=mTargetPortI.read(false);)
         {
             yarp::os::ConstString cmd=bot->get(0).asString();
 
-            if (cmd=="target")
+            if (cmd=="target" || cmd=="t")
             { 
                 double heading=-bot->get(1).asDouble();
                 double distance=bot->get(2).asDouble();
@@ -533,12 +528,19 @@ void Navigator::run()
             }
         }
 
-        rangeData=mLaserPortI.read();
+        yarp::sig::Vector *rangeDataLast=NULL;
+
+        for (yarp::sig::Vector *rangeData; rangeData=mLaserPortI.read(false);)
+        {
+            rangeDataLast=rangeData;
+        }
         
-        if (rangeData!=NULL && mActive && !isStopping())
+        //mImAlive=true;
+
+        if (rangeDataLast!=NULL && mActive && !isStopping())
         {   
             mImAlive=true;
-            runGNF(*rangeData);
+            runGNF(*rangeDataLast);
         }
     }
 }
@@ -602,11 +604,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
                     if (++times==10)
                     {
                         times=0;
-                        printf("No path to target\n");
-                    }
-                    else
-                    {
-                        times=9;
+                        printf("No path to target z=%f\n",zeta);
                     }
                 }
             }
@@ -631,6 +629,8 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
                     setVel(gain*mMaxSpeed*U);
                     static const double RAD2DEG=1.0/Vec2D::DEG2RAD;                    
                     //setVel(gain*mMaxSpeed*Vec2D(1.0,0.0));
+                    
+                    printf("heading=%f\n",heading);
                     
                     setOmega(0.2*heading/*+RAD2DEG*mVel.mod()*curvature*/);
                 }
@@ -674,7 +674,7 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     }
 
     // SEND COMMANDS
-    mKartCtrl->setCtrlRef(-mVel.arg(),153000.0*mVel.mod(),-550.0*mOmega); 
+    mKartCtrl->setCtrlRef(-mVel.arg(),mVel.mod(),mOmega); 
 
     /*
     //if (mCommandPortO.getOutputCount()>0)

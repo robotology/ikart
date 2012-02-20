@@ -60,6 +60,7 @@ class LaserThread: public yarp::os::RateThread
                remoteName(_remoteName), localName(_localName) 
     {
         timeout_counter     = 0;
+        timeout_counter_tot = 0;
         if (rf.check("fake_laser")) fake_laser=true;
         else fake_laser = false;
         thread_period = _period;

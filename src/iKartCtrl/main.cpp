@@ -381,6 +381,9 @@ public:
             fprintf(stdout,"* Compass thread:\nnot running\n");
         }
         fprintf(stdout,"\n");
+        static int life_counter=0;
+        fprintf(stdout,"* Life: %d\n", life_counter);
+        life_counter++;
 
         return true;
     }

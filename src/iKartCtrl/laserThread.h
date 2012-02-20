@@ -48,6 +48,7 @@ class LaserThread: public yarp::os::RateThread
     string                          remoteName;
     string                          localName;
     int                             timeout_counter;
+    int                             timeout_counter_tot;
     bool                            fake_laser;
     double                          thread_period;
 

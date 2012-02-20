@@ -65,7 +65,7 @@ void LaserThread::run()
     double before_laser=Time::now();
     int res = iLaser->read(laser_data);
     double after_laser=Time::now();
-    if (after_laser-before_laser > 0.040) { timeout_counter++;  }
+    if (after_laser-before_laser > 0.040) { timeout_counter++; timeout_counter_tot++;}
     //fprintf(stderr,"after laser reading\n");
     if (res == yarp::dev::IAnalogSensor::AS_OK)
     {
@@ -88,5 +88,6 @@ void LaserThread::printStats()
 {
     double max_tpt = 1000/thread_period;
     fprintf (stdout,"* Laser thread:\n");
-    fprintf (stdout,"timeouts: %3d(%3d)\n",timeout_counter,max_tpt);
+    fprintf (stdout,"timeouts: %3d(%3d) tot: %3d\n",timeout_counter,int(max_tpt), timeout_counter_tot);
+    timeout_counter=0;
 }

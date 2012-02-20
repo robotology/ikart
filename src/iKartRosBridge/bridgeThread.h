@@ -59,6 +59,7 @@ class BridgeThread: public yarp::os::RateThread
     double distance_traveled ;
     double angle_traveled ;
     
+    double last_laser[1080];
     double command_x  ;
     double command_y  ;
     double command_t  ;
@@ -66,6 +67,8 @@ class BridgeThread: public yarp::os::RateThread
     yarp::os::Semaphore mutex_command;
     yarp::os::Semaphore mutex_localiz;
     yarp::os::Semaphore mutex_home;
+    
+ 
     
     class ikart_pose
     {
@@ -93,9 +96,16 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<Bottle>     input_odometer_port; 
     BufferedPort<Bottle>     output_command_port; 
     BufferedPort<Bottle>     output_localization_port;
-    int                      timeout_counter;
+    int                      timeout_thread;
+    int                      timeout_laser;
+    int                      timeout_odometry;
+    int                      timeout_odometer;
+    int                      timeout_laser_tot;
+    int                      timeout_odometry_tot;
+    int                      timeout_odometer_tot;
     int                      command_wdt;
 
+    sensor_msgs::LaserScan   scan;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
     public:
@@ -116,8 +126,14 @@ class BridgeThread: public yarp::os::RateThread
         command_t = 0.0 ;
         distance_traveled = 0.0;
         angle_traveled    = 0.0;
-        timeout_counter   = 0;
+        timeout_thread   = 0;
         command_wdt = 100;
+        timeout_laser = 0;
+        timeout_odometry = 0;
+        timeout_odometer = 0;
+        timeout_laser_tot = 0;
+        timeout_odometry_tot = 0;
+        timeout_odometer_tot = 0;
     }
 
     void setHome();  
@@ -156,12 +172,13 @@ class BridgeThread: public yarp::os::RateThread
         tf_listener    = new tf::TransformListener;
         ac             = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
 
-        //wait for the action server to come up
-        //while(!ac->waitForServer(ros::Duration(5.0)))
+        //wait for the action server to come up  
+        /*while(!ac->waitForServer(ros::Duration(5.0)))
         {
             ROS_INFO("Waiting for the move_base action server to come up");
-        }
+        }*/
 
+        //subscribe ros topics, open yarp ports and make connections
         command_sub = nh->subscribe("cmd_vel", 1, &BridgeThread::commandCallback, this);
 
         input_laser_port.open("/ikart_ros_bridge/laser:i");
@@ -178,6 +195,26 @@ class BridgeThread: public yarp::os::RateThread
         {
             printf("Connection to iKartCtrl failed\n");
         }
+
+        //prepare here the laser scan message, to save time during the main loop
+        int num_readings = 1080;
+        int laser_frequency = 1080;        
+        scan.header.frame_id = "base_laser";
+        scan.angle_min = -2.35619;
+        scan.angle_max =  2.35619;
+        scan.angle_increment = 4.7123889 / num_readings;
+        scan.time_increment = (1 / laser_frequency) / (num_readings);
+        scan.range_min = 0.0;
+        scan.range_max = 10; //100m 
+        scan.ranges.resize(num_readings);
+        scan.intensities.resize(num_readings);    
+        for (int i=0; i< 1080; i++)
+        {
+            last_laser[i] = 0.0;
+            scan.ranges[j] = 0.0;
+            scan.intensities[j]=101;
+        }
+         
         return true;
     }
 
@@ -192,49 +229,28 @@ class BridgeThread: public yarp::os::RateThread
     virtual void run()
     {
         //********************************************* LASER PART *********************************************
-        sensor_msgs::LaserScan scan;
         Bottle *laser_bottle = 0;
         laser_bottle = input_laser_port.read(false);
 
-        int num_readings = 1080;
-        int laser_frequency = 1080;
         ros::Time now = ros::Time::now();
         scan.header.stamp.sec = now.sec;
         scan.header.stamp.nsec = now.nsec;
-        scan.header.frame_id = "base_laser";
-        scan.angle_min = -2.35619;
-        scan.angle_max =  2.35619;
-        scan.angle_increment = 4.7123889 / num_readings;
-        scan.time_increment = (1 / laser_frequency) / (num_readings);
-        scan.range_min = 0.0;
-        scan.range_max = 10; //100m
- 
-        scan.ranges.resize(num_readings);
-        scan.intensities.resize(num_readings);
 
-//#define LASER_DEBUG
-#ifdef LASER_DEBUG
-
-        static double c=0.0;
-        c+=0.005;
-        if (c>=1.0) c=0;
-        for(unsigned int i = 0; i < num_readings; ++i)
-        {
-            scan.ranges[i] = i;//10*c;//double(i)/num_readings*scan.range_max;//ranges[i];
-            scan.intensities[i] = 101;//intensities[i];
-        }
-
-#else
         if (laser_bottle)
         {
            for(int j=0; j<1080; j++)
            {
-                double f = laser_bottle->get(j).asDouble();
-                scan.ranges[j]=f;
-                scan.intensities[j]=101;
+                last_laser[j] = laser_bottle->get(j).asDouble();
+                scan.ranges[j]=last_laser[j];
+                //scan.intensities[j]=101;
            }
         }
-#endif
+        else
+        {    
+           timeout_laser++;
+           timeout_laser_tot++;
+        }
+
         laser_pub.publish (scan);
 
         //********************************************* CREATE NEW TF *********************************************
@@ -308,6 +324,11 @@ class BridgeThread: public yarp::os::RateThread
             distance_traveled = odometer_bottle->get(0).asDouble();
             angle_traveled = odometer_bottle->get(1).asDouble();
         }
+        else
+        {
+            timeout_odometer++;
+            timeout_odometer_tot++;
+        }        
         ikart_ros_bridge::odometer odometer_msg;
         odometer_msg.distance=distance_traveled;
         odometer_msg.angle=angle_traveled;
@@ -334,6 +355,11 @@ class BridgeThread: public yarp::os::RateThread
             ikart_vx = odometry_bottle->get(4).asDouble();
             ikart_vy = -odometry_bottle->get(3).asDouble();
             ikart_vt = -odometry_bottle->get(5).asDouble();
+        }
+        else
+        {
+            timeout_odometry++;
+            timeout_odometry_tot++;
         }
 
 #endif

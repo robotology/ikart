@@ -49,6 +49,7 @@ class LaserThread: public yarp::os::RateThread
     string                          localName;
     int                             timeout_counter;
     bool                            fake_laser;
+    double                          thread_period;
 
     public:
     LaserThread(unsigned int _period, ResourceFinder &_rf, Property options,
@@ -60,6 +61,7 @@ class LaserThread: public yarp::os::RateThread
         timeout_counter     = 0;
         if (rf.check("fake_laser")) fake_laser=true;
         else fake_laser = false;
+        thread_period = _period;
     }
 
     virtual bool threadInit();

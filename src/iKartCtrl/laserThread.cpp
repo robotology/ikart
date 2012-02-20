@@ -86,6 +86,7 @@ void LaserThread::run()
 
 void LaserThread::printStats()
 {
+    double max_tpt = 1000/thread_period;
     fprintf (stdout,"* Laser thread:\n");
-    fprintf (stdout,"timeouts: %d\n",timeout_counter);
+    fprintf (stdout,"timeouts: %3d(%3d)\n",timeout_counter,max_tpt);
 }

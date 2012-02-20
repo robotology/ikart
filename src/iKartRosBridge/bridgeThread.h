@@ -50,6 +50,8 @@ using namespace yarp::os;
 class BridgeThread: public yarp::os::RateThread
 {
     private:
+    int    thread_period;
+    
     double ikart_x  ;
     double ikart_y  ;
     double ikart_t  ;
@@ -115,6 +117,7 @@ class BridgeThread: public yarp::os::RateThread
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
+        thread_period = _period;
         ikart_x  = 0.0;
         ikart_y  = 0.0;
         ikart_t  = 0.0;
@@ -211,8 +214,8 @@ class BridgeThread: public yarp::os::RateThread
         for (int i=0; i< 1080; i++)
         {
             last_laser[i] = 0.0;
-            scan.ranges[j] = 0.0;
-            scan.intensities[j]=101;
+            scan.ranges[i] = 0.0;
+            scan.intensities[i]=101;
         }
          
         return true;

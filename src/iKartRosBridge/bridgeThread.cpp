@@ -95,8 +95,8 @@ void BridgeThread::getLocalizedPos(double &x, double &y, double &angle)
 
 void BridgeThread::printStats()
 {
-    double max_tpt = 1000.0/_period;
-    fprintf (stdout," thread timeouts: %3d", timeout_counter);
+    double max_tpt = 1000.0/thread_period;
+    fprintf (stdout," thread timeouts: %3d", timeout_thread);
     fprintf (stdout," laser timeouts:     %3d(%3d) tot: %3d", timeout_laser,   max_tpt,timeout_laser_tot);
     fprintf (stdout," odometry timeouts:  %3d(%3d) tot: %3d", timeout_odometry,max_tpt,timeout_odometry_tot);
     fprintf (stdout," odometer timeouts:  %3d(%3d) tot: %3d", timeout_odometer,max_tpt,timeout_odometer_tot);

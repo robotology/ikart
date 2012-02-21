@@ -236,13 +236,14 @@ class BridgeThread: public yarp::os::RateThread
         //********************************************* TIMEOUT CHECK ******************************************
         static double wdt_old=Time::now();
         double wdt=Time::now();
-        if (wdt-wdt_old > thread_period/1000.0 + 0.10) 
+        if (wdt-wdt_old > double(thread_period)/1000.0 + 0.10) 
         {
             timeout_thread++;
             timeout_thread_tot++;
-        }
+        }     
+        //printf("%f %f\n",wdt-wdt_old , double(thread_period)/1000.0 + 0.010);
         wdt_old=wdt;
-    
+
         //********************************************* LASER PART *********************************************
         Bottle *laser_bottle = 0;
         laser_bottle = input_laser_port.read(false);
@@ -260,7 +261,7 @@ class BridgeThread: public yarp::os::RateThread
                 //scan.intensities[j]=101;
            }
         }
-        else
+        else  
         {    
            timeout_laser++;
            timeout_laser_tot++;

@@ -236,7 +236,7 @@ class BridgeThread: public yarp::os::RateThread
         //********************************************* TIMEOUT CHECK ******************************************
         static double wdt_old=Time::now();
         double wdt=Time::now();
-        if (wdt-wdt_old > thread_period + 0.10) 
+        if (wdt-wdt_old > thread_period/1000.0 + 0.10) 
         {
             timeout_thread++;
             timeout_thread_tot++;

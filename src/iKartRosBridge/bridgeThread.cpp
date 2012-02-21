@@ -107,4 +107,5 @@ void BridgeThread::printStats()
     timeout_laser = 0;
     timeout_odometry = 0;
     timeout_odometer = 0;
+    timeout_thread = 0;
 }

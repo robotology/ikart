@@ -99,6 +99,7 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<Bottle>     output_command_port; 
     BufferedPort<Bottle>     output_localization_port;
     int                      timeout_thread;
+    int                      timeout_thread_tot;
     int                      timeout_laser;
     int                      timeout_odometry;
     int                      timeout_odometer;
@@ -130,6 +131,7 @@ class BridgeThread: public yarp::os::RateThread
         distance_traveled = 0.0;
         angle_traveled    = 0.0;
         timeout_thread   = 0;
+        timeout_thread_tot   = 0;
         command_wdt = 100;
         timeout_laser = 0;
         timeout_odometry = 0;
@@ -231,6 +233,16 @@ class BridgeThread: public yarp::os::RateThread
 
     virtual void run()
     {
+        //********************************************* TIMEOUT CHECK ******************************************
+        static double wdt_old=Time::now();
+        double wdt=Time::now();
+        if (wdt-wdt_old > thread_period + 0.10) 
+        {
+            timeout_thread++;
+            timeout_thread_tot++;
+        }
+        wdt_old=wdt;
+    
         //********************************************* LASER PART *********************************************
         Bottle *laser_bottle = 0;
         laser_bottle = input_laser_port.read(false);

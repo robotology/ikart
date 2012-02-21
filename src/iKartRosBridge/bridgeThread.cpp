@@ -98,7 +98,7 @@ void BridgeThread::printStats()
     static int life=0;
     life++; 
     int max_tpt = int(1000.0/thread_period);
-    fprintf (stdout," TIMEOUTS: thread:%3d", timeout_thread);
+    fprintf (stdout," TIMEOUTS: thread:%3d(%3d) tot:%3d", timeout_thread,max_tpt,timeout_thread_tot);
     fprintf (stdout,"     laser:%3d(%3d) tot:%3d", timeout_laser,   max_tpt,timeout_laser_tot);
     fprintf (stdout,"     odometry:%3d(%3d) tot:%3d", timeout_odometry,max_tpt,timeout_odometry_tot);
     fprintf (stdout,"     odometer:%3d(%3d) tot:%3d", timeout_odometer,max_tpt,timeout_odometer_tot);

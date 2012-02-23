@@ -299,9 +299,9 @@ class BridgeThread: public yarp::os::RateThread
             tf::transformStampedTFToMsg (stamp_loc_trans, loc_trans);
             
             mutex_localiz.wait();
-            ikart_current_position.x = loc_trans.transform.translation.x;
-            ikart_current_position.y = loc_trans.transform.translation.y;
-            ikart_current_position.t = tf::getYaw(loc_trans.transform.rotation)*180/M_PI;
+            ikart_current_position.x = loc_trans.transform.translation.y;
+            ikart_current_position.y = -loc_trans.transform.translation.x;
+            ikart_current_position.t = -tf::getYaw(loc_trans.transform.rotation)*180/M_PI;
             mutex_localiz.post();
             
             Bottle &m = output_localization_port.prepare();

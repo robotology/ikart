@@ -33,12 +33,13 @@ int BridgeThread::setGoal(double x, double y, double angle)
 
     goal.target_pose.header.frame_id = "home";
     goal.target_pose.header.stamp = ros::Time::now();
+    geometry_msgs::Quaternion goal_quat= tf::createQuaternionMsgFromYaw(angle/180.0*M_PI);
 
     goal.target_pose.pose.position.x = y;
-    goal.target_pose.pose.position.x = -x;
-    goal.target_pose.pose.orientation.w = -angle;
+    goal.target_pose.pose.position.y = -x;
+    goal.target_pose.pose.orientation = goal_quat;
 
-    ac->cancelAllGoals();
+   // ac->cancelAllGoals();
     ac->sendGoal(goal);
     return 0;
 }

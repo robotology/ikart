@@ -142,9 +142,12 @@ class BridgeModule: public RFModule
             reply.addString("set home <x> <y> <angle>");
             reply.addString("set current_home");
             reply.addString("get home");
+            reply.addString("get navigation_status");
             reply.addString("stop_navigation");
             return true;
         }
+        
+        reply.addString("Unknown command. Type 'help' to have the list");
         return true;
     }
 

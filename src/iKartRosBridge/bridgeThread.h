@@ -142,6 +142,7 @@ class BridgeThread: public yarp::os::RateThread
         timeout_odometer_tot = 0;
         
         laser_step = rf.check("laser_resample",Value(1)).asInt();
+        if (laser_step<=0) laser_step = 1;
         printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
     }
 
@@ -217,7 +218,7 @@ class BridgeThread: public yarp::os::RateThread
         scan.range_max = 10; //100m 
         scan.ranges.resize(num_readings);
         scan.intensities.resize(num_readings);    
-        for (int i=0; i< 1080; i=i+laser_step)
+        for (int i=0; i< 1080/laser_step; i++)
         {
             last_laser[i] = 0.0;
             scan.ranges[i] = 0.0;
@@ -258,9 +259,9 @@ class BridgeThread: public yarp::os::RateThread
 
         if (laser_bottle)
         {
-           for(int j=0; j<1080; j=j+laser_step)
+           for(int j=0, i=0; j<1080/laser_step; j++, i=i+laser_step)
            {
-                last_laser[j] = laser_bottle->get(j).asDouble();
+                last_laser[j] = laser_bottle->get(i).asDouble();
                 scan.ranges[j]=last_laser[j];
                 //scan.intensities[j]=101;
            }

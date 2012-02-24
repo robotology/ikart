@@ -193,7 +193,8 @@ int main(int argc, char *argv[])
     if (rf.check("help"))
     {
         printf("\n");
-        printf("No options available.\n");
+        printf("Available options:");
+        printf("--laser_resample <n>\n");
         printf("\n");
         return 0;
     }

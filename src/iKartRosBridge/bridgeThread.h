@@ -61,6 +61,7 @@ class BridgeThread: public yarp::os::RateThread
     double distance_traveled ;
     double angle_traveled ;
     
+    int    laser_step;
     double last_laser[1080];
     double command_x  ;
     double command_y  ;
@@ -70,7 +71,7 @@ class BridgeThread: public yarp::os::RateThread
     yarp::os::Semaphore mutex_localiz;
     yarp::os::Semaphore mutex_home;
     
- 
+    
     
     class ikart_pose
     {
@@ -139,6 +140,9 @@ class BridgeThread: public yarp::os::RateThread
         timeout_laser_tot = 0;
         timeout_odometry_tot = 0;
         timeout_odometer_tot = 0;
+        
+        laser_step = rf.check("laser_resample",Value(1)).asInt();
+        printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
     }
 
     void setHome();  
@@ -202,8 +206,8 @@ class BridgeThread: public yarp::os::RateThread
         }
 
         //prepare here the laser scan message, to save time during the main loop
-        int num_readings = 1080;
-        int laser_frequency = 1080;        
+        int num_readings = 1080/laser_step;
+        int laser_frequency = 1080/laser_step;        
         scan.header.frame_id = "base_laser";
         scan.angle_min = -2.35619;
         scan.angle_max =  2.35619;
@@ -213,7 +217,7 @@ class BridgeThread: public yarp::os::RateThread
         scan.range_max = 10; //100m 
         scan.ranges.resize(num_readings);
         scan.intensities.resize(num_readings);    
-        for (int i=0; i< 1080; i++)
+        for (int i=0; i< 1080; i=i+laser_step)
         {
             last_laser[i] = 0.0;
             scan.ranges[i] = 0.0;
@@ -254,7 +258,7 @@ class BridgeThread: public yarp::os::RateThread
 
         if (laser_bottle)
         {
-           for(int j=0; j<1080; j++)
+           for(int j=0; j<1080; j=j+laser_step)
            {
                 last_laser[j] = laser_bottle->get(j).asDouble();
                 scan.ranges[j]=last_laser[j];

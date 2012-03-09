@@ -206,18 +206,18 @@ public:
                 yarp::os::Time::delay(1.0);
                 if (yarp::os::Network::connect("/joystickCtrl:o","/ikart/joystick:i"))
                     {
-                        printf("Joystick has been automaticallly connected");
+                        printf("Joystick has been automaticallly connected\n");
                         break;
                     }
                 else
                     {
-                        printf("Unable to find the joystick port, retrying (%d/5)...",joystick_trials);
+                        printf("Unable to find the joystick port, retrying (%d/5)...\n",joystick_trials);
                         joystick_trials++;
                     }
 
                 if (joystick_trials>=5)
                     {
-                        printf("Unable to find the joystick port, giving up");
+                        printf("Unable to find the joystick port, giving up\n");
                         break;
                     }
             }

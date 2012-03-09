@@ -200,10 +200,28 @@ public:
         //try to connect to joystickCtrl output
         if (rf.check("joystick_connect"))
         {
-            if (yarp::os::Network::connect("/joystickCtrl:o","/ikart/joystick:i"))
-                {printf("Joystick has been automaticallly connected");}
-            else
-                {printf("Unable to find the joystick port");}
+            int joystick_trials = 0; 
+            do
+            {
+                yarp::os::Time::delay(1.0);
+                if (yarp::os::Network::connect("/joystickCtrl:o","/ikart/joystick:i"))
+                    {
+                        printf("Joystick has been automaticallly connected");
+                        break;
+                    }
+                else
+                    {
+                        printf("Unable to find the joystick port, retrying (%d/5)...",joystick_trials);
+                        joystick_trials++;
+                    }
+
+                if (joystick_trials>=5)
+                    {
+                        printf("Unable to find the joystick port, giving up");
+                        break;
+                    }
+            }
+            while (1);
         }
 
         //check for debug mode

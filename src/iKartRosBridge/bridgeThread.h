@@ -63,6 +63,9 @@ class BridgeThread: public yarp::os::RateThread
     
     int    laser_step;
     double last_laser[1080];
+    int    laser_step2;
+    double last_laser2[1080];
+
     double command_x  ;
     double command_y  ;
     double command_t  ;
@@ -87,6 +90,7 @@ class BridgeThread: public yarp::os::RateThread
     protected:
     ros::NodeHandle          *nh;
     ros::Publisher           laser_pub;
+    ros::Publisher           laser_pub2;
     ros::Publisher           odometry_pub;
     ros::Publisher           odometer_pub;
     ros::Subscriber          command_sub;
@@ -95,6 +99,7 @@ class BridgeThread: public yarp::os::RateThread
     ResourceFinder           &rf;
     Property                 iKartCtrl_options;
     BufferedPort<Bottle>     input_laser_port; 
+    BufferedPort<Bottle>     input_laser_port2; 
     BufferedPort<Bottle>     input_odometry_port; 
     BufferedPort<Bottle>     input_odometer_port; 
     BufferedPort<Bottle>     output_command_port; 
@@ -102,14 +107,17 @@ class BridgeThread: public yarp::os::RateThread
     int                      timeout_thread;
     int                      timeout_thread_tot;
     int                      timeout_laser;
+    int                      timeout_laser2;
     int                      timeout_odometry;
     int                      timeout_odometer;
     int                      timeout_laser_tot;
+    int                      timeout_laser_tot2;
     int                      timeout_odometry_tot;
     int                      timeout_odometer_tot;
     int                      command_wdt;
 
     sensor_msgs::LaserScan   scan;
+    sensor_msgs::LaserScan   scan2;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
     public:
@@ -144,6 +152,8 @@ class BridgeThread: public yarp::os::RateThread
         laser_step = rf.check("laser_resample",Value(1)).asInt();
         if (laser_step<=0) laser_step = 1;
         printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
+
+	laser_step2 = laser_step;
     }
 
     void setHome();  
@@ -176,6 +186,7 @@ class BridgeThread: public yarp::os::RateThread
         nh = new ros::NodeHandle();
         ros::Time::init();
         laser_pub      = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser_out",     1);
+        laser_pub2     = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser2_out",    1);
         odometer_pub   = nh->advertise<ikart_ros_bridge::odometer>     ("/ikart_ros_bridge/odometer_out",  1);
         odometry_pub   = nh->advertise<nav_msgs::Odometry>             ("/ikart_ros_bridge/odometry_out",  1);
         tf_broadcaster = new tf::TransformBroadcaster;
@@ -192,6 +203,7 @@ class BridgeThread: public yarp::os::RateThread
         command_sub = nh->subscribe("cmd_vel", 1, &BridgeThread::commandCallback, this);
 
         input_laser_port.open("/ikart_ros_bridge/laser:i");
+        input_laser_port2.open("/ikart_ros_bridge/laser2:i");
         input_odometry_port.open("/ikart_ros_bridge/odometry:i");
         input_odometer_port.open("/ikart_ros_bridge/odometer:i");
         output_command_port.open("/ikart_ros_bridge/command:o");
@@ -224,7 +236,24 @@ class BridgeThread: public yarp::os::RateThread
             scan.ranges[i] = 0.0;
             scan.intensities[i]=101;
         }
-         
+ 
+        num_readings = 1080/laser_step2;
+        laser_frequency = 1080/laser_step2;        
+        scan2.header.frame_id = "base_laser";
+        scan2.angle_min = -2.35619;
+        scan2.angle_max =  2.35619;
+        scan2.angle_increment = 4.7123889 / num_readings;
+        scan2.time_increment = (1 / laser_frequency) / (num_readings);
+        scan2.range_min = 0.0;
+        scan2.range_max = 10; //100m 
+        scan2.ranges.resize(num_readings);
+        scan2.intensities.resize(num_readings);    
+        for (int i=0; i< 1080/laser_step2; i++)
+        {
+            last_laser2[i] = 0.0;
+            scan2.ranges[i] = 0.0;
+            scan2.intensities[i]=101;
+        }        
         return true;
     }
 
@@ -273,6 +302,31 @@ class BridgeThread: public yarp::os::RateThread
         }
 
         laser_pub.publish (scan);
+
+        //********************************************* LASER2 (OPTIONAL) PART *********************************
+        Bottle *laser_bottle2 = 0;
+        laser_bottle2 = input_laser_port2.read(false);
+
+        ros::Time now2 = ros::Time::now();
+        scan2.header.stamp.sec = now2.sec;
+        scan2.header.stamp.nsec = now2.nsec;
+
+        if (laser_bottle2)
+        {
+           for(int j=0, i=0; j<1080/laser_step2; j++, i=i+laser_step2)
+           {
+                last_laser2[j] = laser_bottle2->get(i).asDouble();
+                scan2.ranges[j]=last_laser2[j];
+                //scan.intensities[j]=101;
+           }
+        }
+        else  
+        {    
+           timeout_laser2++;
+           timeout_laser_tot2++;
+        }
+
+        laser_pub2.publish (scan2);
 
         //********************************************* CREATE NEW TF *********************************************
         tf::StampedTransform laser_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.245,0.0,0.2)),now, "base_link", "base_laser");

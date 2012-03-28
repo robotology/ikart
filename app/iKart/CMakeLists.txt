@@ -20,3 +20,8 @@ icub_app_install(${appname}
 icub_app_install(${appname} 
                  FILES ${scripts}
                  DESTINATION scripts)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_start.sh ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_stop.sh 
+        DESTINATION bin 
+        COMPONENT Core
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

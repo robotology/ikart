@@ -35,34 +35,6 @@ Current\ Goal.Shaft\ Length=1
 Current\ Goal.Shaft\ Radius=0.1
 Current\ Goal.Shape=0
 Current\ Goal.Topic=/move_base_simple/goal
-FilteredTiltCloud.Alpha=1
-FilteredTiltCloud.Billboard\ Size=0.01
-FilteredTiltCloud.Color\ Transformer=
-FilteredTiltCloud.Decay\ Time=0
-FilteredTiltCloud.Enabled=0
-FilteredTiltCloud.Position\ Transformer=
-FilteredTiltCloud.Selectable=1
-FilteredTiltCloud.Style=1
-FilteredTiltCloud.Topic=
-FilteredTiltCloud..AxisAutocompute\ Value\ Bounds=1
-FilteredTiltCloud..AxisAxis=2
-FilteredTiltCloud..AxisMax\ Value=10
-FilteredTiltCloud..AxisMin\ Value=-10
-FilteredTiltCloud..AxisUse\ Fixed\ Frame=1
-FilteredTiltCloud..Flat\ ColorColorR=1
-FilteredTiltCloud..Flat\ ColorColorG=1
-FilteredTiltCloud..Flat\ ColorColorB=1
-FilteredTiltCloud..IntensityAutocompute\ Intensity\ Bounds=1
-FilteredTiltCloud..IntensityChannel\ Name=intensity
-FilteredTiltCloud..IntensityMax\ ColorR=1
-FilteredTiltCloud..IntensityMax\ ColorG=1
-FilteredTiltCloud..IntensityMax\ ColorB=1
-FilteredTiltCloud..IntensityMax\ Intensity=4096
-FilteredTiltCloud..IntensityMin\ ColorR=0
-FilteredTiltCloud..IntensityMin\ ColorG=0
-FilteredTiltCloud..IntensityMin\ ColorB=0
-FilteredTiltCloud..IntensityMin\ Intensity=0
-FilteredTiltCloud..IntensityUse\ full\ RGB\ spectrum=0
 Floor\ Scan.Alpha=1
 Floor\ Scan.Billboard\ Size=0.05
 Floor\ Scan.Color\ Transformer=Intensity
@@ -128,34 +100,6 @@ Map.Alpha=0.7
 Map.Draw\ Behind=0
 Map.Enabled=1
 Map.Topic=map
-New\ Ground\ Plane\ Cloud.Alpha=1
-New\ Ground\ Plane\ Cloud.Billboard\ Size=0.01
-New\ Ground\ Plane\ Cloud.Color\ Transformer=
-New\ Ground\ Plane\ Cloud.Decay\ Time=0
-New\ Ground\ Plane\ Cloud.Enabled=0
-New\ Ground\ Plane\ Cloud.Position\ Transformer=
-New\ Ground\ Plane\ Cloud.Selectable=1
-New\ Ground\ Plane\ Cloud.Style=1
-New\ Ground\ Plane\ Cloud.Topic=
-New\ Ground\ Plane\ Cloud..AxisAutocompute\ Value\ Bounds=1
-New\ Ground\ Plane\ Cloud..AxisAxis=2
-New\ Ground\ Plane\ Cloud..AxisMax\ Value=10
-New\ Ground\ Plane\ Cloud..AxisMin\ Value=-10
-New\ Ground\ Plane\ Cloud..AxisUse\ Fixed\ Frame=1
-New\ Ground\ Plane\ Cloud..Flat\ ColorColorR=1
-New\ Ground\ Plane\ Cloud..Flat\ ColorColorG=1
-New\ Ground\ Plane\ Cloud..Flat\ ColorColorB=1
-New\ Ground\ Plane\ Cloud..IntensityAutocompute\ Intensity\ Bounds=1
-New\ Ground\ Plane\ Cloud..IntensityChannel\ Name=intensity
-New\ Ground\ Plane\ Cloud..IntensityMax\ ColorR=1
-New\ Ground\ Plane\ Cloud..IntensityMax\ ColorG=1
-New\ Ground\ Plane\ Cloud..IntensityMax\ ColorB=1
-New\ Ground\ Plane\ Cloud..IntensityMax\ Intensity=4096
-New\ Ground\ Plane\ Cloud..IntensityMin\ ColorR=0
-New\ Ground\ Plane\ Cloud..IntensityMin\ ColorG=0
-New\ Ground\ Plane\ Cloud..IntensityMin\ ColorB=0
-New\ Ground\ Plane\ Cloud..IntensityMin\ Intensity=0
-New\ Ground\ Plane\ Cloud..IntensityUse\ full\ RGB\ spectrum=0
 Obstacles.Alpha=1
 Obstacles.ColorR=0.1
 Obstacles.ColorG=1
@@ -173,46 +117,11 @@ Planner\ Plan.ColorB=0
 Planner\ Plan.Enabled=1
 Planner\ Plan.Topic=/move_base/TrajectoryPlannerROS/global_plan
 Robot\ Footprint.Alpha=1
-Robot\ Footprint.ColorR=0.1
-Robot\ Footprint.ColorG=1
+Robot\ Footprint.ColorR=0.027451
+Robot\ Footprint.ColorG=0.313726
 Robot\ Footprint.ColorB=0
-Robot\ Footprint.Enabled=0
-Robot\ Footprint.Topic=
-Robot\ Model.Alpha=0.5
-Robot\ Model.Collision\ Enabled=0
-Robot\ Model.Enabled=0
-Robot\ Model.Robot\ Description=robot_description
-Robot\ Model.TF\ Prefix=
-Robot\ Model.Update\ Interval=0.1
-Robot\ Model.Visual\ Enabled=1
-Stereo\ Cloud.Alpha=1
-Stereo\ Cloud.Billboard\ Size=0.01
-Stereo\ Cloud.Color\ Transformer=
-Stereo\ Cloud.Decay\ Time=0
-Stereo\ Cloud.Enabled=0
-Stereo\ Cloud.Position\ Transformer=
-Stereo\ Cloud.Selectable=1
-Stereo\ Cloud.Style=1
-Stereo\ Cloud.Topic=/dcam/cloud
-Stereo\ Cloud..AxisAutocompute\ Value\ Bounds=1
-Stereo\ Cloud..AxisAxis=2
-Stereo\ Cloud..AxisMax\ Value=10
-Stereo\ Cloud..AxisMin\ Value=-10
-Stereo\ Cloud..AxisUse\ Fixed\ Frame=1
-Stereo\ Cloud..Flat\ ColorColorR=1
-Stereo\ Cloud..Flat\ ColorColorG=1
-Stereo\ Cloud..Flat\ ColorColorB=1
-Stereo\ Cloud..IntensityAutocompute\ Intensity\ Bounds=1
-Stereo\ Cloud..IntensityChannel\ Name=intensity
-Stereo\ Cloud..IntensityMax\ ColorR=1
-Stereo\ Cloud..IntensityMax\ ColorG=1
-Stereo\ Cloud..IntensityMax\ ColorB=1
-Stereo\ Cloud..IntensityMax\ Intensity=4096
-Stereo\ Cloud..IntensityMin\ ColorR=0
-Stereo\ Cloud..IntensityMin\ ColorG=0
-Stereo\ Cloud..IntensityMin\ ColorB=0
-Stereo\ Cloud..IntensityMin\ Intensity=0
-Stereo\ Cloud..IntensityUse\ full\ RGB\ spectrum=0
+Robot\ Footprint.Enabled=1
+Robot\ Footprint.Topic=/ikart_ros_bridge/footprint
 Transforms.All\ Enabled=1
 Transforms.Enabled=1
 Transforms.Frame\ Timeout=15
@@ -226,8 +135,8 @@ Visualization\ Markers.Marker\ Topic=visualization_marker
 Tool\ 2D\ Nav\ GoalTopic=move_base_simple/goal
 Tool\ 2D\ Pose\ EstimateTopic=initialpose
 Camera\ Type=rviz::FixedOrientationOrthoViewController
-Camera\ Config=33.5496 -0.502379 11.1042 -3.40282 0.701729 -0.0870402 -0.0870402 -0.701729
-Property\ Grid\ State=selection=Robot Footprint.Enabled;expanded=.Global Options,Visualization Markers.Enabled.Visualization Markers.StatusTopStatus,Visualization Markers.Enabled.Visualization Markers.Namespaces,Robot Model.Enabled.Robot Model.StatusTopStatus,Robot Model.Enabled.Robot: Robot ModelLinks,Transforms./base_laser/base_laser,Transforms./base_link/base_link,Transforms./home/home,Transforms./map/map,Transforms./odom/odom,Transforms.Enabled.Transforms.Tree,Transforms./mapTree/map,Transforms./odomTree/odom,Transforms./base_linkTree/base_link,Transforms./base_laserTree/base_laser,Transforms./homeTree/home,Stereo Cloud.Enabled.Stereo Cloud.StatusTopStatus,FilteredTiltCloud.Enabled.FilteredTiltCloud.StatusTopStatus,New Ground Plane Cloud.Enabled.New Ground Plane Cloud.StatusTopStatus,Local Plan.Enabled,Current Goal.Enabled;scrollpos=0,0;splitterpos=152,307;ispageselected=1
+Camera\ Config=51.7496 -0.21436 11.1042 2.13193 0.701729 -0.0870402 -0.0870402 -0.701729
+Property\ Grid\ State=selection=Visualization Markers.Enabled;expanded=.Global Options,Visualization Markers.Enabled.Visualization Markers.Namespaces,Transforms./base_laser/base_laser,Transforms./base_link/base_link,Transforms./home/home,Transforms./map/map,Transforms./odom/odom,Transforms.Enabled.Transforms.Tree,Transforms./mapTree/map,Transforms./odomTree/odom,Transforms./base_linkTree/base_link,Transforms./base_laserTree/base_laser,Transforms./homeTree/home;scrollpos=0,0;splitterpos=162,311;ispageselected=1
 [Display0]
 Name=Grid
 Package=rviz
@@ -241,70 +150,54 @@ Name=Visualization Markers
 Package=rviz
 ClassName=rviz::MarkerDisplay
 [Display3]
-Name=Robot Model
-Package=rviz
-ClassName=rviz::RobotModelDisplay
-[Display4]
 Name=2D Pose: Odom
 Package=rviz
 ClassName=rviz::OdometryDisplay
-[Display5]
+[Display4]
 Name=2D Pose: Localized
 Package=rviz
 ClassName=rviz::OdometryDisplay
-[Display6]
+[Display5]
 Name=Map
 Package=rviz
 ClassName=rviz::MapDisplay
-[Display7]
+[Display6]
 Name=Floor Scan
 Package=rviz
 ClassName=rviz::LaserScanDisplay
-[Display8]
+[Display7]
 Name=Transforms
 Package=rviz
 ClassName=rviz::TFDisplay
-[Display9]
-Name=Stereo Cloud
-Package=rviz
-ClassName=rviz::PointCloudDisplay
-[Display10]
-Name=FilteredTiltCloud
-Package=rviz
-ClassName=rviz::PointCloudDisplay
-[Display11]
-Name=New Ground Plane Cloud
-Package=rviz
-ClassName=rviz::PointCloudDisplay
-[Display12]
+[Display8]
 Name=AMCL Cloud
 Package=rviz
 ClassName=rviz::PoseArrayDisplay
-[Display13]
+[Display9]
 Name=Obstacles
 Package=rviz
 ClassName=rviz::GridCellsDisplay
-[Display14]
+[Display10]
 Name=Inflated Obstacles
 Package=rviz
 ClassName=rviz::GridCellsDisplay
-[Display15]
+[Display11]
 Name=Robot Footprint
 Package=rviz
 ClassName=rviz::PolygonDisplay
-[Display16]
+[Display12]
 Name=Global Plan
 Package=rviz
 ClassName=rviz::PathDisplay
-[Display17]
+[Display13]
 Name=Local Plan
 Package=rviz
 ClassName=rviz::PathDisplay
-[Display18]
+[Display14]
 Name=Planner Plan
 Package=rviz
 ClassName=rviz::PathDisplay
-[Display19]
+[Display15]
 Name=Current Goal
 Package=rviz
 ClassName=rviz::PoseDisplay

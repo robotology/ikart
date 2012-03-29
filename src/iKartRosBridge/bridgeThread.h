@@ -42,6 +42,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <nav_msgs/Odometry.h> 
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include "odometer.h"
 
 using namespace std;
@@ -92,6 +93,7 @@ class BridgeThread: public yarp::os::RateThread
     ros::Publisher           laser_pub;
     ros::Publisher           laser_pub2;
     ros::Publisher           odometry_pub;
+    ros::Publisher           footprint_pub;
     ros::Publisher           odometer_pub;
     ros::Subscriber          command_sub;
     tf::TransformBroadcaster *tf_broadcaster;
@@ -116,8 +118,9 @@ class BridgeThread: public yarp::os::RateThread
     int                      timeout_odometer_tot;
     int                      command_wdt;
 
-    sensor_msgs::LaserScan   scan;
-    sensor_msgs::LaserScan   scan2;
+    geometry_msgs::PolygonStamped footprint;
+    sensor_msgs::LaserScan        scan;
+    sensor_msgs::LaserScan        scan2;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
     public:
@@ -154,6 +157,15 @@ class BridgeThread: public yarp::os::RateThread
         printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
 
 	laser_step2 = laser_step;
+        footprint.header.frame_id = "base_link";
+	footprint.polygon.points.resize(12);
+	double r = 0.38;
+	for (int i=0; i< 12; i++)
+	{
+	   double t = M_PI*2/12* i;
+           footprint.polygon.points[i].x = r*cos(t);
+	   footprint.polygon.points[i].y = r*sin(t);
+	}
     }
 
     void setHome();  
@@ -185,6 +197,7 @@ class BridgeThread: public yarp::os::RateThread
         ros::init (argc, argv, "ikart_ros_bridge");
         nh = new ros::NodeHandle();
         ros::Time::init();
+        footprint_pub  = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",     1);
         laser_pub      = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser_out",     1);
         laser_pub2     = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser2_out",    1);
         odometer_pub   = nh->advertise<ikart_ros_bridge::odometer>     ("/ikart_ros_bridge/odometer_out",  1);
@@ -277,6 +290,9 @@ class BridgeThread: public yarp::os::RateThread
         }     
         //printf("%f %f\n",wdt-wdt_old , double(thread_period)/1000.0 + 0.010);
         wdt_old=wdt;
+
+	//********************************************* FOOTPRINT PART *****************************************
+	footprint_pub.publish (footprint);
 
         //********************************************* LASER PART *********************************************
         Bottle *laser_bottle = 0;

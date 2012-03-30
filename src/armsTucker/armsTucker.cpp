@@ -96,7 +96,7 @@ public:
     {
         rpcPort.open("/tucker/rpc");
         port_ikart_ctrl.open("/tucker/ikart_commands:o");
-        yarp::os::Network::connect("/tucker/ikart_commands:o", "/ikart/control:i");
+        yarp::os::Network::connect("/tucker/ikart_commands:o", "/ikart/aux_control:i");
         attach(rpcPort);
 
         std::string robotName = rf.check("robot",yarp::os::Value("icub")).asString().c_str();
@@ -218,6 +218,7 @@ public:
         if (left_arm_device) left_arm_device->close();
         if (right_arm_device) right_arm_device->close();
         rpcPort.close();
+        port_ikart_ctrl.close();
         return true;
     }
 

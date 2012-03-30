@@ -32,7 +32,7 @@ using namespace yarp::os;
 
 class TuckerModule: public RFModule
 {
-    enum command_type {CLOSE = 0, OPEN =1};
+    enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1};
     PolyDriver       *left_arm_device;
     PolyDriver       *right_arm_device;
     IPositionControl *l_pos ;
@@ -40,11 +40,17 @@ class TuckerModule: public RFModule
     IPositionControl *r_pos ;
     IEncoders        *r_encs;
     bool             running;
-    Port             rpcPort;
+    Port                  rpcPort;
+    BufferedPort<Bottle>  port_ikart_ctrl;
+
+    int                   approach_count;
+    int                   retreat_count;
 
 public:
     TuckerModule()
     {
+        approach_count   = 0;
+        retreat_count    = 0;
         left_arm_device  = 0;
         right_arm_device = 0;
         l_pos  = 0;
@@ -52,6 +58,16 @@ public:
         r_pos  = 0;
         r_encs = 0;
         running = true;
+    }
+
+    void approach(int dur)
+    {
+        approach_count = dur;
+    }
+    
+    void retreat(int dur)
+    {
+        retreat_count = dur;
     }
 
     void tuck(int tuck_cmd)
@@ -79,11 +95,13 @@ public:
     virtual bool configure(ResourceFinder &rf)
     {
         rpcPort.open("/tucker/rpc");
+        port_ikart_ctrl.open("/tucker/ikart_commands:o");
+        yarp::os::Network::connect("/tucker/ikart_commands:o", "/ikart/control:i");
         attach(rpcPort);
 
         std::string robotName = rf.check("robot",yarp::os::Value("icub")).asString().c_str();
 
-        command_type tuck_cmd = CLOSE;
+        command_type tuck_cmd = NO_CMD;
         if      (rf.check("close")) tuck_cmd = CLOSE;
         else if (rf.check("open"))  tuck_cmd = OPEN;
 
@@ -176,6 +194,18 @@ public:
             tuck(CLOSE);
             reply.addString("closing arms");
         }
+        else if (command.get(0).asString()=="approach")
+        {
+            int dur = 14;
+            approach(dur);
+            reply.addString("approaching");
+        }
+        else if (command.get(0).asString()=="retreat")
+        {   
+            int dur = 14;
+            retreat(dur);
+            reply.addString("retreating");
+        }
         else
         {
             reply.addString("Unknown command.");
@@ -191,8 +221,33 @@ public:
         return true;
     }
 
-    virtual double getPeriod()    { return 1.0;  }
-    virtual bool   updateModule() { return running; }
+    virtual double getPeriod()    { return 0.2;}
+    virtual bool   updateModule() 
+    {
+        if (approach_count>0)
+        {
+            Bottle &b=port_ikart_ctrl.prepare();
+            b.clear();
+            b.addInt(3);
+            b.addDouble(0.0);
+            b.addDouble(0.02);
+            b.addDouble(0.0);
+            port_ikart_ctrl.write();
+            approach_count--;
+        }
+        if (retreat_count>0)
+        {
+            Bottle &b=port_ikart_ctrl.prepare();
+            b.clear();
+            b.addInt(3);
+            b.addDouble(0.0);
+            b.addDouble(-0.02);
+            b.addDouble(0.0);
+            port_ikart_ctrl.write();
+            retreat_count--;
+        }
+        return running; 
+    }
 };
 
 int main(int argc, char *argv[]) 

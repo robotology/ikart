@@ -25,6 +25,7 @@ bool Odometry::reset_odometry()
     ienc->getEncoder(2,&encC_offset);
     odom_x=0;
     odom_y=0;
+    odometry_reset_requested = true;
     fprintf(stderr,"Odometry reset done\n");
     return true;
 }
@@ -57,6 +58,7 @@ Odometry::~Odometry()
 
 Odometry::Odometry(unsigned int _period, ResourceFinder &_rf, Property options, PolyDriver* _driver):rf(_rf)
 {
+    odometry_reset_requested = false;
     iKartCtrl_options = options;
     period = _period;
     control_board_driver= _driver;
@@ -134,7 +136,15 @@ void Odometry::compute()
     iCub::ctrl::AWPolyElement el;
     el.data=enc;
     el.time=Time::now();
-    encv= encvel_estimator->estimate(el);   
+    encv= encvel_estimator->estimate(el);
+    
+    if (odometry_reset_requested)
+    {
+        encv[0]=0.0;
+        encv[1]=0.0;
+        encv[2]=0.0;
+        odometry_reset_requested = false;
+    }
 
     // -------------------------------------------------------------------------------------
     // The following formulas are adapted from:

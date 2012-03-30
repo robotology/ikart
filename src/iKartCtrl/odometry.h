@@ -51,7 +51,8 @@ class Odometry
 private:
     Property iKartCtrl_options;
     yarp::os::Semaphore   mutex;
- 
+    bool odometry_reset_requested;
+
     //encoder variables
     double              encA_offset;
     double              encB_offset;

@@ -331,7 +331,7 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
             read_speed_cart(b, aux_desired_direction,aux_linear_speed,aux_angular_speed,aux_pwm_gain);
             wdt_old_mov_cmd = wdt_mov_cmd;
             wdt_mov_cmd = Time::now();
-            command_received = 100;
+            auxiliary_received = 100;
         }
     }
 

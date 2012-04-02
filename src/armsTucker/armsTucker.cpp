@@ -30,6 +30,8 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
 
+#define WAIT_TIME 3.0
+
 class TuckerModule: public RFModule
 {
     enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1};
@@ -187,24 +189,28 @@ public:
         else if (command.get(0).asString()=="open")
         {
             tuck(OPEN);
-            reply.addString("opening arms");
+            yarp::os::Time::delay(WAIT_TIME);
+            reply.addString("arms opened");
         }
         else if (command.get(0).asString()=="close")
         {
             tuck(CLOSE);
-            reply.addString("closing arms");
+            yarp::os::Time::delay(WAIT_TIME);
+            reply.addString("arms closed");
         }
         else if (command.get(0).asString()=="approach")
         {
             int dur = 14;
             approach(dur);
-            reply.addString("approaching");
+            yarp::os::Time::delay(WAIT_TIME);
+            reply.addString("approaching complete");
         }
         else if (command.get(0).asString()=="retreat")
         {   
             int dur = 14;
             retreat(dur);
-            reply.addString("retreating");
+            yarp::os::Time::delay(WAIT_TIME);
+            reply.addString("retreating complete");
         }
         else
         {

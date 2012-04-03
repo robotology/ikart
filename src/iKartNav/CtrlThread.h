@@ -16,10 +16,8 @@ class CtrlThread : public yarp::os::RateThread
 {
 public:
     CtrlThread(std::string local) 
-        : RateThread(10),mCtrlSem(1)
+        : RateThread(10),mCtrlSem(1),mLocal(local)
     {
-        mLocal=local;
-
         mOmega=0.0;
         mSpeed=0.0;
         mHead=0.0;
@@ -28,13 +26,6 @@ public:
     virtual bool threadInit()
     {
         mCommandPortO.open((mLocal+"/control:o").c_str());
-        
-        /*
-        if (!yarp::os::Network::connect(mCommandPortO.getName(),(mRemote+"/control:i").c_str()))
-        {
-            fprintf(stderr,"ERROR: can't connect to iKartCtrl command port\n");
-        }
-        */
 
         return true;
     }
@@ -42,24 +33,17 @@ public:
     virtual void run()
     {
         mCtrlSem.wait();
-    
-        if (mCommandPortO.getOutputCount()>0)
-        {
-            // SEND COMMANDS
-            yarp::os::Bottle& cmd=mCommandPortO.prepare();
-            cmd.clear();
-            cmd.addInt(2);
-            cmd.addDouble(mHead);
-            cmd.addDouble(mSpeed);
-            cmd.addDouble(mOmega);
-            mCommandPortO.write();
-
-            //printf("H=%lf  S=%lf   W=%lf\n",mHead,mSpeed,mOmega);
-        }
+        
+        sendCommand(mHead,mSpeed,mOmega);
 
         mCtrlSem.post();
     }
     
+    void onStop()
+    {
+        sendCommand(0.0,0.0,0.0);
+    }
+
     virtual void threadRelease()
     {
         mCommandPortO.interrupt();
@@ -82,12 +66,25 @@ protected:
     double mSpeed;
     double mHead;
 
+    std::string mLocal;
+    yarp::os::Semaphore mCtrlSem;
     yarp::os::BufferedPort<yarp::os::Bottle> mCommandPortO;
 
-    yarp::os::Semaphore mCtrlSem;
-
-    std::string mLocal;
+    void sendCommand(double head,double speed,double omega)
+    {
+        if (mCommandPortO.getOutputCount()>0)
+        {
+            yarp::os::Bottle& cmd=mCommandPortO.prepare();
+            cmd.clear();
+            cmd.addInt(2);
+            cmd.addDouble(head);
+            cmd.addDouble(speed);
+            cmd.addDouble(omega);
+            mCommandPortO.write();
+        }
+    }
 };
 
 #endif
+
 

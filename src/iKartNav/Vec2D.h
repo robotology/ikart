@@ -22,7 +22,7 @@ public:
 
     Vec2D rot(double alfa)
     {
-        alfa*=Vec2D::DEG2RAD;
+        alfa*=DEG2RAD;
         double cs=cos(alfa);
         double sn=sin(alfa);
         return Vec2D(cs*x-sn*y,sn*x+cs*y);
@@ -85,10 +85,10 @@ public:
 inline Vec2D operator*(double a,const Vec2D& p){ return Vec2D(a*p.x,a*p.y); }
 inline double mod180(double x)
 {
-    while (x<-180.0) x+=360.0;
     while (x>=180.0) x-=360.0;
-
-    return x; 
+    while (x<-180.0) x+=360.0;
+    return x;
 }
 
 #endif
+

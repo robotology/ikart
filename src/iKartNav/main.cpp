@@ -117,6 +117,7 @@ public:
         mHandlerPort.interrupt();
         mHandlerPort.close();
 
+        //mNavThread->shutdown();
         mNavThread->stop();
         delete mNavThread;
         mNavThread=NULL;
@@ -136,6 +137,13 @@ public:
             mNavThread->stop();   
             return false;
         }
+
+        /*
+        if (!mNavThread->checkResetAlive())
+        {
+            mNavThread->emergencyStop();
+        }
+        */
         
         return true; 
     }
@@ -167,4 +175,5 @@ int main(int argc, char *argv[])
 
     return iKartNav.runModule(rf);
 }
+
  

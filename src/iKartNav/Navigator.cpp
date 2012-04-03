@@ -1,45 +1,66 @@
-//#include "stdafx.h"
-
 #include <yarp/os/Time.h>
+#include <yarp/os/Bottle.h>
 
 #include "Navigator.h"
 
-//Navigator::Navigator(iKartCtrl* kartCtrl) 
+#define PRIO_LASER  1
+#define PRIO_VISION 2
+
 Navigator::Navigator(yarp::os::ResourceFinder *rf)
-    :  //mKartCtrl(kartCtrl),
+    :
+        RateThread(10),
         mRF(rf),
         mVel(0.0,0.0),
         mOmega(0.0),
         mVelRef(0.0,0.0),
         mOmegaRef(0.0)
 {
-    mActive=true;
-
-    mIsValid=NULL;
-    mPoints=NULL;
-    mPointsBuffOld=NULL;
-    mPointsBuffNew=NULL;
+    mOx=mOy=0;
 
     int SIZE=2*DIM+1;
 
-    mD=new double*[SIZE];
-    mD[0]=new double[SIZE*SIZE];
-
-    mZeta=new double*[SIZE];
-    mZeta[0]=new double[SIZE*SIZE];
-
-    mReach=new bool*[SIZE];
-    mReach[0]=new bool[SIZE*SIZE];
-    
-    mQueued=new bool*[SIZE];
-    mQueued[0]=new bool[SIZE*SIZE];
-
+    mD=new double*[SIZE];               mD[0]=new double[SIZE*SIZE];
+    mQueued=new bool*[SIZE];            mQueued[0]=new bool[SIZE*SIZE];
+    mZeta=new double*[SIZE];            mZeta[0]=new double[SIZE*SIZE];
+    mSamples=new double*[SIZE];         mSamples[0]=new double[SIZE*SIZE];
+    mReach=new unsigned short*[SIZE];   mReach[0]=new unsigned short[SIZE*SIZE];
+    mPrio=new unsigned char*[SIZE];     mPrio[0]=new unsigned char[SIZE*SIZE];
+                
     for (int i=1; i<SIZE; ++i)
     {
         mD[i]=mD[i-1]+SIZE;
         mZeta[i]=mZeta[i-1]+SIZE;
+        mSamples[i]=mSamples[i-1]+SIZE;
         mReach[i]=mReach[i-1]+SIZE;
         mQueued[i]=mQueued[i-1]+SIZE;
+        mPrio[i]=mPrio[i-1]+SIZE;
+    }
+    
+    for (int i=0; i<SIZE; ++i)
+    {
+        mD[i]+=DIM;
+        mZeta[i]+=DIM;
+        mSamples[i]+=DIM;
+        mReach[i]+=DIM;
+        mQueued[i]+=DIM;
+        mPrio[i]+=DIM;
+    }
+
+    mD+=DIM;
+    mZeta+=DIM;
+    mSamples+=DIM;
+    mReach+=DIM;
+    mQueued+=DIM;
+    mPrio+=DIM;
+
+    for (int x=-DIM; x<=DIM; ++x)
+    {
+        for (int y=-DIM; y<=DIM; ++y)
+        {
+            mPrio[x][y]=0;
+            mZeta[x][y]=0.0;
+            mSamples[x][y]=0.0;
+        }
     }
     
     mQueueX=new int[SIZE*SIZE];
@@ -53,348 +74,466 @@ Navigator::Navigator(yarp::os::ResourceFinder *rf)
     {
         mMask[i]=mMask[i-1]+21;
     }
+    for (int i=0; i<21; ++i)
+    {
+        mMask[i]+=10;
+    }
+    mMask+=10;
 
-    int Mx,My;
-    mSIGMA=0.5;
-    mK=-0.5/(mSIGMA*mSIGMA);
+    const double sigma=0.5;
+    mK=-1.0/(2.0*sigma*sigma);
     for (int x=-10; x<=10; ++x)
 	{
-        Mx=x+10;
-        double dX=0.1*double(x);
 	    for (int y=-10; y<=10; ++y)
         {
-            My=y+10;
-	        double dY=0.1*double(y);
-	        mMask[Mx][My]=exp(mK*(dX*dX+dY*dY));
+	        mMask[x][y]=exp(mK*0.01*double(x*x+y*y));
 	    }
 	}
 
-    T[3]  =S[3]  =1.0;
-    Tx[2] =Sy[2] =1.0;
-    Txx[1]=Syy[1]=2.0;
-    Tx[3] =Sy[3] =0.0;
-    Txx[3]=Syy[3]=0.0;
-    Txx[2]=Syy[2]=0.0;
-    
-    T[2]=1.0/3.0;   S[2]=1.0/3.0;
-    T[1]=T[2]*T[2]; S[1]=S[2]*S[2];
-    T[0]=T[2]*T[1]; S[0]=S[2]*S[1];
-    
-    Tx[0] =3.0*T[1]; Sy[0] =3.0*S[1];
-    Tx[1] =2.0*T[2]; Sy[1] =2.0*S[2];
-    Txx[0]=6.0*T[2]; Syy[0]=6.0*S[2];
-
-    Mb[0][0]=-1.0; Mb[0][1]= 3.0; Mb[0][2]=-3.0; Mb[0][3]=1.0;
-    Mb[1][0]= 3.0; Mb[1][1]=-6.0; Mb[1][2]= 3.0; Mb[1][3]=0.0;
-    Mb[2][0]=-3.0; Mb[2][1]= 3.0; Mb[2][2]= 0.0; Mb[2][3]=0.0;
-    Mb[3][0]= 1.0; Mb[3][1]= 0.0; Mb[3][2]= 0.0; Mb[3][3]=0.0;
+    mTargetH=0.0;
+    mHaveTarget=false;
+    mHaveTargetH=false;
+    mMustStop=false;
 }
 
 bool Navigator::threadInit()
 {
+    mHaveTarget=false;
+
     mRadius=mRF->check("radius",yarp::os::Value(0.3575)).asDouble();
     mRFpos.x=mRF->check("laser_pos",yarp::os::Value(0.245)).asDouble();
-    mMaxSpeed=mRF->check("max_speed",yarp::os::Value(0.125)).asDouble();
-    mMaxOmega=mRF->check("max_ang_speed",yarp::os::Value(9.0)).asDouble();
+    mRFpos.y=0.0;
+    mMinSpeed=mRF->check("min_speed",yarp::os::Value(0.05)).asDouble();
+    mMaxSpeed=mRF->check("max_speed",yarp::os::Value(0.2)).asDouble();
+    mMaxOmega=mRF->check("max_ang_speed",yarp::os::Value(12.0)).asDouble();
     mLinAcc=mRF->check("linear_acc",yarp::os::Value(0.25)).asDouble();
-    mRotAcc=mRF->check("rot_acc",yarp::os::Value(18.0)).asDouble();
-    mNumPoints=mRF->check("num_range_samples",yarp::os::Value(1081)).asInt();
+    mRotAcc=mRF->check("rot_acc",yarp::os::Value(12.0)).asDouble();
+    RAYS=mRF->check("num_range_samples",yarp::os::Value(1081)).asInt();
     mRangeMax=mRF->check("range_max_dist",yarp::os::Value(9.5)).asDouble();
     mAngularRes=mRF->check("range_ang_res",yarp::os::Value(0.25)).asDouble();
 
-    //mRadius=0.3575;
-    //mRFpos.x=0.245;
-    mRFpos.y=0.0;
-    //mMaxSpeed=0.125;  // m/s
-    //mMaxOmega=30.0;  // deg/s
-    //mLinAcc=0.25;    // m/s2
-    //mRotAcc=60.0;    // deg/s2
-    //mNumPoints=1081;
-    //mRangeMax=9.5;
-    //mAngularRes=0.25;
+    RAYS_BY_2=RAYS/2;
 
-    mNumPointsByTwo=mNumPoints/2;
-    mAngleMax=double(mNumPointsByTwo)*mAngularRes;
-    mPointsBuffSize=3*((int)(360.0/mAngularRes)-mNumPoints);
+    mRays=new Vec2D[RAYS]; 
+    mRanges=new double[RAYS];
+    mAngleMax=double(RAYS_BY_2)*mAngularRes;
+
+    for (int i=0; i<RAYS; ++i)
+    {
+        mRays[i]=Vec2D(double(i-RAYS_BY_2)*mAngularRes);
+        mRanges[i]=0.0;
+    }
 
     ///////////////////////////////////
 
-    mPointsBuffNum=0;
-    mPoints=new Vec2D[mNumPoints];
-    mRays=new Vec2D[mNumPoints];
-    mPointsBuffOld=new Vec2D[mPointsBuffSize];
-    mPointsBuffNew=new Vec2D[mPointsBuffSize];
-    mIsValid=new bool[mNumPoints];
-    
-    for (int i=0; i<mNumPoints; ++i)
-    {
-        mIsValid[i]=false;
-        mRays[i]=Vec2D(double(i-mNumPointsByTwo)*mAngularRes);
-    }
-
-    std::string remote=mRF->check("remote",yarp::os::Value("/ikart")).asString().c_str();
     std::string local=mRF->check("local",yarp::os::Value("/ikartnav")).asString().c_str();
         
     mLaserPortI.open((local+"/laser:i").c_str());
-    /*
-    if (!yarp::os::Network::connect((remote+"/laser:o").c_str(),mLaserPortI.getName()))
-    {
-        fprintf(stderr,"ERROR: can't connect to iKartCtrl laser port\n");
-        return false;
-    }
-    */
-    mTargetPortI.open((local+"/target:i").c_str());
-    /*
-    mCommandPortO.open((local+"/control:o").c_str());
-    if (!yarp::os::Network::connect(mCommandPortO.getName(),(remote+"/control:i").c_str()))
-    {
-        fprintf(stderr,"ERROR: can't connect to iKartCtrl command port\n");
-        return false;
-    }
-    */
-
-    mKartCtrl=new CtrlThread(local,remote);
+    mUserPortI.open((local+"/user:i").c_str());
+    mVisionPortI.open((local+"/vision:i").c_str());
+    mOdometryPortI.open((local+"/odometry:i").c_str());
+    
+    mResetOdometryPortO.open((local+"/resetodometry:o").c_str());
+    mStatusPortO.open((local+"/status:o").c_str());
+    
+    mKartCtrl=new CtrlThread(local);
 
     mKartCtrl->start();
 
     return true;
 }
 
-void Navigator::threadRelease()
+void Navigator::onStop()
 {
     mKartCtrl->stop();
-    delete mKartCtrl;
-
-    mLaserPortI.close();
-    mTargetPortI.close();
-    //mCommandPortO.close();
-
-    if (mRays) delete [] mRays;
-    if (mPoints) delete [] mPoints;
-    if (mIsValid) delete [] mIsValid;
-    if (mPointsBuffOld) delete [] mPointsBuffOld;
-    if (mPointsBuffNew) delete [] mPointsBuffNew;
-
-    mRays=NULL;
-    mPoints=NULL;
-    mIsValid=NULL;
-    mPointsBuffOld=NULL;
-    mPointsBuffNew=NULL;
-
-    delete [] mD[0];
-    delete [] mD;
-
-    delete [] mZeta[0];
-    delete [] mZeta;
-
-    delete [] mReach[0];
-    delete [] mReach;
-
-    delete [] mQueued[0];
-    delete [] mQueued;
-
-    delete [] mQueueX;
-    delete [] mQueueY;
-
-    delete [] mMask[0];
-    delete [] mMask;
 }
 
-bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,double& direction,double& curvature,double &zeta)
+void Navigator::threadRelease()
 {
-    //mLaserSem.wait();
+    delete mKartCtrl;
+    mKartCtrl=NULL;
+ 
+    mOdometryPortI.interrupt();
+    mUserPortI.interrupt();
+    mVisionPortI.interrupt();
+    mLaserPortI.interrupt();
+    mResetOdometryPortO.interrupt();
+    mStatusPortO.interrupt();
+        
+    mOdometryPortI.close();
+    mUserPortI.close();
+    mVisionPortI.close();
+    mLaserPortI.close();
+    mResetOdometryPortO.close();
+    mStatusPortO.close();
 
-    for (int i=0; i<mNumPoints; ++i)
+    if (mRays) delete [] mRays;
+    if (mRanges) delete [] mRanges;
+
+    mD+=DIM;       mD[0]+=DIM;
+    mZeta+=DIM;    mZeta[0]+=DIM;
+    mSamples+=DIM; mSamples[0]+=DIM;
+    mReach+=DIM;   mReach[0]+=DIM;
+    mQueued+=DIM;  mQueued[0]+=DIM;
+    mPrio+=DIM;    mPrio[0]+=DIM; 
+    mMask+=10;     mMask[0]+=10;
+
+    return;
+
+    delete [] mD[0];       delete [] mD;
+    delete [] mZeta[0];    delete [] mZeta;
+    delete [] mSamples[0]; delete [] mSamples;
+    delete [] mReach[0];   delete [] mReach;
+    delete [] mQueued[0];  delete [] mQueued;
+    delete [] mMask[0];    delete [] mMask;
+    delete [] mPrio[0];    delete [] mPrio;
+    delete [] mQueueX;     delete [] mQueueY;    
+}
+
+void Navigator::shiftMapSouth()
+{
+    for (int x=-DIM; x<=DIM_BY_2; ++x)
+        for (int y=-DIM; y<=DIM; ++y)
+            mSamples[x][y]=mSamples[x+DIM_BY_2][y];
+
+    for (int x=DIM_BY_2+1; x<=DIM; ++x)
+        for (int y=-DIM; y<=DIM; ++y)
+            mSamples[x][y]=0.0;
+
+    mOx+=DIM_BY_2;
+}
+
+void Navigator::shiftMapNorth()
+{
+    for (int x=DIM; x>=-DIM_BY_2; --x)
+        for (int y=-DIM; y<=DIM; ++y)
+            mSamples[x][y]=mSamples[x-DIM_BY_2][y];
+
+    for (int x=-DIM; x<=-DIM_BY_2-1; ++x)
+        for (int y=-DIM; y<=DIM; ++y)
+            mSamples[x][y]=0.0;
+
+    mOx-=DIM_BY_2;
+}
+
+void Navigator::shiftMapEast()
+{
+    for (int x=-DIM; x<=DIM; ++x)
+        for (int y=-DIM; y<=DIM_BY_2; ++y)
+            mSamples[x][y]=mSamples[x][y+DIM_BY_2];
+
+    for (int x=-DIM; x<=DIM; ++x)
+        for (int y=DIM_BY_2+1; y<=DIM; ++y)
+            mSamples[x][y]=0.0;
+
+    mOy+=DIM_BY_2;
+}
+
+void Navigator::shiftMapWest()
+{
+    for (int x=-DIM; x<=DIM; ++x)
+        for (int y=DIM; y>=-DIM_BY_2; --y)
+            mSamples[x][y]=mSamples[x][y-DIM_BY_2];
+
+    for (int x=-DIM; x<=DIM; ++x)
+        for (int y=-DIM; y<=-DIM_BY_2-1; ++y)
+            mSamples[x][y]=0.0;
+
+    mOy-=DIM_BY_2;
+}
+
+void Navigator::updateMap(yarp::sig::Vector& rangeData)
+{
+    double dMax2=0.0;
+    for (int i=0; i<RAYS; ++i)
     {
-        if (mIsValid[i])
-        {
-            mPoints[i]-=odoPos;
-            mPoints[i]=mPoints[i].rot(-odoRot);
-        }
+        mRanges[i]=rangeData[i];
+
+        if (rangeData[i]>dMax2) dMax2=rangeData[i];
     }
+    dMax2*=dMax2;
 
-    for (int i=0; i<mPointsBuffNum; ++i)
-    {
-        mPointsBuffOld[i]-=odoPos;
-        mPointsBuffOld[i]=mPointsBuffOld[i].rot(-odoRot);
-    }
+    int angle;
+    Vec2D V;
+    double d2;
+    Vec2D Orf=mOdoP+mRFpos.rot(mOdoH);
 
-    static const double cosAngleMax=cos(Vec2D::DEG2RAD*(mAngleMax));
-
-    int pointsBuffNum=0;
-    for (int i=mNumPoints-1; i>mNumPointsByTwo; --i)
-    {
-        if (mIsValid[i])
-        {
-            if ((mPoints[i]-mRFpos).norm().x<=cosAngleMax)
-            {
-                mPointsBuffNew[pointsBuffNum++]=mPoints[i];
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    for (int i=0; i<mNumPointsByTwo; ++i)
-    {
-        if (mIsValid[i])
-        {
-            if ((mPoints[i]-mRFpos).norm().x<=cosAngleMax)
-            {
-                mPointsBuffNew[pointsBuffNum++]=mPoints[i];
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    for (int i=0; i<mPointsBuffNum && pointsBuffNum<mPointsBuffSize; ++i)
-    {
-        if ((mPointsBuffOld[i]-mRFpos).norm().x<=cosAngleMax)
-        {
-            mPointsBuffNew[pointsBuffNum++]=mPointsBuffOld[i];
-        }
-    }
-
-    mPointsBuffNum=pointsBuffNum;
-    Vec2D *swap=mPointsBuffOld;
-    mPointsBuffOld=mPointsBuffNew;
-    mPointsBuffNew=swap;
-
-    for (int i=0; i<mNumPoints; ++i)
-    {
-        if (rangeData[i]<mRangeMax)
-        {
-            mPoints[i]=mRFpos+rangeData[i]*mRays[i];
-            mIsValid[i]=true;
-        }
-        else
-        {
-            mIsValid[i]=false;
-        }
-    }
-
-    // compile map here
-
-    int Mx,My;
     for (int x=-DIM; x<=DIM; ++x)
     {
-        Mx=x+DIM;
         for (int y=-DIM; y<=DIM; ++y)
         {
-            My=y+DIM;
+            if (mSamples[x][y]>0.1)
+            {
+                if (mPrio[x][y]<=PRIO_LASER)
+                {
+                    V.x=XGrid2World(x)-Orf.x;
+                    V.y=YGrid2World(y)-Orf.y;
 
-            mD[Mx][My]=1E+10;
-            mZeta[Mx][My]=0.0;
-            mReach[Mx][My]=false;
-            mQueued[Mx][My]=false;
+                    d2=V.mod2();
+
+                    if (d2<dMax2)
+                    {
+                        angle=RAYS_BY_2+int(0.5+4.0*mod180(V.arg()-mOdoH));
+
+                        if (angle>=10 && angle<RAYS-10)
+                        {
+                            if (d2<rangeData[angle-1]*rangeData[angle-1] &&
+                                d2<rangeData[angle  ]*rangeData[angle  ] &&
+                                d2<rangeData[angle+1]*rangeData[angle+1])
+                            {
+                                mSamples[x][y]=0.0;
+                            }
+                        }
+                    }
+                }
+
+                if (mPrio[x][y]==PRIO_LASER)
+                { 
+                    mSamples[x][y]*=0.9995;
+                }
+                else if (mPrio[x][y]==PRIO_VISION)
+                {
+                    mSamples[x][y]*=0.9992;
+                }
+            }
+            else
+            {
+                mSamples[x][y]=0.0;
+                mPrio[x][y]=0;
+            }
         }
     }
 
-    compileZ(mPoints,mNumPoints);
-    compileZ(mPointsBuffOld,mPointsBuffNum);
+    int xl,yd,xr,yu;
+    double px,py;
+    double dXl,dXr,dYd,dYu;
+    double dExl,dExr,dEyd,dEyu;
+    double dZld,dZrd,dZru,dZlu;
+
+    Vec2D Prf;
+
+    for (int i=0; i<RAYS; ++i)
+    {
+        if (rangeData[i]>mRangeMax) continue;
+
+        Prf=Orf+rangeData[i]*mRays[i].rot(mOdoH);
+
+        xl=XWorld2Grid(Prf.x); xr=xl+1;
+
+        if (xl<-DIM || xr>DIM) continue;
+
+        yd=YWorld2Grid(Prf.y); yu=yd+1;
+
+        if (yd<-DIM || yu>DIM) continue;
+
+        dXl=Prf.x-XGrid2World(xl); dXr=0.1-dXl;
+        dYd=Prf.y-YGrid2World(yd); dYu=0.1-dYd;
+
+        dExl=exp(mK*dXl*dXl);
+        dExr=exp(mK*dXr*dXr);
+        dEyd=exp(mK*dYd*dYd);
+        dEyu=exp(mK*dYu*dYu);
+
+        dZld=dExl*dEyd;
+        dZrd=dExr*dEyd;
+        dZru=dExr*dEyu;
+        dZlu=dExl*dEyu;
+
+        if (mSamples[xl][yd]<dZld) mSamples[xl][yd]=dZld; 
+        if (mSamples[xr][yd]<dZrd) mSamples[xr][yd]=dZrd;
+        if (mSamples[xr][yu]<dZru) mSamples[xr][yu]=dZru;
+        if (mSamples[xl][yu]<dZlu) mSamples[xl][yu]=dZlu;
+        
+        if (mPrio[xl][yd]<PRIO_LASER) mPrio[xl][yd]=PRIO_LASER;
+        if (mPrio[xr][yd]<PRIO_LASER) mPrio[xr][yd]=PRIO_LASER;
+        if (mPrio[xr][yu]<PRIO_LASER) mPrio[xr][yu]=PRIO_LASER;
+        if (mPrio[xl][yu]<PRIO_LASER) mPrio[xl][yu]=PRIO_LASER; 
+    }
+}
+
+void Navigator::updateZeta()
+{
+    for (int x=-DIM; x<=DIM; ++x)
+    {
+        for (int y=-DIM; y<=DIM; ++y)
+        {
+            mD[x][y]=1E+10;
+            mZeta[x][y]=0.0;
+            mQueued[x][y]=false;
+        }
+    }
+
+    for (int xc=-DIM; xc<=DIM; ++xc)
+    {
+        for (int yc=-DIM; yc<=DIM; ++yc)
+        {
+            if (mSamples[xc][yc]>0.1)
+            {           
+                for (int dx=-10; dx<=10; ++dx)
+                {
+                    int x=xc+dx;
+
+                    if (x>=-DIM && x<=DIM)
+                    {
+                        for (int dy=-10; dy<=10; ++dy)
+                        {
+                            int y=yc+dy;
+                            
+                            if (y>=-DIM && y<=DIM)
+                            {
+                                double dZ=mMask[dx][dy]*mSamples[xc][yc];
+
+                                if (mZeta[x][y]<dZ) mZeta[x][y]=dZ;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     int head=0,tail=0;
 
-    int xT=(int)(10.0*mTarget.x);
-    int yT=(int)(10.0*mTarget.y);
-    
-    if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
-    if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
-
-    int MxT=xT+DIM;
-    int MyT=yT+DIM;
-
-    double dXl,dXr,dYd,dYu;
-    dXl=0.1*(10.0*mTarget.x-double(xT));
-    dYd=0.1*(10.0*mTarget.y-double(yT));
-    dXr=0.1-dXl;
-    dYu=0.1-dYd;
-
-    mD[MxT]    [MyT]=sqrt(dXl*dXl+dYd*dYd);
-    mD[MxT+1]  [MyT]=sqrt(dXr*dXr+dYd*dYd);
-    mD[MxT]  [MyT+1]=sqrt(dXl*dXl+dYu*dYu);
-    mD[MxT+1][MyT+1]=sqrt(dXr*dXr+dYu*dYu);
-
-    static const double THR=0.666;
-
-    mQueueX[tail  ]=xT;
-    mQueueY[tail++]=yT;
-
-    mQueued[MxT][MyT]=true;
-    mReach[MxT][MyT]=(mZeta[MxT][MyT]<THR);
-
-    mQueueX[tail  ]=xT+1;
-    mQueueY[tail++]=yT;
-    
-    mQueued[MxT+1][MyT]=true;
-    mReach[MxT+1][MyT]=(mZeta[MxT+1][MyT]<THR);
-
-    mQueueX[tail  ]=xT;
-    mQueueY[tail++]=yT+1;
-
-    mQueued[MxT][MyT+1]=true;
-    mReach[MxT][MyT+1]=(mZeta[MxT][MyT+1]<THR);
-
-    mQueueX[tail  ]=xT+1;
-    mQueueY[tail++]=yT+1;
-
-    mQueued[MxT+1][MyT+1]=true;
-    mReach[MxT+1][MyT+1]=(mZeta[MxT+1][MyT+1]<THR);
+    for (int x=-DIM; x<=DIM; ++x)
+    {
+        for (int y=-DIM; y<=DIM; ++y)
+        {
+            if (mZeta[x][y]<=THR)
+            {
+                mQueueX[tail  ]=x;
+                mQueueY[tail++]=y;
+                mQueued[x][y]=true;
+                mReach[x][y]=0;
+            }
+            else
+            {
+                mQueued[x][y]=false;
+                mReach[x][y]=0xFFFF;
+            }
+        }
+    }
 
     static const int MODULE=(2*DIM+1)*(2*DIM+1);
-    int xc,yc;
-    int Mxc,Myc;
+
     while(head!=tail)
-    {
+	{
         head%=MODULE;
 
-	    xc=mQueueX[head  ];
-	    yc=mQueueY[head++];
+	    int xc=mQueueX[head  ];
+	    int yc=mQueueY[head++];
         
-        Mxc=xc+DIM;
-        Myc=yc+DIM;
-
-	    mQueued[Mxc][Myc]=false;
-	  
-        double dD=mD[Mxc][Myc];
-	    double dNewDL=1.25*0.1*mZeta[Mxc][Myc]+0.1;
-	    double dNewDT=1.414*dNewDL+dD;
-	    dNewDL+=dD;
+	    mQueued[xc][yc]=false;
 
         int xa=xc-1; if (xa<-DIM) xa=-DIM;
 	    int xb=xc+1; if (xb> DIM) xb= DIM;
 	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
-	    int yb=yc+1; if (yb> DIM) yb= DIM;
-
-        int Mx,My;
+	    int yb=yc+1; if (yb> DIM) yb= DIM;  
 
 	    for (int x=xa; x<=xb; ++x)
         {
-            Mx=x+DIM;
             for (int y=ya; y<=yb; ++y)
             {
-                My=y+DIM;
                 if (x!=xc || y!=yc)
 	            {
-	                double dNewD=(x==xc || y==yc)?dNewDL:dNewDT;
+                    unsigned short k=(x==xc||y==yc)?5:7;
 
-	                if (mReach[Mxc][Myc] && !mReach[Mx][My] || mReach[Mx][My]==mReach[Mxc][Myc] &&  mD[Mx][My]>dNewD)
+                    if (mReach[x][y] && mReach[x][y]>mReach[xc][yc]+k)
+                    {
+                        mReach[x][y]=mReach[xc][yc]+k;
+                        
+                        tail%=MODULE;
+		                mQueueX[tail  ]=x;
+		                mQueueY[tail++]=y;
+		                mQueued[x][y]=true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void Navigator::updateGNF()
+{
+    int head=0,tail=0;
+
+    int xT=XWorld2Grid(mTarget.x);
+    int yT=YWorld2Grid(mTarget.y);
+    
+    if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
+    if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
+    
+    if (mReach[xT][yT])
+    {
+        replaceTarget();
+        xT=XWorld2Grid(mTarget.x);
+        yT=YWorld2Grid(mTarget.y);
+    
+        if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
+        if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
+    }
+
+    double dXl=mTarget.x-XGrid2World(xT),dXr=1.0-dXl;
+    double dYd=mTarget.y-YGrid2World(yT),dYu=1.0-dYd;
+
+    mD[xT]    [yT]=sqrt(dXl*dXl+dYd*dYd);
+    mD[xT+1]  [yT]=sqrt(dXr*dXr+dYd*dYd);
+    mD[xT]  [yT+1]=sqrt(dXl*dXl+dYu*dYu);
+    mD[xT+1][yT+1]=sqrt(dXr*dXr+dYu*dYu);
+    
+    mQueueX[tail  ]=xT; 
+    mQueueY[tail++]=yT;
+    mQueued[xT  ][yT  ]=true;
+
+    mQueueX[tail  ]=xT+1; 
+    mQueueY[tail++]=yT;
+    mQueued[xT+1][yT  ]=true;
+
+    mQueueX[tail  ]=xT; 
+    mQueueY[tail++]=yT+1;
+    mQueued[xT  ][yT+1]=true;
+
+    mQueueX[tail  ]=xT+1; 
+    mQueueY[tail++]=yT+1;
+    mQueued[xT+1][yT+1]=true;
+
+    static const int MODULE=(2*DIM+1)*(2*DIM+1);
+
+    while(head!=tail)
+	{
+        head%=MODULE;
+
+	    int xc=mQueueX[head  ];
+	    int yc=mQueueY[head++];
+        
+	    mQueued[xc][yc]=false;
+	  
+        double D=0.1*(1.0+SAFETY*mZeta[xc][yc]);
+        double dNewDL=      D+mD[xc][yc];
+        double dNewDT=1.414*D+mD[xc][yc];
+
+        int xa=xc-1; if (xa<-DIM) xa=-DIM;
+	    int xb=xc+1; if (xb> DIM) xb= DIM;
+	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
+	    int yb=yc+1; if (yb> DIM) yb= DIM;  
+
+	    for (int x=xa; x<=xb; ++x)
+        {
+            for (int y=ya; y<=yb; ++y)
+            {
+                if (x!=xc || y!=yc)
+	            {
+	                double dNewD=(x==xc||y==yc)?dNewDL:dNewDT;
+       
+                    if (mD[x][y]>dNewD)
 		            {
-		                mD[Mx][My]=dNewD;
+		                mD[x][y]=dNewD;
 
-		                if (mZeta[Mx][My]<THR) mReach[Mx][My]=mReach[Mxc][Myc];
-
-		                if (!mQueued[Mx][My])
+                        if (!mQueued[x][y] && !mReach[x][y])
 		                {
 		                    tail%=MODULE;
 		                    mQueueX[tail  ]=x;
 		                    mQueueY[tail++]=y;
-		                    mQueued[Mx][My]=true;
+		                    mQueued[x][y]=true;
                         }
                     }
 		        }
@@ -402,101 +541,142 @@ bool Navigator::GNF(Vec2D& odoPos,double odoRot,yarp::sig::Vector& rangeData,dou
 	    }
 	}
 
-    static double MbD[4][4],MbDMb[4][4];
-    
-    for (int t=0; t<4; ++t)
+    head=tail=0;
+
+    for (int x=-DIM; x<=DIM; ++x)
     {
-        for (int s=0; s<4; ++s)
+        for (int y=-DIM; y<=DIM; ++y)
         {
-            MbD[t][s]=0.0;
-            for (int k=0; k<4-t; ++k)
+            if (mReach[x][y] && mD[x][y]<1E5)
             {
-                MbD[t][s]-=Mb[t][k]*mD[DIM+k-1][DIM+s-1];
+                mQueueX[tail  ]=x;
+                mQueueY[tail++]=y;
+                mQueued[x][y]=true;
             }
         }
     }
 
-    for (int t=0; t<4; ++t)
-    {
-        for (int s=0; s<4; ++s)
+    while(head!=tail)
+	{
+        head%=MODULE;
+
+	    int xc=mQueueX[head  ];
+	    int yc=mQueueY[head++];
+        
+	    mQueued[xc][yc]=false;
+
+        double D=0.1*(1.0+SAFETY*mZeta[xc][yc]);
+        double dNewDL=      D+mD[xc][yc];
+        double dNewDT=1.414*D+mD[xc][yc];
+
+        int xa=xc-1; if (xa<-DIM) xa=-DIM;
+	    int xb=xc+1; if (xb> DIM) xb= DIM;
+	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
+	    int yb=yc+1; if (yb> DIM) yb= DIM;  
+
+	    for (int x=xa; x<=xb; ++x)
         {
-            MbDMb[t][s]=0.0;
-            for (int k=0; k<4-s; ++k)
+            for (int y=ya; y<=yb; ++y)
             {
-                MbDMb[t][s]+=MbD[t][k]*Mb[k][s];
+                if (x!=xc || y!=yc)
+	            {
+                    double dNewD=(x==xc||y==yc)?dNewDL:dNewDT;
+
+                    if (mReach[x][y] && mReach[x][y]>=mReach[xc][yc] && mD[x][y]>dNewD)
+                    {
+                        mD[x][y]=dNewD;
+
+                        tail%=MODULE;
+		                mQueueX[tail  ]=x;
+		                mQueueY[tail++]=y;
+		                mQueued[x][y]=true;
+                    }
+                }
             }
         }
     }
-
-        static double A[4],B[4],By[4];
-
-    for (int t=0; t<4; ++t)
-    {
-        A[t]=B[t]=By[t]=0.0;
-        for (int s=0; s<4; ++s)
-        {
-            A[t]+=T[s]*MbDMb[s][t];
-            B[t]+=MbDMb[t][s]*S[s];
-            By[t]+=MbDMb[t][s]*Sy[s];
-        }
-    }
-
-    Vec2D W(Tx[0]*B[0]+Tx[1]*B[1]+Tx[2]*B[2],Sy[0]*A[0]+Sy[1]*A[1]+Sy[2]*A[2]);
-    double modW=W.normalize();
-
-    double Wxx=Txx[0]*B[0]+Txx[1]*B[1];
-    double Wxy=Tx[0]*By[0]+Tx[1]*By[1]+Tx[2]*By[2];
-    double Wyy=Syy[0]*A[0]+Syy[1]*A[1];
-
-    //double dGamma=Atan(gx,gy);
-    //double dOmega=dAlfa*(dVx*(Gxy*gx-Gxx*gy)+dVy*(Gyy*gx-Gxy*gy))/(gx*gx+gy*gy);
-
-    static const double ONE_BY_03=1.0/(0.1*3.0);
-
-    direction=W.arg();
-    curvature=ONE_BY_03*(W.x*(W.x*Wxy-W.y*Wxx)+W.y*(W.x*Wyy-W.y*Wxy))/modW;
-    //mLaserSem.post();
-    zeta=mZeta[DIM][DIM];
-    return mReach[DIM][DIM];
 }
 
-void Navigator::compileZ(Vec2D* points,int N)
+bool Navigator::followGNF(Vec2D &W,double &curvature,double &zeta,Vec2D &gradient)
 {
-    int xc,yc;
-    double dXl,dXr,dYd,dYu;
-    double dExl,dExr,dEyd,dEyu;
-    double px,py;
+    int xr=XWorld2GridRound(mOdoP.x);
+    int yr=YWorld2GridRound(mOdoP.y);
 
-    for (int i=0; i<N; ++i)
+    double dX=10.0*(mOdoP.x-XGrid2World(xr)); // -0.5 < dX < 0.5
+    double dY=10.0*(mOdoP.y-YGrid2World(yr)); // -0.5 < dY < 0.5
+
+    double D00=mD[xr-1][yr-1]*(0.5-dX)*(0.5-dY)+mD[xr-1][yr  ]*(0.5-dX)*(0.5+dY)
+              +mD[xr  ][yr-1]*(0.5+dX)*(0.5-dY)+mD[xr  ][yr  ]*(0.5+dX)*(0.5+dY);
+
+    double D10=mD[xr  ][yr-1]*(0.5-dX)*(0.5-dY)+mD[xr  ][yr  ]*(0.5-dX)*(0.5+dY)
+              +mD[xr+1][yr-1]*(0.5+dX)*(0.5-dY)+mD[xr+1][yr  ]*(0.5+dX)*(0.5+dY);
+
+    double D01=mD[xr-1][yr  ]*(0.5-dX)*(0.5-dY)+mD[xr-1][yr+1]*(0.5-dX)*(0.5+dY)
+              +mD[xr  ][yr  ]*(0.5+dX)*(0.5-dY)+mD[xr  ][yr+1]*(0.5+dX)*(0.5+dY);
+
+    double D11=mD[xr  ][yr  ]*(0.5-dX)*(0.5-dY)+mD[xr  ][yr+1]*(0.5-dX)*(0.5+dY)
+              +mD[xr+1][yr  ]*(0.5+dX)*(0.5-dY)+mD[xr+1][yr+1]*(0.5+dX)*(0.5+dY);
+
+
+    W.x=D00+D01-D10-D11;
+    W.y=D00-D01+D10-D11;
+
+    double m=W.normalize();
+    
+    if (m>0.0)
     {
-        xc=(int)(px=10.0*points[i].x);
-        yc=(int)(py=10.0*points[i].y);
+        double Wxy=100.0*(-D00+D01+D10-D11);
+        curvature=-2.0*Vec2D::RAD2DEG*W.x*Wxy*W.y;
+    }
+    else
+    {
+        curvature=0.0;
+    }
 
-        if (abs(xc)>DIM || abs(yc)>DIM) continue;
+    int x=XWorld2Grid(mOdoP.x);
+    int y=YWorld2Grid(mOdoP.y);
 
-        dXl=0.1*(px-double(xc));
-        dYd=0.1*(py-double(yc));
-        dXr=0.1-dXl;
-        dYu=0.1-dYd;
+    dX=10.0*(mOdoP.x-XGrid2World(x)); // 0.0<=dX<1.0
+    dY=10.0*(mOdoP.y-YGrid2World(y)); // 0.0<=dY<1.0
 
-        dExl=exp(mK*dXl*dXl);
-        dExr=exp(mK*dXr*dXr);
-        dEyd=exp(mK*dYd*dYd);
-        dEyu=exp(mK*dYu*dYu);
+    zeta=(1.0-dX)*(1.0-dY)*mZeta[x  ][y  ]
+        +(1.0-dX)*     dY *mZeta[x  ][y+1]
+        +     dX *(1.0-dY)*mZeta[x+1][y  ]
+        +     dX *     dY *mZeta[x+1][y+1];
 
-        int x,y;
-        for (int dx=-10; dx<=10; ++dx) if (abs(x=xc+dx)<=DIM)
+    gradient.x=(1.0-dY)*mZeta[x  ][y  ]
+              +     dY *mZeta[x  ][y+1]
+              -(1.0-dY)*mZeta[x+1][y  ]
+              -     dY *mZeta[x+1][y+1];
+
+    gradient.y=(1.0-dX)*mZeta[x  ][y  ]
+              -(1.0-dX)*mZeta[x  ][y+1]
+              +     dX *mZeta[x+1][y  ]
+              -     dX *mZeta[x+1][y+1];
+
+    gradient.normalize();
+
+    return mReach[xr][yr]==0;
+}
+
+void Navigator::addEvent(double heading,double distance,double radius)
+{
+    Vec2D event=mOdoP+distance*Vec2D(mOdoH+heading);
+
+    int x0=(int)(0.5+10.0*event.x);
+    int y0=(int)(0.5+10.0*event.y);
+    int r=1+(int)(10.0*radius);
+    int r2=r*r;
+
+    for (int x=x0-r; x<=x0+r; ++x) if (x>=-DIM && x<=DIM)
+    {
+        for (int y=y0-r; y<=y0+r; ++y) if (y>=-DIM && y<=DIM)
         {
-            x+=DIM;
-            for (int dy=-10; dy<=10; ++dy) if (abs(y=yc+dy)<=DIM)
+            if ((x-x0)*(x-x0)+(y-y0)*(y-y0)<=r2)
             {
-                y+=DIM;
-                double dZ=mMask[dx+10][dy+10]*(dx<=0?dExl:dExr)*(dy<=0?dEyd:dEyu);
-
-                if (mZeta[x][y]<dZ)
-                {
-                    mZeta[x][y]=dZ;
-                }
+                mSamples[x][y]=1.0;
+                
+                if (mPrio[x][y]<PRIO_VISION) mPrio[x][y]=PRIO_VISION;
             }
         }
     }
@@ -504,158 +684,275 @@ void Navigator::compileZ(Vec2D* points,int N)
 
 void Navigator::run()
 {
-    while (mActive)
+    //////////////////////////
+    // GET COMMANDS
+    for (yarp::os::Bottle* bot; bot=mUserPortI.read(false);)
     {
-        for (yarp::os::Bottle* bot; bot=mTargetPortI.read(false);)
-        {
-            yarp::os::ConstString cmd=bot->get(0).asString();
+        yarp::os::ConstString cmd=bot->get(0).asString();
 
-            if (cmd=="target" || cmd=="t")
-            { 
-                double heading=-bot->get(1).asDouble();
-                double distance=bot->get(2).asDouble();
-                mTarget=distance*Vec2D(heading);
-                mHaveTarget=true;
-
-                printf("NEW TARGET H=%lf D=%lf\n",heading,distance);
-                fflush(stdout);
-            }
-            else if (cmd=="stop" || cmd=="s")
-            {
-                printf("STOP\n");
-                fflush(stdout);
-                mHaveTarget=false;
-            }
-        }
-
-        yarp::sig::Vector *rangeDataLast=NULL;
-
-        for (yarp::sig::Vector *rangeData; rangeData=mLaserPortI.read(false);)
-        {
-            rangeDataLast=rangeData;
-        }
-        
-        //mImAlive=true;
-
-        if (rangeDataLast!=NULL && mActive && !isStopping())
+        if (cmd=="target" || cmd=="t")
         {   
-            mImAlive=true;
-            runGNF(*rangeDataLast);
-        }
-    }
-}
-
-void Navigator::runGNF(yarp::sig::Vector& rangeData)
-{
-    // (very poor) ODOMETRY
-    // only used for target memory
-    
-    double timeNow=yarp::os::Time::now();
-    static double timeOld=timeNow;
-    double step=timeNow-timeOld;
-    timeOld=timeNow;
-    static double period=0.0;
-    period+=step;
-    
-    static double odoRot=0.0;
-    static Vec2D odoPos;
-    odoPos+=step*mVel.rot(0.5*step*mOmega);
-    odoRot+=step*mOmega;
-    while (odoRot>=180.0) odoRot-=360.0;
-    while (odoRot<-180.0) odoRot+=360.0;
-
-    //if (mPeriod<0.1) return;
-    //printf("period %lf\n",step);
-    //fflush(stdout);
-
-    // CONTROL
-    if (period>0.1)
-    {
-        period=0.0;
-
-        if (mHaveTarget)
-        {
-            // target direction
-            mTarget-=odoPos;
-            mTarget=mTarget.rot(-odoRot);
-            double distance=mTarget.mod();
-
-            static int sTime=0;
-            if (++sTime==10)
+            if (bot->size()>=4)
             {
-                sTime=0;
-                printf("%.3lf meters to target\n",distance);
+                mTargetH=mOdoH-bot->get(3).asDouble();
+                printf("NEW TARGET X=%.3f Y=%.3f H=%.1f\n",mTarget.x,mTarget.y,mTargetH);
                 fflush(stdout);
-            }
-
-            double heading;
-            double curvature;
-            double zeta;
-
-            double gain=1.0;
-
-            if (!GNF(odoPos,odoRot,rangeData,heading,curvature,zeta))
-            {
-                if (zeta>0.666)
-                { 
-                    gain=0.0;
-                    static int times=9;
-
-                    if (++times==10)
-                    {
-                        times=0;
-                        printf("No path to target z=%f\n",zeta);
-                    }
-                }
-            }
-
-            Vec2D U(heading);
-
-            if (distance<0.05)
-            {
-                setVel(Vec2D::zero);
-                setOmega(0.0);
-            }
-            else if (distance<0.2)
-            {
-                setVel(gain*0.5*distance*mTarget.norm());
-                //setOmega(0.2*mTarget.arg());
-                setOmega(0.0);
+                mHaveTargetH=true;
             }
             else
             {
-                if (fabs(heading)<=45.0)
+                printf("NEW TARGET X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
+                fflush(stdout);
+                mHaveTargetH=false;
+            }
+
+            setUserTarget(-bot->get(1).asDouble(),bot->get(2).asDouble());
+        }
+        else if (cmd=="event" || cmd=="e")
+        {
+            addEvent(-bot->get(1).asDouble(),bot->get(2).asDouble(),bot->get(3).asDouble());
+        }
+        else if (cmd=="stop" || cmd=="s")
+        {
+            printf("STOP\n");
+            fflush(stdout);
+            mHaveTarget=false;
+        }
+    }
+    
+    for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)
+    {
+        //yarp::os::ConstString cmd=bot->get(0).asString();
+
+        //double x=-bot->get(0).asDouble();
+        //double y= bot->get(1).asDouble();
+        
+        //double angle=Vec2D::RAD2DEG*atan2(y,x);
+        //double distance=sqrt(x*x+y*y);
+        
+        //setVisionTarget(-angle);
+
+        mHaveTargetH=false;
+        setVisionTarget(-bot->get(0).asDouble());        
+        
+        printf("New target from vision\n");
+    }
+    
+    // GET COMMANDS
+    //////////////////////////
+
+    //////////////////////////
+    // GET ODOMETRY
+    yarp::os::Bottle *odometryLast=NULL;
+
+    static int odometryResetCycle=0;
+
+    if (!odometryResetCycle)
+    {
+        if (mResetOdometryPortO.getOutputCount()>0)
+        {
+            yarp::os::Bottle msg,rsp;
+            msg.addString("reset_odometry");
+            mResetOdometryPortO.write(msg,rsp);
+            if (rsp.get(0).asString()=="Odometry reset done.")
+            {
+                mResetOdometryPortO.write(msg,rsp);
+                if (rsp.get(0).asString()=="Odometry reset done.")
                 {
-                    setVel(gain*mMaxSpeed*U);
-                    static const double RAD2DEG=1.0/Vec2D::DEG2RAD;                    
-                    //setVel(gain*mMaxSpeed*Vec2D(1.0,0.0));
-                    
-                    printf("heading=%f\n",heading);
-                    
-                    setOmega(0.2*heading/*+RAD2DEG*mVel.mod()*curvature*/);
+                    odometryResetCycle=1;
                 }
-                else
-                {
-                    setVel(Vec2D::zero);
-                    setOmega(heading>0.0?9.0:-9.0);
-                }   
+            }
+        }
+
+        return;
+    }
+    
+    if (odometryResetCycle && odometryResetCycle<200)
+    {
+        ++odometryResetCycle;
+        
+        return;
+    }
+    
+    for (yarp::os::Bottle *odometry; odometry=mOdometryPortI.read(false);)
+    {
+        odometryLast=odometry;
+    }
+
+    if (odometryLast)
+    {
+        mOdoP.x= odometryLast->get(1).asDouble();
+        mOdoP.y=-odometryLast->get(0).asDouble();
+        mOdoH=mod180(-odometryLast->get(2).asDouble());
+    }
+    // GET ODOMETRY
+    //////////////////////////
+
+    double timeOdoNew=yarp::os::Time::now();
+    static double timeOdoOld=timeOdoNew;
+    if (timeOdoNew-timeOdoOld>1.0)
+    {
+        timeOdoOld=timeOdoNew;
+        printf("X=%.3f Y=%.3f H=%.1f\n",mOdoP.x,mOdoP.y,mOdoH);
+    }
+
+    //////////////////////////
+    // GET LASER
+    yarp::sig::Vector *rangeDataLast=NULL;
+    for (yarp::sig::Vector *rangeData; rangeData=mLaserPortI.read(false);)
+    {    
+        rangeDataLast=rangeData;
+    }
+    if (rangeDataLast) updateMap(*rangeDataLast);
+    // GET LASER
+    //////////////////////////
+    
+    //////////////////////////
+    // COMPUTE GNF
+    static int cycle=9;
+    if (++cycle==10)
+    {
+        updateZeta();
+        if (mHaveTarget) updateGNF();
+        cycle=0;
+    }
+    // COMPUTE GNF
+    //////////////////////////
+
+    if (!mHaveTarget)
+    {
+        emergencyStop();
+        return;
+    }
+
+    //////////////////////////
+    // FOLLOW GNF
+    double curvature,zeta;
+    Vec2D direction,gradient;
+
+    bool bCanReach=followGNF(direction,curvature,zeta,gradient);
+
+    if (mMustStop)
+    {
+        emergencyStop();
+        return;
+    }
+    
+    Vec2D  deltaP=mTarget-mOdoP;
+    double distance=deltaP.mod();
+
+    if (distance<0.05)
+    {
+        setVel(Vec2D::zero);
+       
+        if (mHaveTargetH)
+        {
+            double deltaH=0.5*mod180(mTargetH-mOdoH);
+            if (deltaH<-mMaxOmega) deltaH=-mMaxOmega;
+            if (deltaH> mMaxOmega) deltaH= mMaxOmega;
+            setOmega(deltaH);
+
+            if (fabs(deltaH)<1.5)
+            {
+                mHaveTargetH=false;
             }
         }
         else
         {
-            setVel(Vec2D::zero);
             setOmega(0.0);
+            printf("Target reached.\n");
+            mHaveTarget=false;            
         }
+    }
+    else if (distance<0.2)
+    {
+        setVel((1.0-zeta)*0.5*distance*deltaP.norm().rot(-mOdoH));
+        setOmega(0.0);
+    }
+    else
+    {
+        if (!bCanReach)
+        {
+            static int t=0;
+            if (++t==100)
+            {
+                printf("UNREACHABLE\n");
+                t=0;
+            }
+        }
+        
+        if (zeta>THR)
+        {
+            if (direction*gradient<0.0)
+            {
+                direction-=1.05*(direction*gradient)*gradient;
+            }
+        }
+        
+        double deltaH=mod180(direction.arg()-mOdoH);
 
-        odoRot=0.0;
-        odoPos=Vec2D::zero;
+        //////////////////////////////////////////////////
+        double deltaT=mod180((mTarget-mOdoP).arg()-mOdoH);
+        double errH=mod180(deltaT-deltaH);
+
+        if (fabs(errH)<90.0)
+        {
+            setVel((zeta*mMinSpeed+(1.0-zeta)*mMaxSpeed)*Vec2D(deltaH));
+
+            double omega=0.2*deltaT;
+            if (omega<-mMaxOmega) omega=-mMaxOmega;
+            if (omega> mMaxOmega) omega= mMaxOmega;
+            setOmega(omega);
+        }
+        else if (fabs(errH)<135.0)
+        {
+            deltaT+=errH>0.0?(90.0-errH):(-90.0-errH);
+            
+            double omega=0.2*deltaT;
+            if (omega<-mMaxOmega) omega=-mMaxOmega;
+            if (omega> mMaxOmega) omega= mMaxOmega;
+            setOmega(omega);
+        }
+        else if (fabs(deltaH)<=90.0)
+        {
+            setVel((zeta*mMinSpeed+(1.0-zeta)*mMaxSpeed)*Vec2D(deltaH));
+
+            setOmega((mMaxOmega/90.0)*deltaH/*+mVel.mod()*curvature*/);
+        }
+        else
+        {
+            setVel(Vec2D::zero);
+            setOmega(deltaH>0.0?mMaxOmega:-mMaxOmega);
+        }
+        //////////////////////////////////////////////////
+
+        /*
+        if (fabs(deltaH)<=45.0)
+        {
+            setVel((zeta*mMinSpeed+(1.0-zeta)*mMaxSpeed)*Vec2D(deltaH));
+
+            // must be from odometry
+            setOmega((mMaxOmega/45.0)*deltaH+Vec2D::RAD2DEG*mVel.mod()*curvature);
+        }
+        else
+        {
+            setVel(Vec2D::zero);
+            setOmega(deltaH>0.0?mMaxOmega:-mMaxOmega);
+        }
+        */
     }
 
+    double timeNew=yarp::os::Time::now();
+    static double timeOld=timeNew;  
+    double step=timeNew-timeOld;
+    timeOld=timeNew;
+
+    //////////////////////////
     // SMOOTHING
     if (mVelRef!=mVel)
     {
         Vec2D Verr=mVelRef-mVel;
-        if (Verr.mod()>step*mLinAcc)
+        if (Verr.mod()>step*mLinAcc) 
             mVel+=Verr.norm(step*mLinAcc);
         else
             mVel=mVelRef;
@@ -674,69 +971,6 @@ void Navigator::runGNF(yarp::sig::Vector& rangeData)
     }
 
     // SEND COMMANDS
-    mKartCtrl->setCtrlRef(-mVel.arg(),mVel.mod(),mOmega); 
-
-    /*
-    //if (mCommandPortO.getOutputCount()>0)
-    {
-        // SEND COMMANDS
-        yarp::os::Bottle& cmd=mCommandPortO.prepare();
-        cmd.clear();
-        cmd.addInt(1);
-        //cmd.addDouble(-mVel.arg());
-        cmd.addDouble(0.0);
-        //cmd.addDouble(127500.0*mVel.mod());
-        cmd.addDouble(127500.0*0.2);
-        //cmd.addDouble(45000.0);
-        //cmd.addDouble(-1000.0*mOmega);
-        cmd.addDouble(0.0);
-        cmd.addDouble(65000.0); // pwm %
-        mCommandPortO.write();
-
-        printf("%lf   %lf    %lf\n",-mVel.arg(),mVel.mod(),mOmega);
-    }
-    */
+    mKartCtrl->setCtrlRef(-mVel.arg(),mVel.mod(),-mOmega); 
 }
 
-/*
-void Navigator::draw(CDC* pDC,Vec2D &P,double H)
-{
-    static const double s=1440.0/20.0;
-
-    static CPen rPen(PS_SOLID,1,RGB(255,0,0));
-    static CPen gPen(PS_SOLID,1,RGB(0,255,0));
-
-    int x,y;
-
-    CPen *pen=pDC->SelectObject(&gPen);
-
-    Vec2D Q;
-
-    for (int i=0; i<mNumPoints; ++i)
-    {
-        if (mIsValid[i])
-        {
-            Q=P+mPoints[i].rot(H);
-
-            x=720-int(s*Q.y);
-            y=450-int(s*Q.x);
-            pDC->Ellipse(x-2,y-2,x+2,y+2);
-        }
-    }
-
-    pDC->SelectObject(&rPen);
-    for (int i=0; i<mPointsBuffNum; ++i)
-    {
-        Q=P+mPointsBuffOld[i].rot(H);
-
-        x=720-int(s*Q.y);
-        y=450-int(s*Q.x);
-        pDC->Ellipse(x-2,y-2,x+2,y+2);
-    }
-
-    //x=720-int(s*mOdoPos.y);
-    //y=450-int(s*mOdoPos.x);
-
-    pDC->SelectObject(pen);
-}
-*/

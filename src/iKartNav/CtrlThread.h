@@ -15,11 +15,10 @@
 class CtrlThread : public yarp::os::RateThread
 {
 public:
-    CtrlThread(std::string local,std::string remote) 
+    CtrlThread(std::string local) 
         : RateThread(10),mCtrlSem(1)
     {
         mLocal=local;
-        mRemote=remote;
 
         mOmega=0.0;
         mSpeed=0.0;
@@ -88,7 +87,6 @@ protected:
     yarp::os::Semaphore mCtrlSem;
 
     std::string mLocal;
-    std::string mRemote;
 };
 
 #endif

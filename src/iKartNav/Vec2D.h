@@ -58,7 +58,6 @@ public:
 
 	double arg() const
 	{
-        static const double RAD2DEG=1.0/DEG2RAD;
 		return RAD2DEG*atan2(y,x);
 	}
 
@@ -80,8 +79,16 @@ public:
     double x,y;
     static const Vec2D zero;
     static const double DEG2RAD;
+    static const double RAD2DEG;
 };
 
 inline Vec2D operator*(double a,const Vec2D& p){ return Vec2D(a*p.x,a*p.y); }
+inline double mod180(double x)
+{
+    while (x<-180.0) x+=360.0;
+    while (x>=180.0) x-=360.0;
+
+    return x; 
+}
 
 #endif

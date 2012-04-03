@@ -166,6 +166,8 @@ void Navigator::threadRelease()
     mLaserPortI.close();
     mResetOdometryPortO.close();
     mStatusPortO.close();
+    
+    return;
 
     if (mRays) delete [] mRays;
     if (mRanges) delete [] mRanges;
@@ -177,8 +179,6 @@ void Navigator::threadRelease()
     mQueued+=DIM;  mQueued[0]+=DIM;
     mPrio+=DIM;    mPrio[0]+=DIM; 
     mMask+=10;     mMask[0]+=10;
-
-    return;
 
     delete [] mD[0];       delete [] mD;
     delete [] mZeta[0];    delete [] mZeta;
@@ -718,7 +718,7 @@ void Navigator::run()
             fflush(stdout);
             mHaveTarget=false;
         }
-    }
+    } 
     
     for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)
     {
@@ -790,7 +790,7 @@ void Navigator::run()
 
     double timeOdoNew=yarp::os::Time::now();
     static double timeOdoOld=timeOdoNew;
-    if (timeOdoNew-timeOdoOld>1.0)
+    if (timeOdoNew-timeOdoOld>10.0)
     {
         timeOdoOld=timeOdoNew;
         printf("X=%.3f Y=%.3f H=%.1f\n",mOdoP.x,mOdoP.y,mOdoH);
@@ -819,28 +819,33 @@ void Navigator::run()
     // COMPUTE GNF
     //////////////////////////
 
-    if (!mHaveTarget)
-    {
-        emergencyStop();
-        return;
-    }
-
     //////////////////////////
     // FOLLOW GNF
     double curvature,zeta;
     Vec2D direction,gradient;
-
-    bool bCanReach=followGNF(direction,curvature,zeta,gradient);
-
-    if (mMustStop)
-    {
-        emergencyStop();
-        return;
-    }
+    bool bCanReach=false;
     
     Vec2D  deltaP=mTarget-mOdoP;
     double distance=deltaP.mod();
-
+    
+    if (!mHaveTarget)
+    {
+        if (mTargetFilter.numSamples()==1)
+        {
+            setOmega(0.0);
+            setVel(Vec2D(0.0,0.1));
+        }
+        else 
+        {
+            emergencyStop();
+            return;
+        }
+    }
+    else // have target
+    {
+    
+    bCanReach=followGNF(direction,curvature,zeta,gradient);
+    
     if (distance<0.05)
     {
         setVel(Vec2D::zero);
@@ -941,7 +946,8 @@ void Navigator::run()
         }
         */
     }
-
+    }
+    
     double timeNew=yarp::os::Time::now();
     static double timeOld=timeNew;  
     double step=timeNew-timeOld;

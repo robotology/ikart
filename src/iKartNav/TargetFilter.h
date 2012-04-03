@@ -25,6 +25,8 @@ public:
 
         if (mNumSamples==0)
         {
+            printf("0 samples\n");
+            
             Q=P; W=U;
             mTarget=P+maxRange*U;
             mNumSamples=1;
@@ -33,6 +35,8 @@ public:
 
         if (mNumSamples==1)
         {
+            printf("1 sample\n");
+        
             double k=W*U;
             double d=1.0-k*k;
 
@@ -62,6 +66,8 @@ public:
 
         if (mNumSamples==2)
         {
+            printf("2 samples\n");
+            
             double k=W*U;
             double d=1.0-k*k;
 
@@ -99,9 +105,9 @@ public:
         }
     }
 
-    bool haveTarget()
+    int numSamples()
     {
-        return mNumSamples!=0;
+        return mNumSamples;
     }
 
     void reset()

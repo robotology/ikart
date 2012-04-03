@@ -103,11 +103,17 @@ protected:
 
         mHaveTarget=false;
 
-        if (!mTargetFilter.haveTarget()) return;
+        if (mTargetFilter.numSamples()<2)
+        {
+            printf("Target not ready\n");
+            return;
+        }
         
         mTargetOriginal=mTargetFilter.getTarget();
 
         mTarget=mTargetOriginal;
+        
+        printf("Target X=%.3f   Y=%.3f\n",mTarget.x,mTarget.y);
 
         int xT=XWorld2GridRound(mTarget.x);
         int yT=YWorld2GridRound(mTarget.y);

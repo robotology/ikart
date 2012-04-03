@@ -343,19 +343,19 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
         *angular_speed      = joy_angular_speed;
         *pwm_gain           = joy_pwm_gain;
     }
-    else if (command_received>0)
-    {
-        *desired_direction  = cmd_desired_direction;
-        *linear_speed       = cmd_linear_speed;
-        *angular_speed      = cmd_angular_speed;
-        *pwm_gain           = cmd_pwm_gain;
-    }
-    else
+    else if (auxiliary_received>0)
     {
         *desired_direction  = aux_desired_direction;
         *linear_speed       = aux_linear_speed;
         *angular_speed      = aux_angular_speed;
         *pwm_gain           = aux_pwm_gain;
+    }
+    else //if (command_received>0)
+    {
+        *desired_direction  = cmd_desired_direction;
+        *linear_speed       = cmd_linear_speed;
+        *angular_speed      = cmd_angular_speed;
+        *pwm_gain           = cmd_pwm_gain;
     }
 
     //watchdog on received commands

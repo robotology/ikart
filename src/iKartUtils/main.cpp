@@ -32,7 +32,7 @@ using namespace yarp::os;
 
 #define WAIT_TIME 3.0
 
-class TuckerModule: public RFModule
+class iKartUtilsModule: public RFModule
 {
     enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1};
     PolyDriver       *left_arm_device;
@@ -49,7 +49,7 @@ class TuckerModule: public RFModule
     int                   retreat_count;
 
 public:
-    TuckerModule()
+    iKartUtilsModule()
     {
         approach_count   = 0;
         retreat_count    = 0;
@@ -96,9 +96,9 @@ public:
 
     virtual bool configure(ResourceFinder &rf)
     {
-        rpcPort.open("/tucker/rpc");
-        port_ikart_ctrl.open("/tucker/ikart_commands:o");
-        yarp::os::Network::connect("/tucker/ikart_commands:o", "/ikart/aux_control:i");
+        rpcPort.open("/iKartUtils/rpc");
+        port_ikart_ctrl.open("/iKartUtils/ikart_commands:o");
+        yarp::os::Network::connect("/iKartUtils/ikart_commands:o", "/ikart/aux_control:i");
         attach(rpcPort);
 
         std::string robotName = rf.check("robot",yarp::os::Value("icub")).asString().c_str();
@@ -113,14 +113,14 @@ public:
         Property left_options;
         left_options.put("device", "remote_controlboard");
         remotePorts="/"+robotName+"/left_arm";
-        localPorts="/tucker/left_arm";
+        localPorts="/iKartUtils/left_arm";
         left_options.put("local",  localPorts.c_str());
         left_options.put("remote", remotePorts.c_str());
 
         Property right_options;
         right_options.put("device", "remote_controlboard");
         remotePorts="/"+robotName+"/right_arm";
-        localPorts="/tucker/right_arm";
+        localPorts="/iKartUtils/right_arm";
         right_options.put("local",  localPorts.c_str());
         right_options.put("remote", remotePorts.c_str());
 
@@ -170,7 +170,7 @@ public:
         if (l_pos) l_pos->setRefSpeeds        (spds.data());
 
         //execute the position command
-        tuck(tuck_cmd);
+        //tuck(tuck_cmd);
 
         //check for auto closure
         if (rf.check("quit")) running = false;
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    TuckerModule mod;
+    iKartUtilsModule mod;
 
     ResourceFinder rf;
     rf.setVerbose(true);

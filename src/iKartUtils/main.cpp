@@ -30,8 +30,6 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::os;
 
-#define WAIT_TIME 3.0
-
 class iKartUtilsModule: public RFModule
 {
     enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1};
@@ -183,33 +181,63 @@ public:
         if (command.get(0).asString()=="help")
         {
             reply.addString("Available commands are:");
-            reply.addString("open");
-            reply.addString("close");
+            reply.addString("open <delay>");
+            reply.addString("close <delay>");
+            reply.addString("approach <distance> <delay>");
+            reply.addString("retreat <distance> <delay>");
         }
         else if (command.get(0).asString()=="open")
-        {
+        {   
+            double delay_time = 3.0;
+            if (command.size()>1)
+            {
+                delay_time = command.get(1).asDouble();
+            }
             tuck(OPEN);
-            yarp::os::Time::delay(WAIT_TIME);
+            yarp::os::Time::delay(delay_time);
             reply.addString("arms opened");
         }
         else if (command.get(0).asString()=="close")
         {
+            double delay_time = 3.0;
+            if (command.size()>1)
+            {
+                delay_time = command.get(1).asDouble();
+            }
             tuck(CLOSE);
-            yarp::os::Time::delay(WAIT_TIME);
+            yarp::os::Time::delay(delay_time);
             reply.addString("arms closed");
         }
         else if (command.get(0).asString()=="approach")
         {
-            int dur = 14;
-            approach(dur);
-            yarp::os::Time::delay(WAIT_TIME);
+            double delay_time = 8.0;
+            double distance = 36;
+            if (command.size()>1)
+            {
+                distance = command.get(1).asDouble();
+            }
+            if (command.size()>2)
+            {
+                delay_time = command.get(2).asDouble();
+            }
+            approach(int(distance));
+            yarp::os::Time::delay(delay_time);
             reply.addString("approaching complete");
         }
         else if (command.get(0).asString()=="retreat")
         {   
-            int dur = 14;
-            retreat(dur);
-            yarp::os::Time::delay(WAIT_TIME);
+            double delay_time = 8.0;
+            double distance = 36;
+            if (command.size()>1)
+            {
+                distance = command.get(1).asDouble();
+            }
+            if (command.size()>2)
+            {
+                delay_time = command.get(2).asDouble();
+            }
+            retreat(int(distance));
+            yarp::os::Time::delay(delay_time);
             reply.addString("retreating complete");
         }
         else

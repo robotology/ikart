@@ -101,119 +101,68 @@ protected:
         
         mTargetFilter.addPoint(mOdoP,Vec2D(heading+mOdoH),mRanges[angle]);
 
-        mHaveTarget=false;
-
         if (mTargetFilter.numSamples()<2)
         {
-            printf("Target not ready\n");
+            printf("Vision target not complete (%d samples)\n",mTargetFilter.numSamples());
+            mHaveTarget=false;            
             return;
         }
         
-        mTargetOriginal=mTargetFilter.getTarget();
-
-        mTarget=mTargetOriginal;
+        mTarget=mTargetFilter.getTarget();
         
-        printf("Target X=%.3f   Y=%.3f\n",mTarget.x,mTarget.y);
-
-        int xT=XWorld2GridRound(mTarget.x);
-        int yT=YWorld2GridRound(mTarget.y);
-
-        if (!mReach[xT][yT])
-        {
-            mHaveTarget=true;
-            return;
-        }
+        printf("Vision target X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
     
         replaceTarget();
     }    
 
     void setUserTarget(double heading,double distance)
     {
-        mTargetOriginal=mOdoP+distance*Vec2D(mOdoH+heading);
-
-        mTarget=mTargetOriginal;
-
-        mHaveTarget=false;
-
-        int xT=XWorld2GridRound(mTarget.x);
-        int yT=YWorld2GridRound(mTarget.y);
-
-        if (!mReach[xT][yT])
-        {
-            mHaveTarget=true;
-            return;
-        }
+        mTarget=mOdoP+distance*Vec2D(mOdoH+heading);
     
         replaceTarget();
     }
     
     void replaceTarget() 
     {    
-        double Dmax=(mTarget-mOdoP).mod()+0.1;
+        Vec2D direction,gradient;
+        double curvature,zeta;
 
-        int xT=XWorld2GridRound(mTarget.x);
-        int yT=YWorld2GridRound(mTarget.y);
+        Vec2D X=mTarget;
+        Vec2D D=mOdoP-mTarget;
 
-        int xM=xT,yM=yT;
+        int n=(int)(100.0*D.mod());
 
-        while (mReach[xT][yT])
+        mHaveTarget=false;
+
+        for (int i=0; i<n; ++i)
         {
-            xT=xM;
-            yT=yM;
+            int result=followGNF(X,direction,curvature,zeta,gradient);
 
-            int min=mReach[xT][yT];
-
-            if (xT>-DIM && mReach[xT-1][yT  ]<min && (Grid2World(xT-1,yT  )-mOdoP).mod()<=Dmax) min=mReach[xM=xT-1][yM=yT  ];
-            if (xT< DIM && mReach[xT+1][yT  ]<min && (Grid2World(xT+1,yT  )-mOdoP).mod()<=Dmax) min=mReach[xM=xT+1][yM=yT  ];
-            if (yT>-DIM && mReach[xT  ][yT-1]<min && (Grid2World(xT  ,yT-1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT  ][yM=yT-1]; 
-            if (yT< DIM && mReach[xT  ][yT+1]<min && (Grid2World(xT  ,yT+1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT  ][yM=yT+1];
-
-            if (xT>-DIM && yT>-DIM && mReach[xT-1][yT-1]<min && (Grid2World(xT-1,yT-1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT-1][yM=yT-1];
-            if (xT< DIM && yT>-DIM && mReach[xT+1][yT-1]<min && (Grid2World(xT+1,yT-1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT+1][yM=yT-1];
-            if (xT>-DIM && yT< DIM && mReach[xT-1][yT+1]<min && (Grid2World(xT-1,yT+1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT-1][yM=yT+1];
-            if (xT< DIM && yT< DIM && mReach[xT+1][yT+1]<min && (Grid2World(xT+1,yT+1)-mOdoP).mod()<=Dmax) min=mReach[xM=xT+1][yM=yT+1];
-
-            if (xT==xM && yT==yM) break;
-        }
-
-        if (xT==xM && yT==yM)
-        {
-            Vec2D U=(mOdoP-mTarget).norm();
-
-            for (double d=0.0; d<Dmax; d+=0.1)
+            if (result==GNF_OUT_OF_GRID)
             {
-                Vec2D T=mTarget+d*U;
-                xT=XWorld2GridRound(T.x);
-                yT=YWorld2GridRound(T.y);
-                
-                if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
-                if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
+                printf("WARNING: target is out of grid\n");
+                mHaveTarget=true;
+                return;
+            }
 
-                if (!mReach[xT][yT])
+            if (zeta<THR)
+            {
+                if (i)
                 {
-                    mHaveTarget=true;
-                    mTarget=Grid2World(xT,yT);
-                    printf("Target replaced X=.3%f   Y=%.3f\n",mTarget.x,mTarget.y);
-                    if (!mHaveTargetH)
-                    {
-                        mHaveTargetH=true;
-                        mTargetH=(mTargetOriginal-mTarget).arg();
-                    }
-                    return;
+                    mHaveTargetH=true;
+                    mTargetH=(mTarget-X).arg();             
                 }
+
+                mHaveTarget=true;
+                mTarget=X;
+
+                return;
             }
+
+            X+=(gradient*D>=0.0?0.01:-0.01)*gradient;
         }
-        else
-        {
-            mHaveTarget=true;
-            mTarget=Grid2World(xT,yT);
-            printf("Target replaced X=.3%f   Y=%.3f\n",mTarget.x,mTarget.y);
-            if (!mHaveTargetH)
-            {
-                mHaveTargetH=true;
-                mTargetH=(mTargetOriginal-mTarget).arg();
-            }
-        }
+
+        printf("Can't set a valid target\n");
     }
     
     void addEvent(double heading,double distance,double radius);
@@ -221,7 +170,9 @@ protected:
     void updateMap(yarp::sig::Vector& rangeData);
     void updateZeta();
     void updateGNF();
-    bool followGNF(Vec2D &W,double& curvature,double &zeta,Vec2D &gradient);
+
+    enum { GNF_OK=0, GNF_TARGET_UNREACHABLE=1, GNF_OUT_OF_GRID=2 };
+    int followGNF(Vec2D P,Vec2D &direction,double& curvature,double &zeta,Vec2D &gradient);
 
     void shiftMapSouth();
     void shiftMapNorth();
@@ -260,10 +211,8 @@ protected:
 
     bool mHaveTarget;
     Vec2D mTarget;
-    Vec2D mTargetOriginal;
-    bool mHaveTargetH;
     double mTargetH;
-    bool mMustStop;
+    bool mHaveTargetH;
 
     double **mD;
     unsigned short **mReach;

@@ -93,7 +93,6 @@ Navigator::Navigator(yarp::os::ResourceFinder *rf)
     mTargetH=0.0;
     mHaveTarget=false;
     mHaveTargetH=false;
-    mMustStop=false;
 }
 
 bool Navigator::threadInit()
@@ -454,26 +453,26 @@ void Navigator::updateZeta()
 
 void Navigator::updateGNF()
 {
-    int head=0,tail=0;
+    Vec2D direction,gradient;
+    double curvature,zeta;
+
+    int result=followGNF(mTarget,direction,curvature,zeta,gradient);
+
+    if (result!=GNF_OUT_OF_GRID && zeta>=THR)
+    {
+        replaceTarget();
+    }
 
     int xT=XWorld2Grid(mTarget.x);
     int yT=YWorld2Grid(mTarget.y);
     
     if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
     if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
-    
-    if (mReach[xT][yT])
-    {
-        replaceTarget();
-        xT=XWorld2Grid(mTarget.x);
-        yT=YWorld2Grid(mTarget.y);
-    
-        if (xT<-DIM) xT=-DIM; else if (xT>DIM-1) xT=DIM-1;
-        if (yT<-DIM) yT=-DIM; else if (yT>DIM-1) yT=DIM-1;
-    }
 
     double dXl=mTarget.x-XGrid2World(xT),dXr=1.0-dXl;
     double dYd=mTarget.y-YGrid2World(yT),dYu=1.0-dYd;
+
+    int head=0,tail=0;
 
     mD[xT]    [yT]=sqrt(dXl*dXl+dYd*dYd);
     mD[xT+1]  [yT]=sqrt(dXr*dXr+dYd*dYd);
@@ -597,47 +596,45 @@ void Navigator::updateGNF()
     }
 }
 
-bool Navigator::followGNF(Vec2D &W,double &curvature,double &zeta,Vec2D &gradient)
+int Navigator::followGNF(Vec2D P,Vec2D &direction,double &curvature,double &zeta,Vec2D &gradient)
 {
-    int xr=XWorld2GridRound(mOdoP.x);
-    int yr=YWorld2GridRound(mOdoP.y);
+    int xr=XWorld2GridRound(P.x);
+    int yr=YWorld2GridRound(P.y);
 
-    double dX=10.0*(mOdoP.x-XGrid2World(xr)); // -0.5 < dX < 0.5
-    double dY=10.0*(mOdoP.y-YGrid2World(yr)); // -0.5 < dY < 0.5
+    if (xr<=-DIM || xr>=DIM || yr<=-DIM || yr>=DIM) return GNF_OUT_OF_GRID;
 
-    double D00=mD[xr-1][yr-1]*(0.5-dX)*(0.5-dY)+mD[xr-1][yr  ]*(0.5-dX)*(0.5+dY)
-              +mD[xr  ][yr-1]*(0.5+dX)*(0.5-dY)+mD[xr  ][yr  ]*(0.5+dX)*(0.5+dY);
+    double dX=10.0*(P.x-XGrid2World(xr)); // -0.5 < dX < 0.5
+    double dY=10.0*(P.y-YGrid2World(yr)); // -0.5 < dY < 0.5
 
-    double D10=mD[xr  ][yr-1]*(0.5-dX)*(0.5-dY)+mD[xr  ][yr  ]*(0.5-dX)*(0.5+dY)
-              +mD[xr+1][yr-1]*(0.5+dX)*(0.5-dY)+mD[xr+1][yr  ]*(0.5+dX)*(0.5+dY);
+    double dXa=0.5-dX,dXb=0.5+dX,dYa=0.5-dY,dYb=0.5+dY;
 
-    double D01=mD[xr-1][yr  ]*(0.5-dX)*(0.5-dY)+mD[xr-1][yr+1]*(0.5-dX)*(0.5+dY)
-              +mD[xr  ][yr  ]*(0.5+dX)*(0.5-dY)+mD[xr  ][yr+1]*(0.5+dX)*(0.5+dY);
+    double dXaYa=dXa*dYa,dXaYb=dXa*dYb,dXbYa=dXb*dYa,dXbYb=dXb*dYb;
 
-    double D11=mD[xr  ][yr  ]*(0.5-dX)*(0.5-dY)+mD[xr  ][yr+1]*(0.5-dX)*(0.5+dY)
-              +mD[xr+1][yr  ]*(0.5+dX)*(0.5-dY)+mD[xr+1][yr+1]*(0.5+dX)*(0.5+dY);
+    double D00=mD[xr-1][yr-1]*dXaYa+mD[xr-1][yr  ]*dXaYb
+              +mD[xr  ][yr-1]*dXbYa+mD[xr  ][yr  ]*dXbYb;
+
+    double D10=mD[xr  ][yr-1]*dXaYa+mD[xr  ][yr  ]*dXaYb
+              +mD[xr+1][yr-1]*dXbYa+mD[xr+1][yr  ]*dXbYb;
+
+    double D01=mD[xr-1][yr  ]*dXaYa+mD[xr-1][yr+1]*dXaYb
+              +mD[xr  ][yr  ]*dXbYa+mD[xr  ][yr+1]*dXbYb;
+
+    double D11=mD[xr  ][yr  ]*dXaYa+mD[xr  ][yr+1]*dXaYb
+              +mD[xr+1][yr  ]*dXbYa+mD[xr+1][yr+1]*dXbYb;
 
 
-    W.x=D00+D01-D10-D11;
-    W.y=D00-D01+D10-D11;
+    direction.x=D00+D01-D10-D11;
+    direction.y=D00-D01+D10-D11;
 
-    double m=W.normalize();
+    double m=direction.normalize();
     
-    if (m>0.0)
-    {
-        double Wxy=100.0*(-D00+D01+D10-D11);
-        curvature=-2.0*Vec2D::RAD2DEG*W.x*Wxy*W.y;
-    }
-    else
-    {
-        curvature=0.0;
-    }
+    curvature= m>0.0 ? 200.0*Vec2D::RAD2DEG*direction.x*(D00-D01-D10+D11)*direction.y : 0.0;
 
-    int x=XWorld2Grid(mOdoP.x);
-    int y=YWorld2Grid(mOdoP.y);
+    int x=XWorld2Grid(P.x);
+    int y=YWorld2Grid(P.y);
 
-    dX=10.0*(mOdoP.x-XGrid2World(x)); // 0.0<=dX<1.0
-    dY=10.0*(mOdoP.y-YGrid2World(y)); // 0.0<=dY<1.0
+    dX=10.0*(P.x-XGrid2World(x)); // 0.0<=dX<1.0
+    dY=10.0*(P.y-YGrid2World(y)); // 0.0<=dY<1.0
 
     zeta=(1.0-dX)*(1.0-dY)*mZeta[x  ][y  ]
         +(1.0-dX)*     dY *mZeta[x  ][y+1]
@@ -656,7 +653,7 @@ bool Navigator::followGNF(Vec2D &W,double &curvature,double &zeta,Vec2D &gradien
 
     gradient.normalize();
 
-    return mReach[xr][yr]==0;
+    return mReach[xr][yr]?GNF_TARGET_UNREACHABLE:GNF_OK;
 }
 
 void Navigator::addEvent(double heading,double distance,double radius)
@@ -844,7 +841,7 @@ void Navigator::run()
     else // have target
     {
     
-    bCanReach=followGNF(direction,curvature,zeta,gradient);
+    bCanReach=followGNF(mOdoP,direction,curvature,zeta,gradient);
     
     if (distance<0.05)
     {

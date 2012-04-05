@@ -38,6 +38,13 @@ ikart
 </module>
 
 <module>
+   <name>iKartUtils</name>
+   <node>ikart</node>
+   <stdio>icub14</stdio>
+   <tag>iKartUtils</tag>
+</module>
+
+<module>
    <name>robotMotorGui</name>
    <parameters>--context /iKart/conf</parameters>
    <node>ikart</node>

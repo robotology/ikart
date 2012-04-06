@@ -453,15 +453,7 @@ void Navigator::updateZeta()
 
 void Navigator::updateGNF()
 {
-    Vec2D direction,gradient;
-    double curvature,zeta;
-
-    int result=followGNF(mTarget,direction,curvature,zeta,gradient);
-
-    if (result!=GNF_OUT_OF_GRID && zeta>=THR)
-    {
-        replaceTarget();
-    }
+    replaceTarget(mTarget);
 
     int xT=XWorld2Grid(mTarget.x);
     int yT=YWorld2Grid(mTarget.y);
@@ -719,20 +711,8 @@ void Navigator::run()
     
     for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)
     {
-        //yarp::os::ConstString cmd=bot->get(0).asString();
-
-        //double x=-bot->get(0).asDouble();
-        //double y= bot->get(1).asDouble();
-        
-        //double angle=Vec2D::RAD2DEG*atan2(y,x);
-        //double distance=sqrt(x*x+y*y);
-        
-        //setVisionTarget(-angle);
-
         mHaveTargetH=false;
         setVisionTarget(-bot->get(0).asDouble());        
-        
-        printf("New target from vision\n");
     }
     
     // GET COMMANDS
@@ -786,7 +766,7 @@ void Navigator::run()
     //////////////////////////
 
     double timeOdoNew=yarp::os::Time::now();
-    static double timeOdoOld=timeOdoNew;
+    static double timeOdoOld=0.0;
     if (timeOdoNew-timeOdoOld>10.0)
     {
         timeOdoOld=timeOdoNew;
@@ -820,7 +800,6 @@ void Navigator::run()
     // FOLLOW GNF
     double curvature,zeta;
     Vec2D direction,gradient;
-    bool bCanReach=false;
     
     Vec2D  deltaP=mTarget-mOdoP;
     double distance=deltaP.mod();
@@ -841,7 +820,7 @@ void Navigator::run()
     else // have target
     {
     
-    bCanReach=followGNF(mOdoP,direction,curvature,zeta,gradient);
+    int reachable=followGNF(mOdoP,direction,curvature,zeta,gradient);
     
     if (distance<0.05)
     {
@@ -873,12 +852,12 @@ void Navigator::run()
     }
     else
     {
-        if (!bCanReach)
+        if (reachable==GNF_TARGET_UNREACHABLE)
         {
             static int t=0;
             if (++t==100)
             {
-                printf("UNREACHABLE\n");
+                printf("TARGET UNREACHABLE\n");
                 t=0;
             }
         }

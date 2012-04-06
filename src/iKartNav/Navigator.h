@@ -104,6 +104,7 @@ protected:
         if (mTargetFilter.numSamples()<2)
         {
             printf("Vision target not complete (%d samples)\n",mTargetFilter.numSamples());
+
             mHaveTarget=false;            
             return;
         }
@@ -112,23 +113,28 @@ protected:
         
         printf("Vision target X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
     
-        replaceTarget();
+        replaceTarget(mTarget);
     }    
 
     void setUserTarget(double heading,double distance)
     {
         mTarget=mOdoP+distance*Vec2D(mOdoH+heading);
     
-        replaceTarget();
+        replaceTarget(mTarget);
     }
     
-    void replaceTarget() 
+    void replaceTarget(Vec2D& target) 
     {    
+        int xr=XWorld2GridRound(target.x);
+        int yr=YWorld2GridRound(target.y);
+
+        if (xr<=-DIM || xr>=DIM || yr<=-DIM || yr>=DIM) return;
+
         Vec2D direction,gradient;
         double curvature,zeta;
 
-        Vec2D X=mTarget;
-        Vec2D D=mOdoP-mTarget;
+        Vec2D X=target;
+        Vec2D D=mOdoP-target;
 
         int n=(int)(100.0*D.mod());
 
@@ -150,11 +156,12 @@ protected:
                 if (i)
                 {
                     mHaveTargetH=true;
-                    mTargetH=(mTarget-X).arg();             
+                    mTargetH=(target-X).arg();
+                    printf("Target replaced X=%.3f  Y=%.3f  H=%.3f\n",X.x,X.y,mTargetH);             
                 }
 
                 mHaveTarget=true;
-                mTarget=X;
+                target=X;
 
                 return;
             }

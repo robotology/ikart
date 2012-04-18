@@ -31,6 +31,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
+#include <yarp/sig/Image.h>
 
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
@@ -45,8 +46,16 @@
 #include <geometry_msgs/PolygonStamped.h>
 #include "odometer.h"
 
+#include <sensor_msgs/PointCloud.h> 
+#include <sensor_msgs/PointCloud2.h> 
+#include <pcl_ros/point_cloud.h>
+#include <pcl/point_types.h>
+
+typedef pcl::PointCloud<pcl::PointXYZ> tPointCloud;
+
 using namespace std;
 using namespace yarp::os;
+using namespace yarp::sig;
 
 class BridgeThread: public yarp::os::RateThread
 {
@@ -92,6 +101,7 @@ class BridgeThread: public yarp::os::RateThread
     ros::NodeHandle          *nh;
     ros::Publisher           laser_pub;
     ros::Publisher           laser_pub2;
+    ros::Publisher           pcloud_pub;
     ros::Publisher           odometry_pub;
     ros::Publisher           footprint_pub;
     ros::Publisher           odometer_pub;
@@ -104,6 +114,7 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<Bottle>     input_laser_port2; 
     BufferedPort<Bottle>     input_odometry_port; 
     BufferedPort<Bottle>     input_odometer_port; 
+    BufferedPort<ImageOf<PixelRgbFloat> >  input_pcloud_port; 
     BufferedPort<Bottle>     output_command_port; 
     BufferedPort<Bottle>     output_localization_port;
     int                      timeout_thread;
@@ -121,6 +132,7 @@ class BridgeThread: public yarp::os::RateThread
     geometry_msgs::PolygonStamped footprint;
     sensor_msgs::LaserScan        scan;
     sensor_msgs::LaserScan        scan2;
+    tPointCloud::Ptr*             pcloud;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
     public:
@@ -166,6 +178,9 @@ class BridgeThread: public yarp::os::RateThread
            footprint.polygon.points[i].x = r*cos(t);
 	   footprint.polygon.points[i].y = r*sin(t);
 	}
+
+	pcloud = new tPointCloud::Ptr (new tPointCloud);
+	(*pcloud)->header.frame_id ="robot_root";
     }
 
     void setHome();  
@@ -197,6 +212,7 @@ class BridgeThread: public yarp::os::RateThread
         ros::init (argc, argv, "ikart_ros_bridge");
         nh = new ros::NodeHandle();
         ros::Time::init();
+        pcloud_pub     = nh->advertise<tPointCloud>                    ("/ikart_ros_bridge/pcloud_out",    1);
         footprint_pub  = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",     1);
         laser_pub      = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser_out",     1);
         laser_pub2     = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser2_out",    1);
@@ -215,6 +231,7 @@ class BridgeThread: public yarp::os::RateThread
         //subscribe ros topics, open yarp ports and make connections
         command_sub = nh->subscribe("cmd_vel", 1, &BridgeThread::commandCallback, this);
 
+        input_pcloud_port.open("/ikart_ros_bridge/stereo_img:i");
         input_laser_port.open("/ikart_ros_bridge/laser:i");
         input_laser_port2.open("/ikart_ros_bridge/laser2:i");
         input_odometry_port.open("/ikart_ros_bridge/odometry:i");
@@ -344,9 +361,40 @@ class BridgeThread: public yarp::os::RateThread
 
         laser_pub2.publish (scan2);
 
+	//********************************************* PCL (OPTIONAL) PART ***************************************
+        ImageOf<PixelRgbFloat> *pcloud_image = 0;
+        pcloud_image = input_pcloud_port.read(false);
+
+        if (pcloud_image)
+        { 
+	   int w_size =  pcloud_image->width();
+	   int h_size =  pcloud_image->height();
+           int c=0;
+	//   printf ("pcl_size: %d %d\n", w_size, h_size);
+           (*pcloud)->points.clear();
+	   for (int x=0; x<w_size; x++)
+           {
+		for (int y=0; y<h_size; y++)
+		{
+			yarp::sig::PixelRgbFloat p = pcloud_image->pixel(x,y);
+ //  printf ("pcl_size: %f %f %f\n", p.r,p.g,p.b);
+			if (p.r!=0 && p.g!=0 && p.b!=0)
+			{(*pcloud)->points.push_back (pcl::PointXYZ(p.r,p.g,p.b)); 
+		 	c++;}
+		}
+    	   }
+           (*pcloud)->height = 1;
+	   (*pcloud)->width = c;
+        }
+
+	pcloud_pub.publish (*pcloud);
+        
         //********************************************* CREATE NEW TF *********************************************
         tf::StampedTransform laser_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.245,0.0,0.2)),now, "base_link", "base_laser");
         tf_broadcaster->sendTransform(laser_trans);
+
+        tf::StampedTransform robot_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.000,0.0,0.9)),now, "base_link", "robot_root");
+        tf_broadcaster->sendTransform(robot_trans);
 
         mutex_home.wait();
         tf::StampedTransform home_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(ikart_home.x,ikart_home.y,0.0)),now, "map", "home");
@@ -485,6 +533,8 @@ class BridgeThread: public yarp::os::RateThread
 
     virtual void threadRelease()
     {
+        input_pcloud_port.interrupt();
+        input_pcloud_port.close();
         input_laser_port.interrupt();
         input_laser_port.close();
         input_odometry_port.interrupt();

@@ -93,6 +93,7 @@ Navigator::Navigator(yarp::os::ResourceFinder *rf)
     mTargetH=0.0;
     mHaveTarget=false;
     mHaveTargetH=false;
+    mPaused=true;
 }
 
 bool Navigator::threadInit()
@@ -130,6 +131,7 @@ bool Navigator::threadInit()
     mLaserPortI.open((local+"/laser:i").c_str());
     mUserPortI.open((local+"/user:i").c_str());
     mVisionPortI.open((local+"/vision:i").c_str());
+    mEventPortI.open((local+"/event:i").c_str());
     mOdometryPortI.open((local+"/odometry:i").c_str());
     
     mResetOdometryPortO.open((local+"/resetodometry:o").c_str());
@@ -155,6 +157,7 @@ void Navigator::threadRelease()
     mOdometryPortI.interrupt();
     mUserPortI.interrupt();
     mVisionPortI.interrupt();
+    mEventPortI.interrupt();
     mLaserPortI.interrupt();
     mResetOdometryPortO.interrupt();
     mStatusPortO.interrupt();
@@ -162,6 +165,7 @@ void Navigator::threadRelease()
     mOdometryPortI.close();
     mUserPortI.close();
     mVisionPortI.close();
+    mEventPortI.close();
     mLaserPortI.close();
     mResetOdometryPortO.close();
     mStatusPortO.close();
@@ -707,12 +711,29 @@ void Navigator::run()
             fflush(stdout);
             mHaveTarget=false;
         }
+        else if (cmd=="pause" || cmd=="p")
+        {
+            printf("PAUSE\n");
+            fflush(stdout);
+            mPaused=true;
+        }
+        else if (cmd=="go" || cmd=="g")
+        {
+            printf("GO\n");
+            fflush(stdout);
+            mPaused=false;
+        }
     } 
     
     for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)
     {
         mHaveTargetH=false;
         setVisionTarget(-bot->get(0).asDouble());        
+    }
+
+    for (yarp::os::Bottle* bot; bot=mEventPortI.read(false);)
+    {
+        addEvent(-bot->get(0).asDouble(),bot->get(1).asDouble(),bot->get(2).asDouble());
     }
     
     // GET COMMANDS
@@ -796,6 +817,22 @@ void Navigator::run()
     // COMPUTE GNF
     //////////////////////////
 
+    if (!mHaveTarget)
+    {
+        if (!mPaused && mTargetFilter.numSamples()==1)
+        {
+            setOmega(0.0);
+            setVel(Vec2D(0.0,0.1));
+            sendCtrlRef();
+
+            return;   
+        }
+     
+        sendBrake();
+
+        return;
+    }
+
     //////////////////////////
     // FOLLOW GNF
     double curvature,zeta;
@@ -803,23 +840,9 @@ void Navigator::run()
     
     Vec2D  deltaP=mTarget-mOdoP;
     double distance=deltaP.mod();
-    
-    if (!mHaveTarget)
-    {
-        if (mTargetFilter.numSamples()==1)
-        {
-            setOmega(0.0);
-            setVel(Vec2D(0.0,0.1));
-        }
-        else 
-        {
-            emergencyStop();
-            return;
-        }
-    }
-    else // have target
-    {
-    
+
+    // have target
+       
     int reachable=followGNF(mOdoP,direction,curvature,zeta,gradient);
     
     if (distance<0.05)
@@ -922,37 +945,14 @@ void Navigator::run()
         }
         */
     }
-    }
-    
-    double timeNew=yarp::os::Time::now();
-    static double timeOld=timeNew;  
-    double step=timeNew-timeOld;
-    timeOld=timeNew;
-
-    //////////////////////////
-    // SMOOTHING
-    if (mVelRef!=mVel)
-    {
-        Vec2D Verr=mVelRef-mVel;
-        if (Verr.mod()>step*mLinAcc) 
-            mVel+=Verr.norm(step*mLinAcc);
-        else
-            mVel=mVelRef;
-    }
-
-    if (mOmegaRef!=mOmega)
-    {
-        double Werr=mOmegaRef-mOmega;
-
-        if (Werr>step*mRotAcc)
-            mOmega+=step*mRotAcc;
-        else if (Werr<-step*mRotAcc)
-            mOmega-=step*mRotAcc;
-        else
-            mOmega=mOmegaRef;
-    }
 
     // SEND COMMANDS
-    mKartCtrl->setCtrlRef(-mVel.arg(),mVel.mod(),-mOmega); 
+    if (mPaused)
+    {
+        sendBrake();
+        return;
+    }
+    
+    sendCtrlRef(); 
 }
 

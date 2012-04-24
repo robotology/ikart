@@ -22,6 +22,9 @@
 //#define THR       0.7  // 0.666
 //#define SAFETY    1.5  // 1.25
 
+#define NAVIGATOR_PRIORITY    1
+#define TRIANGULATOR_PRIORITY 2
+
 class Navigator : public yarp::os::RateThread
 {
 public:
@@ -31,13 +34,6 @@ public:
     virtual void run();
     virtual void threadRelease();
     virtual void onStop();
-
-    void emergencyStop()
-    {
-        mOmega=mOmegaRef=0.0;
-        mVel=mVelRef=Vec2D::zero;
-        mKartCtrl->setCtrlRef(0.0,0.0,0.0);
-    }
 
     void updateOdometry(Vec2D P,double H)
     {
@@ -83,6 +79,37 @@ protected:
         {
             mVelRef=vel;
         }
+    }
+
+    void sendBrake()
+    {
+        mOmega=mOmegaRef=0.0;
+        mVel=mVelRef=Vec2D::zero;
+        mKartCtrl->setCtrlRef(0.0,0.0,0.0,NAVIGATOR_PRIORITY);
+    }
+
+    void sendCtrlRef()
+    {
+        double timeNew=yarp::os::Time::now();
+        static double timeOld=timeNew;  
+        double step=timeNew-timeOld;
+        timeOld=timeNew;
+
+        if (mVelRef!=mVel)
+        {
+            Vec2D Verr=mVelRef-mVel;
+
+            if (Verr.mod()>step*mLinAcc) mVel+=Verr.norm(step*mLinAcc); else mVel=mVelRef;
+        }
+
+        if (mOmegaRef!=mOmega)
+        {
+            double Werr=mOmegaRef-mOmega;
+
+            if (Werr>step*mRotAcc) mOmega+=step*mRotAcc; else if (Werr<-step*mRotAcc) mOmega-=step*mRotAcc; else mOmega=mOmegaRef;
+        }
+
+        mKartCtrl->setCtrlRef(-mVel.arg(),mVel.mod(),-mOmega,NAVIGATOR_PRIORITY);
     }
 
     inline int XWorld2Grid(double& x){ return int(10.0*x)-mOx; }
@@ -220,6 +247,7 @@ protected:
     Vec2D mTarget;
     double mTargetH;
     bool mHaveTargetH;
+    bool mPaused;
 
     double **mD;
     unsigned short **mReach;
@@ -254,6 +282,7 @@ protected:
     yarp::os::BufferedPort<yarp::os::Bottle> mOdometryPortI;
     yarp::os::BufferedPort<yarp::os::Bottle> mUserPortI;
     yarp::os::BufferedPort<yarp::os::Bottle> mVisionPortI;
+    yarp::os::BufferedPort<yarp::os::Bottle> mEventPortI;
 };
 
 #endif

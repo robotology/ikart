@@ -21,6 +21,7 @@ public:
         mOmega=0.0;
         mSpeed=0.0;
         mHead=0.0;
+        mPriority=0;
     }
 
     virtual bool threadInit()
@@ -50,14 +51,29 @@ public:
         mCommandPortO.close();
     }
 
-    void setCtrlRef(double head,double speed,double omega)
+    void setCtrlRef(double head,double speed,double omega,int priority)
     {
         mCtrlSem.wait();
-
-        mOmega=omega;
-        mSpeed=speed;
-        mHead=head;
         
+        if (priority>=mPriority)
+        {
+            mOmega=omega;
+            mSpeed=speed;
+            mHead=head;
+            mPriority=priority;
+        }
+
+        mCtrlSem.post();
+    }
+
+    void releasePriority(int newPriority,int priority)
+    {
+        if (newPriority>=priority) return;
+
+        mCtrlSem.wait();
+
+        if (priority>=mPriority) mPriority=newPriority;
+
         mCtrlSem.post();
     }
 
@@ -65,6 +81,7 @@ protected:
     double mOmega;
     double mSpeed;
     double mHead;
+    int mPriority;
 
     std::string mLocal;
     yarp::os::Semaphore mCtrlSem;

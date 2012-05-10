@@ -6,6 +6,7 @@ ret1=$?
 if [ $ret1 -eq 101 ]; then
     echo "joystick boot requested" 
     sudo -u icub -i yarp server &
+    #sudo -u icub -i icub-cluster-server.sh start yarpserver3 &
     sleep 2
     sudo -u icub -i joystickCtrl --context joystickCtrl --from conf/ikart.ini --silent --force_configuration &
     sudo -u icub -i iCubInterface --context iKart --config conf/iKart.ini &

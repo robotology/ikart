@@ -136,6 +136,7 @@ bool Navigator::threadInit()
     
     mResetOdometryPortO.open((local+"/resetodometry:o").c_str());
     mStatusPortO.open((local+"/status:o").c_str());
+    mTargetPortO.open((local+"/target:o").c_str());
     
     mKartCtrl=new CtrlThread(local);
 
@@ -161,6 +162,7 @@ void Navigator::threadRelease()
     mLaserPortI.interrupt();
     mResetOdometryPortO.interrupt();
     mStatusPortO.interrupt();
+    mTargetPortO.interrupt();
         
     mOdometryPortI.close();
     mUserPortI.close();
@@ -169,6 +171,7 @@ void Navigator::threadRelease()
     mLaserPortI.close();
     mResetOdometryPortO.close();
     mStatusPortO.close();
+    mTargetPortO.close();
     
     return;
 
@@ -308,7 +311,7 @@ void Navigator::updateMap(yarp::sig::Vector& rangeData)
     }
 
     int xl,yd,xr,yu;
-    double px,py;
+    //double px,py;
     double dXl,dXr,dYd,dYu;
     double dExl,dExr,dEyd,dEyu;
     double dZld,dZrd,dZru,dZlu;

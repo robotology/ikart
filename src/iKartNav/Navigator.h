@@ -151,7 +151,9 @@ protected:
     }
     
     void replaceTarget(Vec2D& target) 
-    {    
+    {
+        static double timeOld=0.0;
+
         int xr=XWorld2GridRound(target.x);
         int yr=YWorld2GridRound(target.y);
 
@@ -175,6 +177,22 @@ protected:
             {
                 printf("WARNING: target is out of grid\n");
                 mHaveTarget=true;
+                
+                if (mTargetPortO.getOutputCount()>0)
+                {
+                    double timeNew=yarp::os::Time::now();
+
+                    if (timeNew-timeOld>1.0)
+                    {
+                        timeOld=timeNew;
+                        D=target-mOdoP;
+                        yarp::os::Bottle msg;
+                        msg.addDouble(-D.arg());
+                        msg.addDouble( D.mod());
+                        mTargetPortO.write(msg);
+                    }
+                }
+
                 return;
             }
 
@@ -190,6 +208,21 @@ protected:
                 mHaveTarget=true;
                 target=X;
 
+                if (mTargetPortO.getOutputCount()>0)
+                {
+                    double timeNew=yarp::os::Time::now();
+
+                    if (timeNew-timeOld>1.0)
+                    {
+                        timeOld=timeNew;
+                        D=target-mOdoP;
+                        yarp::os::Bottle msg;
+                        msg.addDouble(-D.arg());
+                        msg.addDouble( D.mod());
+                        mTargetPortO.write(msg);
+                    }
+                }
+                
                 return;
             }
 
@@ -276,6 +309,7 @@ protected:
     
     yarp::os::Port mResetOdometryPortO;
     yarp::os::Port mStatusPortO;
+    yarp::os::Port mTargetPortO;
 
     yarp::os::BufferedPort<yarp::sig::Vector> mLaserPortI;
 

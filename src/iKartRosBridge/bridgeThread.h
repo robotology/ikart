@@ -44,6 +44,7 @@
 #include <nav_msgs/Odometry.h> 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PolygonStamped.h>
+#include <visualization_msgs/Marker.h>
 #include "odometer.h"
 
 #include <sensor_msgs/PointCloud.h> 
@@ -105,6 +106,7 @@ class BridgeThread: public yarp::os::RateThread
     ros::Publisher           odometry_pub;
     ros::Publisher           footprint_pub;
     ros::Publisher           odometer_pub;
+    ros::Publisher           marker_pub;
     ros::Subscriber          command_sub;
     tf::TransformBroadcaster *tf_broadcaster;
     tf::TransformListener    *tf_listener;
@@ -132,6 +134,7 @@ class BridgeThread: public yarp::os::RateThread
     geometry_msgs::PolygonStamped footprint;
     sensor_msgs::LaserScan        scan;
     sensor_msgs::LaserScan        scan2;
+    visualization_msgs::Marker    marker;
     tPointCloud::Ptr*             pcloud;
     actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> *ac;
     
@@ -212,15 +215,16 @@ class BridgeThread: public yarp::os::RateThread
         ros::init (argc, argv, "ikart_ros_bridge");
         nh = new ros::NodeHandle();
         ros::Time::init();
-        pcloud_pub     = nh->advertise<tPointCloud>                    ("/ikart_ros_bridge/pcloud_out",    1);
-        footprint_pub  = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",     1);
-        laser_pub      = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser_out",     1);
-        laser_pub2     = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser2_out",    1);
-        odometer_pub   = nh->advertise<ikart_ros_bridge::odometer>     ("/ikart_ros_bridge/odometer_out",  1);
-        odometry_pub   = nh->advertise<nav_msgs::Odometry>             ("/ikart_ros_bridge/odometry_out",  1);
-        tf_broadcaster = new tf::TransformBroadcaster;
-        tf_listener    = new tf::TransformListener;
-        ac             = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
+        pcloud_pub      = nh->advertise<tPointCloud>                    ("/ikart_ros_bridge/pcloud_out",      1);
+        footprint_pub   = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",       1);
+        laser_pub       = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser_out",       1);
+        laser_pub2      = nh->advertise<sensor_msgs::LaserScan>         ("/ikart_ros_bridge/laser2_out",      1);
+        odometer_pub    = nh->advertise<ikart_ros_bridge::odometer>     ("/ikart_ros_bridge/odometer_out",    1);
+        odometry_pub    = nh->advertise<nav_msgs::Odometry>             ("/ikart_ros_bridge/odometry_out",    1);
+        marker_pub      = nh->advertise<visualization_msgs::Marker>     ("/ikart_ros_bridge/marker_out",      1);
+        tf_broadcaster  = new tf::TransformBroadcaster;
+        tf_listener     = new tf::TransformListener;
+        ac              = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
 
         //wait for the action server to come up  
         /*while(!ac->waitForServer(ros::Duration(5.0)))
@@ -248,6 +252,30 @@ class BridgeThread: public yarp::os::RateThread
             printf("Connection to iKartCtrl failed\n");
         }
 
+        //prepare here the maker message, to save time during the main loop
+        marker.header.frame_id = "/my_frame";
+        marker.header.stamp = ros::Time::now();
+        marker.ns = "basic_shapes";
+        marker.id = 0;
+        marker.type = visualization_msgs::Marker::CUBE;
+        marker.action = visualization_msgs::Marker::ADD;
+        marker.scale.x = 0.2;
+        marker.scale.y = 0.2;
+        marker.scale.z = 0.2;
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
+        marker.lifetime = 0;
+        marker.pose.position.x = 0;
+        marker.pose.position.y = 0;
+        marker.pose.position.z = 0;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.framelocked = true;
+    
         //prepare here the laser scan message, to save time during the main loop
         int num_readings = 1080/laser_step;
         int laser_frequency = 1080/laser_step;        
@@ -455,6 +483,9 @@ class BridgeThread: public yarp::os::RateThread
         output_command_port.write();
         mutex_command.post();
 
+        //********************************************* MAKER PART *********************************************
+        marker_pub.publish(maker_msg);
+        
         //********************************************* ODOMETER PART *********************************************
         Bottle *odometer_bottle = 0;
         odometer_bottle = input_odometer_port.read(false);

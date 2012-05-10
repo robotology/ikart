@@ -9,7 +9,7 @@ ikart
    <name>iKartNav</name>
    <parameters>--context iKart --config conf/iKartNav.ini</parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
+   <stdio>rospc</stdio>
    <tag>iKartNavigation</tag>
 </module>
 
@@ -20,8 +20,20 @@ ikart
 </connection>
 
 <connection>
+  <from>/ikart/odometry:o</from>
+  <to>/ikartnav/odometry:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
   <from>/ikartnav/control:o</from>
   <to>/ikart/control:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
+  <from>/ikartnav/resetodometry:o</from>
+  <to>/ikart/rpc</to>
   <protocol>tcp</protocol>
 </connection>
 

@@ -213,7 +213,9 @@ class BridgeThread: public yarp::os::RateThread
         int argc = 0;
         char** argv = 0;
         ros::init (argc, argv, "ikart_ros_bridge");
+                    printf("Starting1\n");
         nh = new ros::NodeHandle();
+          printf("Starting2\n");
         ros::Time::init();
         pcloud_pub      = nh->advertise<tPointCloud>                    ("/ikart_ros_bridge/pcloud_out",      1);
         footprint_pub   = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",       1);
@@ -225,7 +227,7 @@ class BridgeThread: public yarp::os::RateThread
         tf_broadcaster  = new tf::TransformBroadcaster;
         tf_listener     = new tf::TransformListener;
         ac              = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
-
+  printf("Starting3\n");
         //wait for the action server to come up  
         /*while(!ac->waitForServer(ros::Duration(5.0)))
         {
@@ -253,7 +255,7 @@ class BridgeThread: public yarp::os::RateThread
         }
 
         //prepare here the maker message, to save time during the main loop
-        marker.header.frame_id = "/my_frame";
+        marker.header.frame_id = "/base_link";
         marker.header.stamp = ros::Time::now();
         marker.ns = "basic_shapes";
         marker.id = 0;
@@ -266,7 +268,7 @@ class BridgeThread: public yarp::os::RateThread
         marker.color.g = 1.0;
         marker.color.b = 0.0;
         marker.color.a = 1.0;
-        marker.lifetime = 0;
+        marker.lifetime = ros::Duration();
         marker.pose.position.x = 0;
         marker.pose.position.y = 0;
         marker.pose.position.z = 0;
@@ -274,7 +276,7 @@ class BridgeThread: public yarp::os::RateThread
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
         marker.pose.orientation.w = 1.0;
-        marker.framelocked = true;
+        marker.frame_locked = true;
     
         //prepare here the laser scan message, to save time during the main loop
         int num_readings = 1080/laser_step;
@@ -484,7 +486,7 @@ class BridgeThread: public yarp::os::RateThread
         mutex_command.post();
 
         //********************************************* MAKER PART *********************************************
-        marker_pub.publish(maker_msg);
+        marker_pub.publish(marker);
         
         //********************************************* ODOMETER PART *********************************************
         Bottle *odometer_bottle = 0;

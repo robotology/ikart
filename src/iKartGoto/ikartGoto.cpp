@@ -48,11 +48,6 @@ void GotoThread::run()
 	yarp::sig::Vector control;
 	control.resize(3,0.0);
 
-    //add here kinematics computation
-    control[0]=localization_data[2];
-    control[1]=localization_data[1];
-    control[2]=localization_data[0];
-
 	//gamma is the angle between the current ikart heading and the target heading
 	double gamma = localization_data[2]-target_data[2];
 
@@ -60,8 +55,20 @@ void GotoThread::run()
 	double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
 
 	//distance is the distance between the current ikart position and the target position
-	double distance = sqrt(localization_data[0]*localization_data[0] + localization_data[1]*localization_data[1])-
-                      sqrt(target_data[0]*target_data[0] + target_data[1]*target_data[1]);
+    double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
+
+    //
+    double k_gain = 0.05;
+    double max_lin_speed = 1.0;  //m/s
+    double max_ang_speed = 10.0; //deg/s
+    control[2] = -k_gain * gamma;
+    
+    //saturation
+    if (control[2] > +max_ang_speed) control[2] =  max_ang_speed;
+    if (control[2] < -max_ang_speed) control[2] = -max_ang_speed;
+
+    if (control[1] > +max_lin_speed) control[1] =  max_lin_speed;
+    if (control[1] < -max_lin_speed) control[1] = -max_lin_speed;
 
 	printf ("%f %f %f \n", gamma, beta, distance);
 	if (status == "rotate")
@@ -80,10 +87,10 @@ void GotoThread::run()
 
     Bottle &b=port_commands_output.prepare();
     b.clear();
-    b.addInt(3);
-    b.addDouble(control[0]);    // x_vel in m/s
-    b.addDouble(control[1]);    // y_vel in m/s
-    b.addDouble(control[2]);    // t_vel in deg/s
+    b.addInt(2);                // polar commands
+    b.addDouble(control[0]);    // angle in deg
+    b.addDouble(control[1]);    // lin_vel in m/s
+    b.addDouble(control[2]);    // ang_vel in deg/s
     port_commands_output.write();
 }
 

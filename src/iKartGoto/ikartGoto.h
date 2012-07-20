@@ -61,6 +61,7 @@ class GotoThread: public yarp::os::RateThread
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
+        status = "IDLE";
         timeout_counter     = 0;
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
@@ -75,6 +76,8 @@ class GotoThread: public yarp::os::RateThread
 		port_commands_output.open((localName+"/commands:o").c_str());
         bool b = false;
         b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str());
+        if (!b) return false;
+        b = Network::connect("/ikart/goto/commands:o","/ikart/control:i");
         if (!b) return false;
         return true;
     }

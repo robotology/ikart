@@ -51,17 +51,26 @@ void GotoThread::run()
 	//gamma is the angle between the current ikart heading and the target heading
 	double gamma = localization_data[2]-target_data[2];
 
-	//beta is the angle between the current ikart heading and the target position
+	//beta is the angle between the current ikart position and the target position
 	double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
 
 	//distance is the distance between the current ikart position and the target position
     double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
 
-    //
-    double k_gain = 0.05;
+    //compute the control law
+    double k_ang_gain = 0.05;
+    double k_lin_gain = 0.05;
     double max_lin_speed = 1.0;  //m/s
     double max_ang_speed = 10.0; //deg/s
-    control[2] = -k_gain * gamma;
+
+//    control[0] = -beta;
+//    control[0] = -beta-localization_data[2];
+//    control[0] = -beta+localization_data[2];
+//    control[0] =  beta+localization_data[2];
+//    control[0] =    beta-localization_data[2];
+    control[0] = beta;
+    control[1] = -k_lin_gain * distance;
+    control[2] = -k_ang_gain * gamma;
     
     //saturation
     if (control[2] > +max_ang_speed) control[2] =  max_ang_speed;
@@ -73,17 +82,16 @@ void GotoThread::run()
 	printf ("%f %f %f \n", gamma, beta, distance);
 	if (status == "rotate")
 	{
-		if (localization_data[2] - beta > 1) 
+		if (fabs(distance) < 0.05 && fabs(gamma) < 0.6) 
 		{
-		}
-		else if (localization_data[2] - beta < 1) 
-		{
-		}
-		else
-		{
-
+            printf("GOAL REACHED\n");
 		}
 	}
+
+    if (status == "IDLE")
+    {
+       control[0]=control[1]=control[2] = 0.0;        
+    }
 
     Bottle &b=port_commands_output.prepare();
     b.clear();
@@ -98,10 +106,12 @@ void GotoThread::setNewTarget(yarp::sig::Vector target)
 {
 	//data is formatted as follows: x, y, angle
 	target_data=target;
+    status="MOVING";
 }
 
 void GotoThread::stopMovement()
 {
+    status="IDLE";
 }
 
 void GotoThread::printStats()

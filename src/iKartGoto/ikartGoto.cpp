@@ -29,6 +29,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
+#include <math.h>
 
 #include "ikartGoto.h"
 
@@ -59,7 +60,8 @@ void GotoThread::run()
 	double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
 
 	//distance is the distance between the current ikart position and the target position
-	double distance = sqrt(localization_data[0]*localization_data[0] + localization_data[1]*localization_data[1]);
+	double distance = sqrt(localization_data[0]*localization_data[0] + localization_data[1]*localization_data[1])-
+                      sqrt(target_data[0]*target_data[0] + target_data[1]*target_data[1]);
 
 	printf ("%f %f %f \n", gamma, beta, distance);
 	if (status == "rotate")

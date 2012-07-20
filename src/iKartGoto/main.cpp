@@ -22,6 +22,7 @@
 #include <yarp/os/Port.h>
 
 #include "ikartGoto.h"
+#include <math.h>
 
 class iKartGotoModule : public yarp::os::RFModule
 {
@@ -105,19 +106,25 @@ public:
 			reply.addString("quit");
 		}
 
-		else if (command.get(0).asString()=="goTo")
+		else if (command.get(0).asString()=="goTo" || command.get(0).asString()=="goto")
 		{
 			yarp::sig::Vector v(3, 0.0);
 			v[0]=command.get(1).asDouble();
 			v[1]=command.get(2).asDouble();
 			v[2]=command.get(3).asDouble();
 			gotoThread->setNewTarget(v);
+            reply.addString("new target received");
 		}
 
 		else if (command.get(0).asString()=="stop")
 		{
 			gotoThread->stopMovement();
+            reply.addString("Stopping movement.");
 		}
+        else
+        {
+            reply.addString("Unknown command.");
+        }
 
         return true;
     }

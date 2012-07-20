@@ -73,7 +73,9 @@ class GotoThread: public yarp::os::RateThread
         port_target_input.open((localName+"/target:i").c_str());
 		port_laser_input.open((localName+"/laser:i").c_str());
 		port_commands_output.open((localName+"/commands:o").c_str());
-        //Network::connect("/icub/inertial",(localName+"/inertial:i").c_str());
+        bool b = false;
+        b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str());
+        if (!b) return false;
         return true;
     }
 

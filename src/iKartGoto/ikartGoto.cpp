@@ -59,16 +59,11 @@ void GotoThread::run()
 
     //compute the control law
     double k_ang_gain = 0.05;
-    double k_lin_gain = 0.05;
-    double max_lin_speed = 1.0;  //m/s
+    double k_lin_gain = 0.1;
+    double max_lin_speed = 0.9;  //m/s
     double max_ang_speed = 10.0; //deg/s
 
-//    control[0] = -beta;
-//    control[0] = -beta-localization_data[2];
-//    control[0] = -beta+localization_data[2];
-//    control[0] =  beta+localization_data[2];
-//    control[0] =    beta-localization_data[2];
-    control[0] = beta;
+    control[0] = -beta;
     control[1] = -k_lin_gain * distance;
     control[2] = -k_ang_gain * gamma;
     

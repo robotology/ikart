@@ -15,6 +15,7 @@ include(iCubHelpers)
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
 				
 add_subdirectory(iKart)
+add_subdirectory(iKartGoto)
 add_subdirectory(laserScannerGui)
 add_subdirectory(forceGuidance)
 

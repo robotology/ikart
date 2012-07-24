@@ -39,7 +39,10 @@ public:
     virtual bool configure(yarp::os::ResourceFinder &rf)
     {
         yarp::os::Time::turboBoost();
+
         Property p;
+        ConstString configFile = rf.findFile("from");
+        if (configFile!="") p.fromConfigFile(configFile.c_str());
 
         gotoThread = new GotoThread(10,rf,p);
 
@@ -142,7 +145,7 @@ int main(int argc, char *argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("iKartGoto.ini");		   //overridden by --from parameter
-    rf.setDefaultContext("iKart/conf");                //overridden by --context parameter
+    rf.setDefaultContext("iKartGoto/conf");                //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     
     iKartGotoModule iKartGoto;

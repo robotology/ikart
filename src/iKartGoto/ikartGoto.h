@@ -44,6 +44,15 @@ using namespace yarp::dev;
 class GotoThread: public yarp::os::RateThread
 {
     protected:
+    //configuration parameters
+    double k_ang_gain;
+    double k_lin_gain;
+    double max_lin_speed;  //m/s
+    double max_ang_speed;  //deg/s
+    double robot_radius;   //m
+    bool   stop_on_obstacles;
+
+    //ports
 	BufferedPort<yarp::sig::Vector> port_localization_input;
 	BufferedPort<yarp::sig::Vector> port_target_input;
     BufferedPort<yarp::sig::Vector> port_laser_input;
@@ -53,6 +62,7 @@ class GotoThread: public yarp::os::RateThread
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
     yarp::sig::Vector   target_data;
+    yarp::sig::Vector   laser_data;
 	string              status;
     int                 timeout_counter;
 
@@ -65,20 +75,34 @@ class GotoThread: public yarp::os::RateThread
         timeout_counter     = 0;
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
+        laser_data.resize(1080,100.0);
     }
 
     virtual bool threadInit()
     {
+        //read configuration parametes
+        k_ang_gain = 0.05;
+        k_lin_gain = 0.1;
+        max_lin_speed = 0.9;  //m/s
+        max_ang_speed = 10.0; //deg/s
+        robot_radius = 0.30;  //m
+        stop_on_obstacles = false;
+
+        //open module ports
 		string localName = "/ikart/goto";
         port_localization_input.open((localName+"/localization:i").c_str());
         port_target_input.open((localName+"/target:i").c_str());
 		port_laser_input.open((localName+"/laser:i").c_str());
 		port_commands_output.open((localName+"/commands:o").c_str());
+
+        //automatic port connections
         bool b = false;
-        b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str());
-        if (!b) return false;
-        b = Network::connect("/ikart/goto/commands:o","/ikart/control:i");
-        if (!b) return false;
+        b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str(), "udp", false);
+        if (!b) {fprintf (stderr,"Unable to connect the localization port!"); return false;}
+        b = Network::connect((localName+"/commands:o").c_str(),"/ikart/control:i", "udp", false);
+        if (!b) {fprintf (stderr,"Unable to connect the output command port!"); return false;}
+        b = Network::connect("/ikart/laser:o",(localName+"/laser:i").c_str(), "udp", false);
+        if (!b) {fprintf (stderr,"Unable to connect the laser port!"); }
         return true;
     }
 

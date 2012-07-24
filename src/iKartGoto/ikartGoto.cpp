@@ -39,10 +39,13 @@ using namespace yarp::dev;
 
 void GotoThread::run()
 {
+	//data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) localization_data = *loc;
     else timeout_counter++;
-	//data is formatted as follows: x, y, angle
+
+    yarp::sig::Vector *las = port_laser_input.read(false);
+    if (las) laser_data = *las;
 
 	//computes the control action
 	yarp::sig::Vector control;
@@ -58,11 +61,6 @@ void GotoThread::run()
     double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
 
     //compute the control law
-    double k_ang_gain = 0.05;
-    double k_lin_gain = 0.1;
-    double max_lin_speed = 0.9;  //m/s
-    double max_ang_speed = 10.0; //deg/s
-
     control[0] = -beta;
     control[1] = -k_lin_gain * distance;
     control[2] = -k_ang_gain * gamma;
@@ -74,16 +72,33 @@ void GotoThread::run()
     if (control[1] > +max_lin_speed) control[1] =  max_lin_speed;
     if (control[1] < -max_lin_speed) control[1] = -max_lin_speed;
 
-	printf ("%f %f %f \n", gamma, beta, distance);
-	if (status == "rotate")
+    //check for obstacles
+    if (stop_on_obstacles)    
+    {   int laser_obstacles = 0;
+        if (las)    
+        {   
+            for (size_t i=0; i<1080; i++)
+            {
+                if ((*las)[i] < robot_radius) laser_obstacles++;
+            }
+        }
+        if (laser_obstacles)
+        {
+            fprintf (stdout, "Obstacles detected, stopping /n");
+            status="ABORTED";
+        }
+    }
+
+	//printf ("%f %f %f \n", gamma, beta, distance);
+	/*if (status == "rotate")
 	{
 		if (fabs(distance) < 0.05 && fabs(gamma) < 0.6) 
 		{
-            printf("GOAL REACHED\n");
+            fprintf (stdout, "Goal reached! /n");
 		}
-	}
+	}*/
 
-    if (status == "IDLE")
+    if (status != "MOVING")
     {
        control[0]=control[1]=control[2] = 0.0;        
     }

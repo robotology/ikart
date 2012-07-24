@@ -47,10 +47,12 @@ class GotoThread: public yarp::os::RateThread
     //configuration parameters
     double k_ang_gain;
     double k_lin_gain;
-    double max_lin_speed;  //m/s
-    double max_ang_speed;  //deg/s
-    double robot_radius;   //m
-    bool   stop_on_obstacles;
+    double max_lin_speed;    //m/s
+    double max_ang_speed;    //deg/s
+    double robot_radius;     //m
+    int    retreat_duration; 
+    bool   enable_stop_on_obstacles;
+    bool   enable_retreat;
 
     //ports
 	BufferedPort<yarp::sig::Vector> port_localization_input;
@@ -65,6 +67,7 @@ class GotoThread: public yarp::os::RateThread
     yarp::sig::Vector   laser_data;
 	string              status;
     int                 timeout_counter;
+    int                 retreat_counter;
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -76,6 +79,7 @@ class GotoThread: public yarp::os::RateThread
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
         laser_data.resize(1080,100.0);
+        retreat_counter = 0;
     }
 
     virtual bool threadInit()
@@ -86,7 +90,9 @@ class GotoThread: public yarp::os::RateThread
         max_lin_speed = 0.9;  //m/s
         max_ang_speed = 10.0; //deg/s
         robot_radius = 0.30;  //m
-        stop_on_obstacles = false;
+        enable_stop_on_obstacles = false;
+        enable_retreat = false;
+        retreat_duration = 300;
 
         //open module ports
 		string localName = "/ikart/goto";

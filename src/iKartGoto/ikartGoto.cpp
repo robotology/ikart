@@ -73,7 +73,7 @@ void GotoThread::run()
     if (control[1] < -max_lin_speed) control[1] = -max_lin_speed;
 
     //check for obstacles
-    if (stop_on_obstacles)    
+    if (enable_stop_on_obstacles)    
     {   int laser_obstacles = 0;
         if (las)    
         {   
@@ -103,6 +103,14 @@ void GotoThread::run()
        control[0]=control[1]=control[2] = 0.0;        
     }
 
+    if (enable_retreat && retreat_counter >0)
+    {
+        control[0]=180;
+        control[1]=0.4;
+        control[2]=0;
+        retreat_counter--;
+    }
+
     Bottle &b=port_commands_output.prepare();
     b.clear();
     b.addInt(2);                // polar commands
@@ -117,6 +125,7 @@ void GotoThread::setNewTarget(yarp::sig::Vector target)
 	//data is formatted as follows: x, y, angle
 	target_data=target;
     status="MOVING";
+    retreat_counter = retreat_duration;
 }
 
 void GotoThread::stopMovement()

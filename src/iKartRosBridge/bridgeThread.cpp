@@ -22,9 +22,9 @@ void BridgeThread::setUserTarget(int id, double x, double y, double angle)
 {
     if (id<10)
     {
-        user_target[id].x=x;
-        user_target[id].y=y;
-        user_target[id].t=angle;
+        user_target[id].x= -y;
+        user_target[id].y= x;
+        user_target[id].t=-angle;
     }
 }
 

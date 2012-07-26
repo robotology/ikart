@@ -61,9 +61,26 @@ void GotoThread::run()
     double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
 
     //compute the control law
-    control[0] = -beta;
-    control[1] = -k_lin_gain * distance;
-    control[2] = -k_ang_gain * gamma;
+//    control[0] = -beta;
+    //control[0] = -beta-localization_data[2]; //CHECKME
+//   control[0] = -(beta-localization_data[2]); //CHECKME -180
+//   control[0] = -(beta+localization_data[2]); //CHECKME -90
+ //   control[0] = +beta+localization_data[2]-90; //CHECKME -90
+ //   control[0] = +beta-localization_data[2]-90; //CHECKME -90
+ //   control[0] = -beta+localization_data[2]-90; //CHECKME -90
+//   control[0] = -beta-localization_data[2]-90; //CHECKME -90
+ //  control[0] = -beta-localization_data[2]+90; //CHECKME -90
+  // control[0] = -beta+localization_data[2]+90; //CHECKME -90
+ //  control[0] = +beta+localization_data[2]+90; //CHECKME -90
+ //  control[0] = +beta-localization_data[2]+90; //CHECKME -90
+   //  control[0] = -beta+localization_data[2]; //CHECKME -90
+   //  control[0] =  beta-localization_data[2]; //CHECKME -90
+  control[0] =  180-(beta-localization_data[2]); //CHECKME -90
+  
+
+//printf ("%f \n", control[0]);
+    control[1] =  k_lin_gain * distance;
+    control[2] =  k_ang_gain * gamma;
     
     //saturation
     if (control[2] > +max_ang_speed) control[2] =  max_ang_speed;

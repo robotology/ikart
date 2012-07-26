@@ -96,6 +96,8 @@ class BridgeThread: public yarp::os::RateThread
         ikart_pose() {x=0; y=0; t=0;}
     };
     ikart_pose ikart_home;
+    ikart_pose user_target[10];
+
     ikart_pose ikart_current_position;
 
     protected:
@@ -187,6 +189,7 @@ class BridgeThread: public yarp::os::RateThread
     }
 
     void setHome();  
+    void setUserTarget(int id, double x, double y, double angle);
     void setHome(double x, double y, double angle);
     void getHome(double &x, double &y, double &angle);  
     int  setGoal(double x, double y, double angle);
@@ -430,6 +433,16 @@ class BridgeThread: public yarp::os::RateThread
         tf::StampedTransform home_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(ikart_home.x,ikart_home.y,0.0)),now, "map", "home");
         tf_broadcaster->sendTransform(home_trans);
         mutex_home.post();
+
+        //mutex_home.wait();
+        tf::StampedTransform user_trans1(tf::Transform(tf::createQuaternionFromYaw(user_target[0].t/180.0*M_PI), tf::Vector3(user_target[0].x,user_target[0].y,0.0)),now, "map", "user1");
+        tf_broadcaster->sendTransform(user_trans1);
+        //mutex_home.post();
+
+        //mutex_home.wait();
+        tf::StampedTransform user_trans2(tf::Transform(tf::createQuaternionFromYaw(user_target[1].t/180.0*M_PI), tf::Vector3(user_target[1].x,user_target[1].y,0.0)),now, "map", "user2");
+        tf_broadcaster->sendTransform(user_trans2);
+        //mutex_home.post();
         
         //********************************************* READ TF      **********************************************
         tf::StampedTransform stamp_loc_trans;

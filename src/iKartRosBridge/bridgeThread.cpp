@@ -18,6 +18,16 @@ void BridgeThread::setHome()
     mutex_home.post();
 }
 
+void BridgeThread::setUserTarget(int id, double x, double y, double angle)
+{
+    if (id<10)
+    {
+        user_target[id].x=x;
+        user_target[id].y=y;
+        user_target[id].t=angle;
+    }
+}
+
 void BridgeThread::getHome(double &x, double &y, double &angle)
 {
     mutex_home.wait();

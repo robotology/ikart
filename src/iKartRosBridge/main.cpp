@@ -95,6 +95,13 @@ class BridgeModule: public RFModule
                 reply.addString("setting current position as new home");
                 return  true;
             }
+            if (command.get(1).asString()=="frame")
+            {
+                bridge_thr->setUserTarget(command.get(2).asInt(),command.get(3).asDouble(),command.get(4).asDouble(),command.get(5).asDouble());
+                reply.addString("ack");
+                reply.addString("setting frame");
+                return  true;
+            }
             else if (command.get(1).asString()=="home")
             {
                 bridge_thr->setHome(command.get(2).asDouble(),command.get(3).asDouble(),command.get(4).asDouble());
@@ -140,6 +147,7 @@ class BridgeModule: public RFModule
             reply.addString("Available commands:");
             reply.addString("set goal <x> <y> <angle>");
             reply.addString("set home <x> <y> <angle>");
+            reply.addString("set frame <name> <x> <y> <angle>");
             reply.addString("set current_home");
             reply.addString("get home");
             reply.addString("get navigation_status");

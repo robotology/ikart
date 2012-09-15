@@ -270,7 +270,7 @@ void Odometry::compute()
 
 	if (port_ikart_vels.getOutputCount()>0)
 	{
-		Bottle &v=port_odometer.prepare();
+		Bottle &v=port_ikart_vels.prepare();
 		v.clear();
 		v.addDouble(ikart_vel_x);
 		v.addDouble(ikart_vel_y);

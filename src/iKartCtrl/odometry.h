@@ -109,6 +109,7 @@ private:
     PolyDriver                      *control_board_driver;
     BufferedPort<Bottle>            port_odometry;
     BufferedPort<Bottle>            port_odometer;
+	BufferedPort<Bottle>            port_ikart_vels;
 
     string                          localName;
     IEncoders                       *ienc;

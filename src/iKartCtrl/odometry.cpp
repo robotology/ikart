@@ -49,6 +49,8 @@ void Odometry::close()
     port_odometry.close();
     port_odometer.interrupt();
     port_odometer.close();
+	port_ikart_vels.interrupt();
+	port_ikart_vels.close();
 }
 
 Odometry::~Odometry()
@@ -105,6 +107,7 @@ bool Odometry::open()
     // open control input ports
     port_odometry.open((localName+"/odometry:o").c_str());
     port_odometer.open((localName+"/odometer:o").c_str());
+	port_ikart_vels.open((localName+"/velocity:o").c_str());
 
     //reset odometry
     reset_odometry();
@@ -264,4 +267,14 @@ void Odometry::compute()
         t.addDouble(traveled_angle);
         port_odometer.write();
     }
+
+	if (port_ikart_vels.getOutputCount()>0)
+	{
+		Bottle &v=port_odometer.prepare();
+		v.clear();
+		v.addDouble(ikart_vel_x);
+		v.addDouble(ikart_vel_y);
+		v.addDouble(ikart_vel_theta);
+		port_ikart_vels.write();
+	}
 }

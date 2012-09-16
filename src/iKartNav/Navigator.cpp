@@ -726,6 +726,15 @@ void Navigator::run()
             fflush(stdout);
             mPaused=false;
         }
+		else if (cmd=="help")
+		{
+			printf("available commands:\n");
+			printf("- go\n");
+			printf("- pause\n");
+			printf("- stop\n");
+			printf("- event <1> <2> <3> \n");
+			printf("- target <x> <y> <h> \n");
+		}
     } 
     
     for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)

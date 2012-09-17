@@ -688,19 +688,22 @@ void Navigator::run()
 
         if (cmd=="target" || cmd=="t")
         {   
-            setUserTarget(-bot->get(1).asDouble(),bot->get(2).asDouble());
-
             if (bot->size()>=4)
             {
                 mHaveTargetH=true;
-                mTargetH=mOdoH-bot->get(3).asDouble();
-                printf("TARGET HEADING=%.1f\n",mTargetH);
-                fflush(stdout);
-                
+                mTargetH=mOdoH-bot->get(3).asDouble();                
             }
             else
             {
                 mHaveTargetH=false;
+            }
+
+            setUserTarget(-bot->get(1).asDouble(),bot->get(2).asDouble());
+
+            if (mHaveTargetH)
+            {
+                printf("TARGET HEADING=%.1f\n",mTargetH);
+                fflush(stdout);
             }
         }
         else if (cmd=="event" || cmd=="e")

@@ -145,7 +145,10 @@ protected:
 
     void setUserTarget(double heading,double distance)
     {
+        mHaveTarget=true;
         mTarget=mOdoP+distance*Vec2D(mOdoH+heading);
+        printf("NEW TARGET X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
+        fflush(stdout);
     
         replaceTarget(mTarget);
     }
@@ -175,7 +178,7 @@ protected:
 
             if (result==GNF_OUT_OF_GRID)
             {
-                printf("WARNING: target is out of grid\n");
+                printf("WARNING: the target is out of grid\n");
                 mHaveTarget=true;
                 
                 if (mTargetPortO.getOutputCount()>0)
@@ -198,15 +201,19 @@ protected:
 
             if (zeta<THR)
             {
+                /*
                 if (i)
                 {
                     mHaveTargetH=true;
                     mTargetH=(target-X).arg();
                     printf("Target replaced X=%.3f  Y=%.3f  H=%.3f\n",X.x,X.y,mTargetH);             
                 }
+                */
 
                 mHaveTarget=true;
                 target=X;
+
+                printf("Target replaced X=%.3f  Y=%.3f\n",X.x,X.y);
 
                 if (mTargetPortO.getOutputCount()>0)
                 {
@@ -229,7 +236,8 @@ protected:
             X+=(gradient*D>=0.0?0.01:-0.01)*gradient;
         }
 
-        printf("Can't set a valid target\n");
+        printf("WARNING: Can't replace the target in a free space position (Z=%f - THR=%f)\n",zeta,THR);
+        mHaveTarget=true;
     }
     
     void addEvent(double heading,double distance,double radius);

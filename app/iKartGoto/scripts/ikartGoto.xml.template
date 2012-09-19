@@ -13,7 +13,7 @@
 
 <connection>
   <from>/ikartGoto/control:o</from>
-  <to>/ikart/control:i<o>
+  <to>/ikart/control:i</to>
   <protocol>udp</protocol>
 </connection>
 

@@ -37,6 +37,18 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+bool GotoThread::check_obstacles_in_path()
+{
+	int laser_obstacles = 0;
+    for (size_t i=0; i<1080; i++)
+    {
+        if (laser_data[i] < robot_radius) laser_obstacles++;
+    }
+
+	if (laser_obstacles>=1) return true;
+	return false;
+}
+
 void GotoThread::run()
 {
 	//data is formatted as follows: x, y, angle
@@ -91,31 +103,43 @@ void GotoThread::run()
 
     //check for obstacles
     if (enable_stop_on_obstacles)    
-    {   int laser_obstacles = 0;
-        if (las)    
-        {   
-            for (size_t i=0; i<1080; i++)
-            {
-                if ((*las)[i] < robot_radius) laser_obstacles++;
-            }
-        }
-        if (laser_obstacles)
+    {   
+		bool obstacles_in_path = check_obstacles_in_path();
+        if (status==MOVING && obstacles_in_path)
         {
             fprintf (stdout, "Obstacles detected, stopping /n");
-            status="ABORTED";
+            status=WAITING_OBSTACLE;
+			yarp::os::Time::now();
         }
+		else
+		if (status==WAITING_OBSTACLE && !obstacles_in_path)
+		{
+            fprintf (stdout, "Obstacles removed, thank you /n");
+            status=MOVING;
+		}
     }
 
 	//printf ("%f %f %f \n", gamma, beta, distance);
-	/*if (status == "rotate")
+	if (status == MOVING)
 	{
 		if (fabs(distance) < 0.05 && fabs(gamma) < 0.6) 
 		{
-            fprintf (stdout, "Goal reached! /n");
+			status=REACHED;
+            fprintf (stdout, "Goal reached!/n");
 		}
-	}*/
+	}
 
-    if (status != "MOVING")
+	if (status==WAITING_OBSTACLE)
+	{
+		double current_time = yarp::os::Time::now();
+		if (fabs(current_time-obstacle_time)>30.0)
+		{
+			fprintf (stdout, "failed to recover from obstacle, goal aborted /n");
+			status=ABORTED;
+		}
+	}
+
+    if (status != MOVING)
     {
        control[0]=control[1]=control[2] = 0.0;        
     }
@@ -128,30 +152,65 @@ void GotoThread::run()
         retreat_counter--;
     }
 
-    Bottle &b=port_commands_output.prepare();
-    b.clear();
-    b.addInt(2);                // polar commands
-    b.addDouble(control[0]);    // angle in deg
-    b.addDouble(control[1]);    // lin_vel in m/s
-    b.addDouble(control[2]);    // ang_vel in deg/s
-    port_commands_output.write();
+	if (port_commands_output.getOutputCount()>0)
+	{
+		Bottle &b=port_commands_output.prepare();
+		b.clear();
+		b.addInt(2);                // polar commands
+		b.addDouble(control[0]);    // angle in deg
+		b.addDouble(control[1]);    // lin_vel in m/s
+		b.addDouble(control[2]);    // ang_vel in deg/s
+		port_commands_output.write();
+	}
+
+	if (port_status_output.getOutputCount()>0)
+	{
+		string string_out;
+		string_out = status_string;
+		Bottle &b=port_status_output.prepare();
+		b.clear();
+		b.addString(string_out.c_str());
+		port_status_output.write();
+	}
 }
 
 void GotoThread::setNewTarget(yarp::sig::Vector target)
 {
 	//data is formatted as follows: x, y, angle
 	target_data=target;
-    status="MOVING";
+    status=MOVING;
+	fprintf (stdout, "received new target/n");
     retreat_counter = retreat_duration;
 }
 
 void GotoThread::stopMovement()
 {
-    status="IDLE";
+	fprintf (stdout, "asked to stop/n");
+    status=IDLE;
 }
 
 void GotoThread::printStats()
 {
     fprintf (stdout,"* ikartGoto thread:\n");
     fprintf (stdout,"timeouts: %d\n",timeout_counter);
+	status_string = "ERROR";
+	switch (status)
+	{
+		case IDLE:
+		status_string = "IDLE";
+		break;
+		case MOVING:
+		status_string = "MOVING";
+		break;
+		case WAITING_OBSTACLE:
+		status_string = "WAITING_OBSTACLE";
+		break;
+		case REACHED:	
+		status_string = "REACHED";
+		break;
+		case ABORTED:
+		status_string = "ABORTED";
+		break;
+	}
+	fprintf (stdout,"status: %s\n",status_string.c_str());
 }

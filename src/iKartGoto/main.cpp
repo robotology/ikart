@@ -45,6 +45,7 @@ public:
         if (configFile!="") p.fromConfigFile(configFile.c_str());
 
         gotoThread = new GotoThread(10,rf,p);
+		if (rf.check("no_obstacles_stop")) gotoThread->enable_stop_on_obstacles=false;
 
         if (!gotoThread->start())
         {

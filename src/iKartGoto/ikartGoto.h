@@ -43,6 +43,10 @@ using namespace yarp::dev;
 
 class GotoThread: public yarp::os::RateThread
 {
+	public:
+	bool   enable_stop_on_obstacles;
+    bool   enable_retreat;
+
     protected:
     //configuration parameters
     double k_ang_gain;
@@ -51,35 +55,37 @@ class GotoThread: public yarp::os::RateThread
     double max_ang_speed;    //deg/s
     double robot_radius;     //m
     int    retreat_duration; 
-    bool   enable_stop_on_obstacles;
-    bool   enable_retreat;
 
     //ports
 	BufferedPort<yarp::sig::Vector> port_localization_input;
 	BufferedPort<yarp::sig::Vector> port_target_input;
     BufferedPort<yarp::sig::Vector> port_laser_input;
     BufferedPort<yarp::os::Bottle>  port_commands_output;
+	BufferedPort<yarp::os::Bottle>  port_status_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
     yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
-	string              status;
+	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED} status;
     int                 timeout_counter;
     int                 retreat_counter;
+	double              obstacle_time;
+	string              status_string;
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
-        status = "IDLE";
+        status = IDLE;
         timeout_counter     = 0;
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
-        laser_data.resize(1080,100.0);
+        laser_data.resize(1080,1000.0);
         retreat_counter = 0;
+		enable_stop_on_obstacles = true;
     }
 
     virtual bool threadInit()
@@ -90,7 +96,7 @@ class GotoThread: public yarp::os::RateThread
         max_lin_speed = 0.9;  //m/s
         max_ang_speed = 10.0; //deg/s
         robot_radius = 0.30;  //m
-        enable_stop_on_obstacles = false;
+        
         enable_retreat = false;
         retreat_duration = 300;
 
@@ -100,6 +106,7 @@ class GotoThread: public yarp::os::RateThread
         port_target_input.open((localName+"/target:i").c_str());
 		port_laser_input.open((localName+"/laser:i").c_str());
 		port_commands_output.open((localName+"/commands:o").c_str());
+		port_status_output.open((localName+"/status:o").c_str());
 
         //automatic port connections
         bool b = false;
@@ -127,9 +134,12 @@ class GotoThread: public yarp::os::RateThread
         port_laser_input.close();
 	    port_commands_output.interrupt();
         port_commands_output.close();
+		port_status_output.interrupt();
+		port_status_output.close();
     }
 
     void printStats();
+	bool check_obstacles_in_path();
 
 };
 

@@ -57,6 +57,7 @@ class GotoThread: public yarp::os::RateThread
     int    retreat_duration; 
 
     //ports
+	BufferedPort<yarp::sig::Vector> port_odometry_input;
 	BufferedPort<yarp::sig::Vector> port_localization_input;
 	BufferedPort<yarp::sig::Vector> port_target_input;
     BufferedPort<yarp::sig::Vector> port_laser_input;
@@ -66,10 +67,12 @@ class GotoThread: public yarp::os::RateThread
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
+	yarp::sig::Vector   odometry_data;
     yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
 	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED} status;
-    int                 timeout_counter;
+    int                 loc_timeout_counter;
+	int                 odm_timeout_counter;
     int                 retreat_counter;
 	double              obstacle_time;
 	string              status_string;
@@ -80,7 +83,8 @@ class GotoThread: public yarp::os::RateThread
                iKartCtrl_options (options)
     {
         status = IDLE;
-        timeout_counter     = 0;
+        loc_timeout_counter = 0;
+		odm_timeout_counter = 0;
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
         laser_data.resize(1080,1000.0);
@@ -101,21 +105,21 @@ class GotoThread: public yarp::os::RateThread
         retreat_duration = 300;
 
         //open module ports
-		string localName = "/ikart/goto";
+		string localName = "/ikartGoto";
         port_localization_input.open((localName+"/localization:i").c_str());
         port_target_input.open((localName+"/target:i").c_str());
 		port_laser_input.open((localName+"/laser:i").c_str());
-		port_commands_output.open((localName+"/commands:o").c_str());
+		port_commands_output.open((localName+"/control:o").c_str());
 		port_status_output.open((localName+"/status:o").c_str());
 
         //automatic port connections
-        bool b = false;
+        /*bool b = false;
         b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str(), "udp", false);
         if (!b) {fprintf (stderr,"Unable to connect the localization port!"); return false;}
         b = Network::connect((localName+"/commands:o").c_str(),"/ikart/control:i", "udp", false);
         if (!b) {fprintf (stderr,"Unable to connect the output command port!"); return false;}
         b = Network::connect("/ikart/laser:o",(localName+"/laser:i").c_str(), "udp", false);
-        if (!b) {fprintf (stderr,"Unable to connect the laser port!"); }
+        if (!b) {fprintf (stderr,"Unable to connect the laser port!"); }*/
         return true;
     }
 
@@ -136,6 +140,8 @@ class GotoThread: public yarp::os::RateThread
         port_commands_output.close();
 		port_status_output.interrupt();
 		port_status_output.close();
+		port_odometry_input.interrupt();
+		port_odometry_input.close();
     }
 
     void printStats();

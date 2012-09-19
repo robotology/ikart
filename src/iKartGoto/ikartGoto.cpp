@@ -54,7 +54,11 @@ void GotoThread::run()
 	//data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) localization_data = *loc;
-    else timeout_counter++;
+    else loc_timeout_counter++;
+
+	yarp::sig::Vector *odm = port_odometry_input.read(false);
+    if (odm) odometry_data = *odm;
+    else odm_timeout_counter++;
 
     yarp::sig::Vector *las = port_laser_input.read(false);
     if (las) laser_data = *las;
@@ -192,7 +196,8 @@ void GotoThread::stopMovement()
 void GotoThread::printStats()
 {
     fprintf (stdout,"* ikartGoto thread:\n");
-    fprintf (stdout,"timeouts: %d\n",timeout_counter);
+    fprintf (stdout,"loc timeouts: %d\n",loc_timeout_counter);
+    fprintf (stdout,"odm timeouts: %d\n",odm_timeout_counter);
 	status_string = "ERROR";
 	switch (status)
 	{

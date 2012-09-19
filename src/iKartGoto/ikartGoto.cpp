@@ -191,9 +191,9 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
 {
 	//data is formatted as follows: x, y, angle
 	double a = localization_data[2]/180.0*M_PI;
-	target_data[0]=target[0] + localization_data[0] * sin (a);
-	target_data[1]=target[1] + localization_data[1] * cos (a);
-	target_data[2]=target[2] + localization_data[2];
+	target_data[0]=target[0] * cos (a) + localization_data[0] ;
+	target_data[1]=target[1] * sin (a) + localization_data[1] ;
+	target_data[2]=-target[2] + localization_data[2];
     status=MOVING;
 	fprintf (stdout, "received new target/n");
     retreat_counter = retreat_duration;

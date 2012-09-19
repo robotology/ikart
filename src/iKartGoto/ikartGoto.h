@@ -111,6 +111,7 @@ class GotoThread: public yarp::os::RateThread
 		port_laser_input.open((localName+"/laser:i").c_str());
 		port_commands_output.open((localName+"/control:o").c_str());
 		port_status_output.open((localName+"/status:o").c_str());
+		port_odometry_input.open((localName+"/odometry:i").c_str());
 
         //automatic port connections
         /*bool b = false;
@@ -125,7 +126,8 @@ class GotoThread: public yarp::os::RateThread
 
     virtual void run();
 
-	void setNewTarget(yarp::sig::Vector target);
+	void setNewAbsTarget(yarp::sig::Vector target);
+	void setNewRelTarget(yarp::sig::Vector target);
 	void stopMovement();
 
     virtual void threadRelease()

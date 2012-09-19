@@ -110,14 +110,24 @@ public:
 			reply.addString("quit");
 		}
 
-		else if (command.get(0).asString()=="goTo" || command.get(0).asString()=="goto")
+		else if (command.get(0).asString()=="goToAbs")
 		{
 			yarp::sig::Vector v(3, 0.0);
 			v[0]=command.get(1).asDouble();
 			v[1]=command.get(2).asDouble();
 			v[2]=command.get(3).asDouble();
-			gotoThread->setNewTarget(v);
-            reply.addString("new target received");
+			gotoThread->setNewAbsTarget(v);
+            reply.addString("new absolute target received");
+		}
+
+		else if (command.get(0).asString()=="goToRel")
+		{
+			yarp::sig::Vector v(3, 0.0);
+			v[0]=command.get(1).asDouble();
+			v[1]=command.get(2).asDouble();
+			v[2]=command.get(3).asDouble();
+			gotoThread->setNewRelTarget(v);
+            reply.addString("new relative target received");
 		}
 
 		else if (command.get(0).asString()=="stop")

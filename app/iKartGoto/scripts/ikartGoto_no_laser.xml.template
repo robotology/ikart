@@ -1,12 +1,12 @@
 <application>
-<name>ikartGoto</name>
+<name>ikartGoto_no_laser</name>
 
 <dependencies>
 </dependencies>
 
 <module>
    <name>ikartGoto</name>
-   <parameters></parameters>
+   <parameters>--no_stop_on_obstacles</parameters>
    <node>icub14</node>
    <tag>ikartGoto</tag>
 </module>

@@ -1,0 +1,20 @@
+<application>
+<name>ikartGoto_no_laser</name>
+
+<dependencies>
+</dependencies>
+
+<module>
+   <name>ikartGoto</name>
+   <parameters>--no_stop_on_obstacles</parameters>
+   <node>icub14</node>
+   <tag>ikartGoto</tag>
+</module>
+
+<connection>
+  <from>/ikartGoto/control:o</from>
+  <to>/ikart/control:i<o>
+  <protocol>udp</protocol>
+</connection>
+
+</application>

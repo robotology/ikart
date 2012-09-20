@@ -166,6 +166,30 @@ void GotoThread::run()
         retreat_counter--;
     }
 
+	//update status string
+	status_string = "ERROR";
+	switch (status)
+	{
+		case IDLE:
+		status_string = "IDLE";
+		break;
+		case MOVING:
+		status_string = "MOVING";
+		break;
+		case WAITING_OBSTACLE:
+		status_string = "WAITING_OBSTACLE";
+		break;
+		case REACHED:	
+		status_string = "REACHED";
+		break;
+		case ABORTED:
+		status_string = "ABORTED";
+		break;
+		case PAUSED:
+		status_string = "PAUSED";
+		break;
+	}
+
 	sendOutput();
 }
 
@@ -265,27 +289,5 @@ void GotoThread::printStats()
     fprintf (stdout,"* ikartGoto thread:\n");
     fprintf (stdout,"loc timeouts: %d\n",loc_timeout_counter);
     fprintf (stdout,"odm timeouts: %d\n",odm_timeout_counter);
-	status_string = "ERROR";
-	switch (status)
-	{
-		case IDLE:
-		status_string = "IDLE";
-		break;
-		case MOVING:
-		status_string = "MOVING";
-		break;
-		case WAITING_OBSTACLE:
-		status_string = "WAITING_OBSTACLE";
-		break;
-		case REACHED:	
-		status_string = "REACHED";
-		break;
-		case ABORTED:
-		status_string = "ABORTED";
-		break;
-		case PAUSED:
-		status_string = "PAUSED";
-		break;
-	}
 	fprintf (stdout,"status: %s\n",status_string.c_str());
 }

@@ -43,6 +43,9 @@ using namespace yarp::dev;
 
 class GotoThread: public yarp::os::RateThread
 {
+	private:
+	void sendOutput();
+
 	public:
 	bool   enable_stop_on_obstacles;
     bool   enable_retreat;
@@ -55,6 +58,10 @@ class GotoThread: public yarp::os::RateThread
     double max_ang_speed;    //deg/s
     double robot_radius;     //m
     int    retreat_duration; 
+
+	//pause info
+	double pause_start;
+	double pause_duration;
 
     //ports
 	BufferedPort<yarp::sig::Vector> port_odometry_input;
@@ -70,7 +77,8 @@ class GotoThread: public yarp::os::RateThread
 	yarp::sig::Vector   odometry_data;
     yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
-	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED} status;
+	yarp::sig::Vector   control_out;
+	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED} status;
     int                 loc_timeout_counter;
 	int                 odm_timeout_counter;
     int                 retreat_counter;
@@ -90,6 +98,9 @@ class GotoThread: public yarp::os::RateThread
         laser_data.resize(1080,1000.0);
         retreat_counter = 0;
 		enable_stop_on_obstacles = true;
+		control_out.resize(3,0.0);
+		pause_start = 0;
+		pause_duration = 0;
     }
 
     virtual bool threadInit()
@@ -129,6 +140,8 @@ class GotoThread: public yarp::os::RateThread
 	void setNewAbsTarget(yarp::sig::Vector target);
 	void setNewRelTarget(yarp::sig::Vector target);
 	void stopMovement();
+	void pauseMovement (double secs);
+	void resumeMovement();
 
     virtual void threadRelease()
     {    

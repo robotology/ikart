@@ -64,8 +64,7 @@ void GotoThread::run()
     if (las) laser_data = *las;
 
 	//computes the control action
-	yarp::sig::Vector control;
-	control.resize(3,0.0);
+	control_out.zero();
 
 	//gamma is the angle between the current ikart heading and the target heading
 	double gamma = localization_data[2]-target_data[2];
@@ -91,19 +90,19 @@ void GotoThread::run()
  //  control[0] = +beta-localization_data[2]+90; //CHECKME -90
    //  control[0] = -beta+localization_data[2]; //CHECKME -90
    //  control[0] =  beta-localization_data[2]; //CHECKME -90
-  control[0] =  180-(beta-localization_data[2]); //CHECKME -90
+  control_out[0] =  180-(beta-localization_data[2]); //CHECKME -90
   
 
 //printf ("%f \n", control[0]);
-    control[1] =  k_lin_gain * distance;
-    control[2] =  k_ang_gain * gamma;
+    control_out[1] =  k_lin_gain * distance;
+    control_out[2] =  k_ang_gain * gamma;
     
     //saturation
-    if (control[2] > +max_ang_speed) control[2] =  max_ang_speed;
-    if (control[2] < -max_ang_speed) control[2] = -max_ang_speed;
+    if (control_out[2] > +max_ang_speed) control_out[2] =  max_ang_speed;
+    if (control_out[2] < -max_ang_speed) control_out[2] = -max_ang_speed;
 
-    if (control[1] > +max_lin_speed) control[1] =  max_lin_speed;
-    if (control[1] < -max_lin_speed) control[1] = -max_lin_speed;
+    if (control_out[1] > +max_lin_speed) control_out[1] =  max_lin_speed;
+    if (control_out[1] < -max_lin_speed) control_out[1] = -max_lin_speed;
 
     //check for obstacles
     if (enable_stop_on_obstacles)    
@@ -143,27 +142,44 @@ void GotoThread::run()
 		}
 	}
 
+	if (status==PAUSED)
+	{
+		//check if apuse is expired
+		double current_time = yarp::os::Time::now();
+		if (current_time - pause_start > pause_duration)
+		{
+			fprintf(stdout, "pause expired! resuming /n");
+			status=MOVING;
+		}
+	}
+
     if (status != MOVING)
     {
-       control[0]=control[1]=control[2] = 0.0;        
+       control_out[0]=control_out[1]=control_out[2] = 0.0;        
     }
 
     if (enable_retreat && retreat_counter >0)
     {
-        control[0]=180;
-        control[1]=0.4;
-        control[2]=0;
+        control_out[0]=180;
+        control_out[1]=0.4;
+        control_out[2]=0;
         retreat_counter--;
     }
 
+	sendOutput();
+}
+
+void GotoThread::sendOutput()
+{
+	//send the motors commands and the status to the yarp ports
 	if (port_commands_output.getOutputCount()>0)
 	{
 		Bottle &b=port_commands_output.prepare();
 		b.clear();
-		b.addInt(2);                // polar commands
-		b.addDouble(control[0]);    // angle in deg
-		b.addDouble(control[1]);    // lin_vel in m/s
-		b.addDouble(control[2]);    // ang_vel in deg/s
+		b.addInt(2);                    // polar commands
+		b.addDouble(control_out[0]);    // angle in deg
+		b.addDouble(control_out[1]);    // lin_vel in m/s
+		b.addDouble(control_out[2]);    // ang_vel in deg/s
 		port_commands_output.write();
 	}
 
@@ -199,6 +215,28 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
     retreat_counter = retreat_duration;
 }
 
+void GotoThread::pauseMovement(double secs)
+{
+	if (secs > 0)
+	{
+		fprintf (stdout, "asked to pause for %f /n", secs);
+		pause_duration = secs;
+	}
+	else
+	{
+		fprintf (stdout, "asked to pause/n");
+		pause_duration = 10000000;
+	}
+    status=PAUSED;
+	pause_start = yarp::os::Time::now();
+}
+
+void GotoThread::resumeMovement()
+{
+	fprintf (stdout, "asked to resume movement/n");
+    status=MOVING;
+}
+
 void GotoThread::stopMovement()
 {
 	fprintf (stdout, "asked to stop/n");
@@ -227,6 +265,9 @@ void GotoThread::printStats()
 		break;
 		case ABORTED:
 		status_string = "ABORTED";
+		break;
+		case PAUSED:
+		status_string = "PAUSED";
 		break;
 	}
 	fprintf (stdout,"status: %s\n",status_string.c_str());

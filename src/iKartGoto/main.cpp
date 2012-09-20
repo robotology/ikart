@@ -135,6 +135,19 @@ public:
 			gotoThread->stopMovement();
             reply.addString("Stopping movement.");
 		}
+		else if (command.get(0).asString()=="pause")
+		{
+			double time = -1;
+			if (command.size() > 1)
+				time = command.get(1).asDouble();
+			gotoThread->pauseMovement(time);
+			reply.addString("Pausing.");
+		}
+		else if (command.get(0).asString()=="resume")
+		{
+			gotoThread->resumeMovement();
+			reply.addString("Resuming.");
+		}
         else
         {
             reply.addString("Unknown command.");

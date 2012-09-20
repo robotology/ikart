@@ -53,7 +53,7 @@ public:
             return false;
         }
 
-        rpcPort.open("/ikart/goto/rpc:i");
+        rpcPort.open("/ikartGoto/rpc:i");
         attach(rpcPort);
         //attachTerminal();
 

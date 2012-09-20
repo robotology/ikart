@@ -130,7 +130,7 @@ class BridgeModule: public RFModule
             }
         }
         else
-		if (command.get(0).asString()=="stop_navigation")
+		if (command.get(0).asString()=="stop")
         {
             int v = bridge_thr->navigationStop();
             reply.addString("ack");
@@ -166,7 +166,7 @@ class BridgeModule: public RFModule
             reply.addString("set current_home");
             reply.addString("get home");
             reply.addString("get navigation_status");
-            reply.addString("stop_navigation");
+            reply.addString("stop");
 			reply.addString("gotoAbs <x> <y> <angle>");
 			reply.addString("gotoRel <x> <y> <angle>");
             return true;

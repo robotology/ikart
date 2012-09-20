@@ -110,7 +110,7 @@ public:
 			reply.addString("quit");
 		}
 
-		else if (command.get(0).asString()=="goToAbs")
+		else if (command.get(0).asString()=="gotoAbs")
 		{
 			yarp::sig::Vector v(3, 0.0);
 			v[0]=command.get(1).asDouble();
@@ -120,7 +120,7 @@ public:
             reply.addString("new absolute target received");
 		}
 
-		else if (command.get(0).asString()=="goToRel")
+		else if (command.get(0).asString()=="gotoRel")
 		{
 			yarp::sig::Vector v(3, 0.0);
 			v[0]=command.get(1).asDouble();

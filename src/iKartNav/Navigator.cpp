@@ -706,6 +706,31 @@ void Navigator::run()
                 fflush(stdout);
             }
         }
+		else if (cmd=="gotoRel")
+        {   
+            if (bot->size()>=4)
+            {
+                mTargetH=mOdoH-bot->get(3).asDouble();
+                printf("NEW TARGET X=%.3f Y=%.3f H=%.1f\n",mTarget.x,mTarget.y,mTargetH);
+                fflush(stdout);
+                mHaveTargetH=true;
+				mPaused=false;
+            }
+            else
+            {
+                printf("NEW TARGET X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
+                fflush(stdout);
+                mHaveTargetH=false;
+				mPaused=false;
+            }
+
+            setUserTarget(-bot->get(1).asDouble(),bot->get(2).asDouble());
+        }
+		else if (cmd=="gotoAbs")
+        {   
+			printf("Not yet implemented\n");
+			fflush(stdout);
+		}
         else if (cmd=="event" || cmd=="e")
         {
             addEvent(-bot->get(1).asDouble(),bot->get(2).asDouble(),bot->get(3).asDouble());
@@ -722,7 +747,7 @@ void Navigator::run()
             fflush(stdout);
             mPaused=true;
         }
-        else if (cmd=="go" || cmd=="g")
+        else if (cmd=="go" || cmd=="g" || cmd=="resume")
         {
             printf("GO\n");
             fflush(stdout);
@@ -733,9 +758,12 @@ void Navigator::run()
 			printf("available commands:\n");
 			printf("- go\n");
 			printf("- pause\n");
+			printf("- resume\n");
 			printf("- stop\n");
 			printf("- event <1> <2> <3> \n");
 			printf("- target <x> <y> <h> \n");
+			printf("- gotoAbs <x> <y> <h> \n");
+			printf("- gotoRel <x> <y> <h> \n");
 		}
     } 
     

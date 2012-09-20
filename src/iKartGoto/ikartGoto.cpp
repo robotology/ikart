@@ -256,6 +256,7 @@ void GotoThread::stopMovement()
 
 void GotoThread::printStats()
 {
+	fprintf (stdout,"\n");
     fprintf (stdout,"* ikartGoto thread:\n");
     fprintf (stdout,"loc timeouts: %d\n",loc_timeout_counter);
     fprintf (stdout,"odm timeouts: %d\n",odm_timeout_counter);

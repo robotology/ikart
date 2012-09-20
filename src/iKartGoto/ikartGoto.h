@@ -111,7 +111,13 @@ class GotoThread: public yarp::os::RateThread
         max_lin_speed = 0.9;  //m/s
         max_ang_speed = 10.0; //deg/s
         robot_radius = 0.30;  //m
-        
+		printf ("Using following paramters:\n %s\n", rf.toString().c_str());
+		if (rf.check("ang_speed_gain"))	{k_ang_gain = rf.find("ang_speed_gain").asDouble();}
+		if (rf.check("lin_speed_gain"))	{k_lin_gain = rf.find("lin_speed_gain").asDouble();}
+		if (rf.check("max_lin_speed"))  {max_lin_speed = rf.find("max_lin_speed").asDouble();}
+		if (rf.check("max_ang_speed"))  {max_ang_speed = rf.find("max_ang_speed").asDouble();}
+		if (rf.check("robot_radius"))   {robot_radius = rf.find("robot_radius").asDouble();}
+
         enable_retreat = false;
         retreat_duration = 300;
 

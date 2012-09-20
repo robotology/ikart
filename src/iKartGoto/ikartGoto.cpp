@@ -53,11 +53,11 @@ void GotoThread::run()
 {
 	//data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
-    if (loc) localization_data = *loc;
+	if (loc) {localization_data = *loc; loc_timeout_counter=0;}
     else loc_timeout_counter++;
 
 	yarp::sig::Vector *odm = port_odometry_input.read(false);
-    if (odm) odometry_data = *odm;
+	if (odm) {odometry_data = *odm; odm_timeout_counter=0;}
     else odm_timeout_counter++;
 
     yarp::sig::Vector *las = port_laser_input.read(false);
@@ -110,14 +110,14 @@ void GotoThread::run()
 		bool obstacles_in_path = check_obstacles_in_path();
         if (status==MOVING && obstacles_in_path)
         {
-            fprintf (stdout, "Obstacles detected, stopping /n");
+            fprintf (stdout, "Obstacles detected, stopping \n");
             status=WAITING_OBSTACLE;
 			yarp::os::Time::now();
         }
 		else
 		if (status==WAITING_OBSTACLE && !obstacles_in_path)
 		{
-            fprintf (stdout, "Obstacles removed, thank you /n");
+            fprintf (stdout, "Obstacles removed, thank you \n");
             status=MOVING;
 		}
     }
@@ -128,7 +128,7 @@ void GotoThread::run()
 		if (fabs(distance) < 0.05 && fabs(gamma) < 0.6) 
 		{
 			status=REACHED;
-            fprintf (stdout, "Goal reached!/n");
+            fprintf (stdout, "Goal reached!\n");
 		}
 	}
 
@@ -137,7 +137,7 @@ void GotoThread::run()
 		double current_time = yarp::os::Time::now();
 		if (fabs(current_time-obstacle_time)>30.0)
 		{
-			fprintf (stdout, "failed to recover from obstacle, goal aborted /n");
+			fprintf (stdout, "failed to recover from obstacle, goal aborted \n");
 			status=ABORTED;
 		}
 	}
@@ -148,7 +148,7 @@ void GotoThread::run()
 		double current_time = yarp::os::Time::now();
 		if (current_time - pause_start > pause_duration)
 		{
-			fprintf(stdout, "pause expired! resuming /n");
+			fprintf(stdout, "pause expired! resuming \n");
 			status=MOVING;
 		}
 	}
@@ -199,7 +199,7 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
 	//data is formatted as follows: x, y, angle
 	target_data=target;
     status=MOVING;
-	fprintf (stdout, "received new target/n");
+	fprintf (stdout, "received new target\n");
     retreat_counter = retreat_duration;
 }
 
@@ -211,7 +211,7 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
 	target_data[1]=target[1] * sin (a) + localization_data[1] ;
 	target_data[2]=-target[2] + localization_data[2];
     status=MOVING;
-	fprintf (stdout, "received new target/n");
+	fprintf (stdout, "received new target\n");
     retreat_counter = retreat_duration;
 }
 
@@ -219,23 +219,23 @@ void GotoThread::pauseMovement(double secs)
 {
 	if (status == PAUSED)
 	{
-		fprintf (stdout, "already in pause!/n");
+		fprintf (stdout, "already in pause!\n");
 		return;
 	}
 	if (status != MOVING)
 	{
-		fprintf (stdout, "not moving!/n");
+		fprintf (stdout, "not moving!\n");
 		return;
 	}
 
 	if (secs > 0)
 	{
-		fprintf (stdout, "asked to pause for %f /n", secs);
+		fprintf (stdout, "asked to pause for %f \n", secs);
 		pause_duration = secs;
 	}
 	else
 	{
-		fprintf (stdout, "asked to pause/n");
+		fprintf (stdout, "asked to pause\n");
 		pause_duration = 10000000;
 	}
     status=PAUSED;
@@ -244,13 +244,13 @@ void GotoThread::pauseMovement(double secs)
 
 void GotoThread::resumeMovement()
 {
-	fprintf (stdout, "asked to resume movement/n");
+	fprintf (stdout, "asked to resume movement\n");
     status=MOVING;
 }
 
 void GotoThread::stopMovement()
 {
-	fprintf (stdout, "asked to stop/n");
+	fprintf (stdout, "asked to stop\n");
     status=IDLE;
 }
 

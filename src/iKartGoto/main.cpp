@@ -82,6 +82,7 @@ public:
 
     virtual double getPeriod()
     { 
+		if (gotoThread) gotoThread->printStats();
         return 1.0; 
     }
     

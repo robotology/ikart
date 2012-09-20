@@ -85,8 +85,21 @@ class BridgeModule: public RFModule
             reply.addString("nack");
             return true;
         }
-        
-        if (command.get(0).asString()=="set")
+   
+		if (command.get(0).asString()=="gotoAbs")
+        {
+			int v = bridge_thr->setGoal(command.get(1).asDouble(),command.get(2).asDouble(),command.get(3).asDouble());
+			reply.addString("ack");
+			return  true;
+		}
+		else
+		if (command.get(0).asString()=="gotoRel")
+		{
+			reply.addString("not yet implemeented");
+			return  true;
+		}
+		else
+		if (command.get(0).asString()=="set")
         {
             if (command.get(1).asString()=="current_home")
             {
@@ -116,13 +129,15 @@ class BridgeModule: public RFModule
                 return  true;
             }
         }
-        else if (command.get(0).asString()=="stop_navigation")
+        else
+		if (command.get(0).asString()=="stop_navigation")
         {
             int v = bridge_thr->navigationStop();
             reply.addString("ack");
             return  true;        
         }
-        else if (command.get(0).asString()=="get")
+        else
+		if (command.get(0).asString()=="get")
         {
             if (command.get(1).asString()=="home")
             {
@@ -152,6 +167,8 @@ class BridgeModule: public RFModule
             reply.addString("get home");
             reply.addString("get navigation_status");
             reply.addString("stop_navigation");
+			reply.addString("gotoAbs <x> <y> <angle>");
+			reply.addString("gotoRel <x> <y> <angle>");
             return true;
         }
         

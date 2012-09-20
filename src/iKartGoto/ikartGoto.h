@@ -148,6 +148,7 @@ class GotoThread: public yarp::os::RateThread
 	void stopMovement();
 	void pauseMovement (double secs);
 	void resumeMovement();
+	string getNavigationStatus();
 
     virtual void threadRelease()
     {    

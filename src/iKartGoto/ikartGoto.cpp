@@ -254,6 +254,11 @@ void GotoThread::stopMovement()
     status=IDLE;
 }
 
+string GotoThread::getNavigationStatus()
+{
+	return status_string;
+}
+
 void GotoThread::printStats()
 {
 	fprintf (stdout,"\n");

@@ -131,6 +131,14 @@ public:
             reply.addString("new relative target received");
 		}
 
+		else if (command.get(0).asString()=="get")
+		{
+			if (command.get(1).asString()=="navigation_status")
+			{
+				string s = gotoThread->getNavigationStatus();
+				reply.addString(s.c_str());
+			}
+		}
 		else if (command.get(0).asString()=="stop")
 		{
 			gotoThread->stopMovement();

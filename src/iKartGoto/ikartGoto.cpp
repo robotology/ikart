@@ -217,6 +217,17 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
 
 void GotoThread::pauseMovement(double secs)
 {
+	if (status == PAUSED)
+	{
+		fprintf (stdout, "already in pause!/n");
+		return;
+	}
+	if (status != MOVING)
+	{
+		fprintf (stdout, "not moving!/n");
+		return;
+	}
+
 	if (secs > 0)
 	{
 		fprintf (stdout, "asked to pause for %f /n", secs);

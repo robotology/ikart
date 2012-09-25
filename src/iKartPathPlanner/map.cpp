@@ -33,53 +33,68 @@
 #include <cv.h>
 #include <highgui.h> 
 
-#include "ikartPlanner.h"
+#include "map.h"
 
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-void PlannerThread::run()
+map_class::map_class()
 {
-   /* Bottle &b=port_commands_output.prepare();
-    b.clear();
-    b.addInt(2);                // polar commands
-    b.addDouble(control[0]);    // angle in deg
-    b.addDouble(control[1]);    // lin_vel in m/s
-    b.addDouble(control[2]);    // ang_vel in deg/s
-    port_commands_output.write();
-	*/
-
-	this->map.sendToPort(&port_map_output);
+	img_map = 0;
 }
 
-void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
+bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port)
 {
+	if (port!=0 && port->getOutputCount()>0)
+	{
+		/*yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=port->prepare();
+		IplImage *ipl=(IplImage*) img.getIplImage();
+		cvCopy(ipl,this->img_map);
+		port->write();*/
+
+		yarp::sig::ImageOf<yarp::sig::PixelRgb> *segImg = new yarp::sig::ImageOf<yarp::sig::PixelRgb>;
+		segImg->resize( this->img_map->width, this->img_map->height );
+		cvCopyImage(this->img_map, (IplImage*)segImg->getIplImage());
+		port->prepare() = *segImg;
+		port->write();
+		delete segImg;
+
+		return true;
+	}
+	
+
+
+	return false;
 }
 
-void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
+bool map_class::loadMap(string filename)
 {
-}
+	size_x = 100;
+	size_y = 100;
 
-void PlannerThread::stopMovement()
-{
-}
+	string pgm_file = filename+".pgm";
+	string yaml_file = filename+".yaml";
 
-void PlannerThread::resumeMovement()
-{
-}
+	img_map = cvLoadImage(pgm_file.c_str());
+	if (img_map == 0)
+	{
+		fprintf(stderr, "unable to load pgm map file %s\n", filename.c_str());
+		return false;
+	}
 
-void PlannerThread::pauseMovement(double d)
-{
+	FILE * pFile=0;
+	pFile = fopen (yaml_file.c_str(),"r");
+	if (pFile!=NULL)
+	{
+		printf ("opening yaml map file %s\n", filename.c_str()); 
+		//read here resolution, origin, size
+		fclose (pFile);
+	}
+	else
+	{
+		fprintf(stderr, "unable to load yaml map file %s\n", filename.c_str());
+		return false;
+	}
+	return true;
 }
-
-void PlannerThread::printStats()
-{
-}
-
-string PlannerThread::getNavigationStatus()
-{
-	string s= "IDLE";
-	return s;
-}
-

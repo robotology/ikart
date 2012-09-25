@@ -16,6 +16,9 @@
  * Public License for more details
 */
 
+#ifndef MAP_H
+#define MAP_H
+
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Bottle.h>
@@ -24,62 +27,38 @@
 #include <yarp/os/Os.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
+#include <yarp/sig/Image.h>
+#include <yarp/sig/ImageDraw.h>
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
-#include <math.h>
 #include <cv.h>
 #include <highgui.h> 
-
-#include "ikartPlanner.h"
 
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
-void PlannerThread::run()
+#ifndef M_PI
+#define M_PI 3.14159265
+#endif
+
+class map_class
 {
-   /* Bottle &b=port_commands_output.prepare();
-    b.clear();
-    b.addInt(2);                // polar commands
-    b.addDouble(control[0]);    // angle in deg
-    b.addDouble(control[1]);    // lin_vel in m/s
-    b.addDouble(control[2]);    // ang_vel in deg/s
-    port_commands_output.write();
-	*/
+	int size_x;
+	int size_y;
+	double                                  resolution;
+	yarp::sig::Vector                       origin;
+	IplImage*                               img_map;
+	yarp::sig::ImageOf<yarp::sig::PixelRgb> data_map;
+	
+	public:
+	map_class();
 
-	this->map.sendToPort(&port_map_output);
-}
+	bool loadMap(string filename);
+	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port); 
+};
 
-void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
-{
-}
-
-void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
-{
-}
-
-void PlannerThread::stopMovement()
-{
-}
-
-void PlannerThread::resumeMovement()
-{
-}
-
-void PlannerThread::pauseMovement(double d)
-{
-}
-
-void PlannerThread::printStats()
-{
-}
-
-string PlannerThread::getNavigationStatus()
-{
-	string s= "IDLE";
-	return s;
-}
-
+#endif

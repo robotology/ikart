@@ -16,8 +16,8 @@
  * Public License for more details
 */
 
-#ifndef COMPASS_THREAD_H
-#define COMPASS_THREAD_H
+#ifndef PLANNER_THREAD_H
+#define PLANNER_THREAD_H
 
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
@@ -34,8 +34,8 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
-#include <cv.h>
-#include <highgui.h> 
+
+#include "map.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -44,22 +44,6 @@ using namespace yarp::dev;
 #ifndef M_PI
 #define M_PI 3.14159265
 #endif
-
-class map_class
-{
-	int size_x;
-	int size_y;
-	IplImage*                               img_map;
-	yarp::sig::ImageOf<yarp::sig::PixelRgb> data_map;
-	
-	public:
-	bool loadMap(string filename);
-	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port); 
-	map_class()
-	{
-		img_map = 0;
-	}
-};
 
 class PlannerThread: public yarp::os::RateThread
 {

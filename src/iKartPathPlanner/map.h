@@ -51,13 +51,18 @@ class map_class
 	int size_y;
 	double                                  resolution;
 	yarp::sig::Vector                       origin;
-	IplImage*                               img_map;
+	IplImage*                               loaded_map;
+	IplImage*                               processed_map;
+	IplImage*                               tmp1;
+	IplImage*                               tmp2;
 	yarp::sig::ImageOf<yarp::sig::PixelRgb> data_map;
 	
 	public:
 	map_class();
 
 	bool loadMap(string filename);
+	bool crop(IplImage *img, IplImage *imgOrig);
+	bool enlargeObstacles(IplImage* src, IplImage* dst);
 	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port); 
 };
 

@@ -43,6 +43,7 @@ using namespace yarp::dev;
 map_class::map_class()
 {
 	processed_map = 0;
+	map_with_path = 0;
 	loaded_map    = 0;
 	tmp1          = 0;
 	tmp2          = 0;
@@ -53,18 +54,13 @@ map_class::map_class()
 	crop_h        = 0;
 }
 
-bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port)
+bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port, IplImage* image_to_send)
 {
 	if (port!=0 && port->getOutputCount()>0)
 	{
-		/*yarp::sig::ImageOf<yarp::sig::PixelRgb>& img=port->prepare();
-		IplImage *ipl=(IplImage*) img.getIplImage();
-		cvCopy(ipl,this->img_map);
-		port->write();*/
-
 		yarp::sig::ImageOf<yarp::sig::PixelRgb> *segImg = new yarp::sig::ImageOf<yarp::sig::PixelRgb>;
-		segImg->resize( this->processed_map->width, this->processed_map->height );
-		cvCopyImage(this->processed_map, (IplImage*)segImg->getIplImage());
+		segImg->resize(image_to_send->width, image_to_send->height );
+		cvCopyImage(image_to_send, (IplImage*)segImg->getIplImage());
 		port->prepare() = *segImg;
 		port->write();
 		delete segImg;
@@ -82,7 +78,8 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 	cv::Mat src_mat = src;
 	cv::Mat dst_mat = dst;
 //	cvErode(loaded_map,processed_map,0,6);
-	
+	cv::Vec3b white (254,254,254);
+	cv::Vec3b red   (255,0,0);
 	for(int i=0; i<src_mat.rows; i++)
 	{
 		for(int j=0; j<src_mat.cols; j++) 
@@ -96,29 +93,21 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 				dst_mat.at<cv::Vec3b>(i,j)[2]= src_mat.at<cv::Vec3b>(i,j)[2];
 				cv::Vec3b* b;
 				b = &dst_mat.at<cv::Vec3b>(i-1,j);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i+1,j);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i,j-1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i,j+1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i-1,j-1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i-1,j+1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i+1,j+1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 				b = &dst_mat.at<cv::Vec3b>(i+1,j-1);
-				if ((*b)[0] == 254 && (*b)[1] == 254 && (*b)[2] == 254)
-					{(*b)[0] = 255;   (*b)[1]=   0;     (*b)[2]=   0;}
+				if ((*b) == white) (*b) = red;
 			}
 		}
 	}
@@ -205,27 +194,37 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
 
 	output_path.push(input_path.front());
 
-	while (input_path.size()>0)
+	for (unsigned int i=0; i<input_path.size(); i++)
 	{
-		cell start_cell=input_path.front(); input_path.pop();
-		
-		std::queue<cell> tmp_path = input_path;
-		while (tmp_path.size()>0)
-		{		
-			static cell old_stop_cell = tmp_path.front();
-			cell stop_cell=tmp_path.front();  tmp_path.pop();
+		cell start_cell=input_path._Get_container().at(i);
+		cell old_stop_cell;
+		cell stop_cell;
+		unsigned int j;
+		for (j=i+1; j<input_path.size(); j++)
+		{
+			old_stop_cell = input_path._Get_container().at(j-1);
+			stop_cell     = input_path._Get_container().at(j);
+			//printf ("%d %d -> %d %d\n", start_cell.x, start_cell.y, stop_cell.x, stop_cell.y);
 			if (!checkStraightLine(map, start_cell, stop_cell))
 			{
-				output_path.push(old_stop_cell);
 				break;
-			}
-			old_stop_cell=stop_cell;
+			}		
 		};
+		if (j==input_path.size())
+		{
+			output_path.push(stop_cell);
+			return true;
+		}
+		else
+		{
+			output_path.push(old_stop_cell);
+			i=j-1;
+		}
 	};
 	return true;
 };
 
-void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path)
+void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path, const CvScalar& color)
 {
 	if (map==0) return;
 	if (path.size()==0) return;
@@ -234,7 +233,7 @@ void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path)
 	{
 		cell dst = path.front();
 		path.pop();
-		cvLine(map, cvPoint(src.x, src.y), cvPoint(dst.x, dst.y), cvScalar(0, 150, 0));               
+		cvLine(map, cvPoint(src.x, src.y), cvPoint(dst.x, dst.y), color);               
 		src=dst;
 	};
 }
@@ -244,26 +243,31 @@ bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
 	if (map==0) return false;
 
 	//here using the fast Bresenham algorithm
-	int dx=dst.x-src.x;
-    int dy=dst.y-src.y;
-	int D = 2*dy - dx;
-	int y=src.y;
+	int dx = abs(dst.x-src.x);
+    int dy = abs(dst.y-src.y); 
+	int err = dx-dy;
+	
+	int sx;
+	int sy;
+    if (src.x < dst.x) sx = 1; else sx = -1;
+    if (src.y < dst.y) sy = 1; else sy = -1;
 	
 	cv::Mat imgMat = map; 
-	for (int x=src.x+1; x<dst.x; x++)
+	while(1)
 	{
-		if (D > 0)
+		cv::Vec3b p= imgMat.at<cv::Vec3b>(src.y,src.x);		
+	    if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
+		if (src.x==dst.x && src.y==src.y) break;
+		int e2 = err*2;
+		if (e2 > -dy)
 		{
-			y = y+1;
-			cv::Vec3b p= imgMat.at<cv::Vec3b>(x,y);
-			if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
-			D = D + (2*dy-2*dx);
+			err = err-dy;
+			src.x += sx;
 		}
-		else
+		if (e2 < dx)
 		{
-			cv::Vec3b p= imgMat.at<cv::Vec3b>(x,y);
-			if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
-			D = D + (2*dy);
+			err = err+dx;
+			src.y += sy;
 		}
 	}
 	return true;
@@ -354,15 +358,15 @@ bool map_class::crop(IplImage *img, IplImage *dest)
 cell map_class::world2cell (yarp::sig::Vector v)
 {
 	cell c;
-	c.x = int(v[0]/this->size_x);
-	c.y = int(v[1]/this->size_y);
+	c.x = int(v[0]/this->resolution);
+	c.y = int(v[1]/this->resolution);
 	return c;
 }
 
 yarp::sig::Vector map_class::cell2world (cell c)
 {
 	yarp::sig::Vector v(2);
-	v[0] = c.x*this->size_x;
-	v[1] = c.y*this->size_y;
+	v[0] = c.x*this->resolution;
+	v[1] = c.y*this->resolution;
 	return v;
 }

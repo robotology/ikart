@@ -67,9 +67,9 @@ class map_class
 	yarp::sig::Vector                       origin;
 	IplImage*                               loaded_map;
 	IplImage*                               processed_map;
+	IplImage*                               map_with_path;
 	IplImage*                               tmp1;
 	IplImage*                               tmp2;
-	yarp::sig::ImageOf<yarp::sig::PixelRgb> data_map;
 	
 	public:
 	map_class();
@@ -77,7 +77,7 @@ class map_class
 	bool loadMap(string filename);
 	bool crop(IplImage *img, IplImage *imgOrig);
 	bool enlargeObstacles(IplImage* src, IplImage* dst);
-	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port); 
+	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port, IplImage* image_to_send); 
 	
 	//return true if the straight line that connects src with dst does not contain any obstacles
 	bool checkStraightLine(IplImage* map, cell src, cell dst);
@@ -86,7 +86,7 @@ class map_class
 	bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
 
 	//draw the path on the map
-	void drawPath(IplImage *map, cell start, std::queue<cell> input_path);
+	void drawPath(IplImage *map, cell start, std::queue<cell> input_path, const CvScalar& color);
 
 	//compute the path
 	bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);

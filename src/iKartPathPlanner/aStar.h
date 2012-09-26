@@ -121,17 +121,6 @@ double heuristic_cost_estimate (node_type start, node_type goal)
 	return 0;
 }
 
-std::queue<cell> reconstruct_path(const node_map_type* the_map, const cell& came_from, const std::queue<cell>& previous_path)
-{
-	if (the_map->nodes[came_from.x][came_from.y].came_from.x > 0 &&
-		the_map->nodes[came_from.x][came_from.y].came_from.y > 0)
-	{
-		//previous_path the_path = reconstruct_path(the_map, came_from, 
-	}
-	std::queue<cell> the_path; //bohhhhhhhhhh
-	return the_path;
-}
-
 class ordered_set_type
 {
 	vector<node_type> set;
@@ -154,7 +143,7 @@ class ordered_set_type
 	{
 		printf("front (smallest)%f \n", set.front().f_score);
 		for (unsigned int i=0; i<set.size(); i++)
-			printf ("%d %f\n", i, set[i].f_score);
+			printf ("id%d x%d y%d %f\n", i, set[i].x, set[i].y, set[i].f_score);
 		printf("back (biggest) %f \n", set.back().f_score);
 	}
 	int size()
@@ -199,6 +188,7 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 {
 	if (img == 0 ) return false;
 
+	std::vector<cell> inverse_path;
 	node_map_type map(img);
 	int sx=start.x;
 	int sy=start.y;
@@ -210,39 +200,36 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 
 	open_set.insert(map.nodes[sx][sy]);
 	
-	/*
-	//test routine
-	map.nodes[sx][sy].f_score = 14; open_set.insert(map.nodes[sx][sy]); 
-	map.nodes[sx][sy].f_score = 64;	open_set.insert(map.nodes[sx][sy]); 
-	map.nodes[sx][sy].f_score = 9;	open_set.insert(map.nodes[sx][sy]); 
-	map.nodes[sx][sy].f_score = 83; open_set.insert(map.nodes[sx][sy]);  
-	map.nodes[sx][sy].f_score = 77; open_set.insert(map.nodes[sx][sy]);  
-	open_set.print();
-	open_set.get_smallest();
-	open_set.print();
-	open_set.get_smallest();
-	open_set.print();
-	open_set.get_smallest();
-	open_set.print();
-	open_set.get_smallest();
-	open_set.print();
-	open_set.get_smallest();
-	open_set.print();
-	*/
-
 	map.nodes[sx][sy].g_score=0;
 	map.nodes[sx][sy].f_score = map.nodes[sx][sy].g_score + heuristic_cost_estimate(map.nodes[sx][sy], map.nodes[gx][gy]);
-	// @@@came_from := the empty map    // The map of navigated nodes.
 
+	int iterations=0;
 	while (open_set.size()>0)
 	{
+		iterations++;
+		//printf ("%d\n", iterations++);
+		//open_set.print();
 		node_type curr=open_set.get_smallest();
 		
 		if (curr.x==goal.x &&
 			curr.y==goal.y) 
 			{
-				//@@@path= reconstruct path
-				//path = reconstruct_path(
+				cell c;
+				c.x=goal.x;
+				c.y=goal.y;
+				while (!(c.x==start.x && c.y==start.y))
+				{
+					inverse_path.push_back(c);
+					c.x=map.nodes[c.x][c.y].came_from.x;
+					c.y=map.nodes[c.x][c.y].came_from.y;
+				}
+				printf("size: %d\n", inverse_path.size());
+
+				//reverse the path				
+				for (int i=inverse_path.size()-1; i>=0; i--)
+				{
+					path.push(inverse_path[i]);
+				}
 				return true;
 			}
 
@@ -272,21 +259,29 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 			int ny = neighbor.y;
 			double tentative_g_score=0;
 			if (neighbor.empty)
-				tentative_g_score = curr.g_score + 1;     //1 is the distance between curr and neigh
+				{
+					// add the distance between curr and neigh
+					if ( (nx==curr.x+1 && ny==curr.y   ) ||
+						 (nx==curr.x-1 && ny==curr.y   ) ||
+						 (nx==curr.x   && ny==curr.y+1 ) ||
+						 (nx==curr.x   && ny==curr.y-1 ) ) tentative_g_score = curr.g_score + 10;
+					else 
+						tentative_g_score = curr.g_score + 14;     
+				}
 			else
 				tentative_g_score = curr.g_score + 1e10;
 			
 			bool b = open_set.find(neighbor);
 			if (!b || tentative_g_score < map.nodes[nx][ny].g_score)
 			{
-				if (!b)
-				{
-					open_set.insert(neighbor);
-				}
 				map.nodes[nx][ny].came_from.x = curr.x;
 				map.nodes[nx][ny].came_from.y = curr.y;
 				map.nodes[nx][ny].g_score = tentative_g_score;
 				map.nodes[nx][ny].f_score = map.nodes[nx][ny].g_score + heuristic_cost_estimate( map.nodes[neighbor.x][neighbor.y],  map.nodes[gx][gy]);
+				if (!b)
+				{
+					open_set.insert(map.nodes[nx][ny]);
+				}
 			}
 
 			neighbors.pop_front();

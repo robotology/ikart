@@ -46,7 +46,7 @@ public:
 
         plannerThread = new PlannerThread(10,rf,p);
 
-        rpcPort.open("/ikart/planner/rpc:i");
+        rpcPort.open("/ikartPathPlanner/rpc:i");
         attach(rpcPort);
         //attachTerminal();
 

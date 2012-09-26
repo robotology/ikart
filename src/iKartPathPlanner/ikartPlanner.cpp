@@ -49,24 +49,45 @@ void PlannerThread::run()
     b.addDouble(control[2]);    // ang_vel in deg/s
     port_commands_output.write();
 	*/
-
-	std::queue<cell> path;
-	cell start (150, 150);
-	cell goal  (250, 270);
-	path.push(start);
-	path.push(goal);
-	std::queue<cell> found_path;
-	map.findPath(map.processed_map,start,goal,found_path);
-	map.drawPath(map.processed_map, start, path); 
-	map.sendToPort(&port_map_output);
+	
+	if (map.map_with_path!=0)
+		map.sendToPort(&port_map_output, map.map_with_path);
+	else
+		map.sendToPort(&port_map_output, map.processed_map);
 }
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 {
 	cell goal = map.world2cell(target);
-	cell current_pos = map.world2cell(target);
+	cell start = map.world2cell(target);
+	start.x = 150;
+	start.y = 150;
+	goal.x = target[0];
+	goal.y = target[1];
 	std::queue<cell> path;
-	map.findPath(map.processed_map, current_pos , goal, path);
+	double t1 = yarp::os::Time::now();
+	map.findPath(map.processed_map, start , goal, path);
+	double t2 = yarp::os::Time::now();
+
+	std::queue<cell> simpler_path;
+	map.simplifyPath(map.processed_map, path, simpler_path);
+	printf ("time: %f\n", t2-t1);
+	for (int i=0; i<simpler_path.size(); i++)
+	{
+		cell c = simpler_path._Get_container().at(i);
+		printf ("%d %d %d\n",i,c.x, c.y);
+	}
+
+	if (map.map_with_path==0)
+	{
+		map.map_with_path = cvCloneImage(map.processed_map);
+	}
+	cvCopyImage(map.processed_map,map.map_with_path);
+	
+	CvScalar color = cvScalar(0,200,0);
+	map.drawPath(map.map_with_path, start, path, color); 
+	color = cvScalar(0,0,200);
+	map.drawPath(map.map_with_path, start, simpler_path, color); 
 }
 
 void PlannerThread::setNewRelTarget(yarp::sig::Vector target)

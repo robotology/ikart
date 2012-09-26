@@ -56,10 +56,10 @@ class PlannerThread: public yarp::os::RateThread
 
     //ports
 	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> port_map_output;
-	BufferedPort<yarp::sig::Vector>   port_localization_input;
-	BufferedPort<yarp::sig::Vector>   port_target_input;
-    BufferedPort<yarp::sig::Vector>   port_laser_input;
-    BufferedPort<yarp::os::Bottle>    port_commands_output;
+	BufferedPort<yarp::sig::Vector>						  port_localization_input;
+	BufferedPort<yarp::sig::Vector>						  port_target_input;
+    BufferedPort<yarp::sig::Vector>						  port_laser_input;
+    BufferedPort<yarp::os::Bottle>						  port_commands_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
@@ -69,7 +69,7 @@ class PlannerThread: public yarp::os::RateThread
 	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED} status;
     int                 timeout_counter;
     int                 retreat_counter;
-	double              obstacle_time;
+
 
     public:
     PlannerThread(unsigned int _period, ResourceFinder &_rf, Property options) :

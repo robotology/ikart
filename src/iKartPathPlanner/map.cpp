@@ -45,6 +45,7 @@ map_class::map_class()
 	loaded_map    = 0;
 	tmp1          = 0;
 	tmp2          = 0;
+	origin.resize(3,0.0);
 }
 
 bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port)
@@ -140,10 +141,35 @@ bool map_class::loadMap(string filename)
 
 	FILE * pFile=0;
 	pFile = fopen (yaml_file.c_str(),"r");
+	char buff[255];
+	char tmp[255];
 	if (pFile!=NULL)
 	{
 		printf ("opening yaml map file %s\n", filename.c_str()); 
 		//read here resolution, origin, size
+		while (1)
+		{
+			int ret = fscanf(pFile,"%s", buff);
+			if (ret==EOF) break;
+
+			if (strcmp(buff,"resolution:")==0)
+				{
+					fscanf(pFile,"%s",tmp);
+					resolution = atof(tmp);
+					printf("map resolution: %f\n",resolution);
+				}
+			if (strcmp(buff,"origin:")==0) 
+				{
+					fscanf(pFile,"%s",tmp);
+					origin[0] = atof(tmp+1);
+					fscanf(pFile,"%s",tmp);
+					origin[1] = atof(tmp);
+					fscanf(pFile,"%s",tmp);
+					origin[2] = atof(tmp);
+					printf("map origin: [%s]\n",origin.toString().c_str());
+				} 
+		}
+		printf("\n");
 		fclose (pFile);
 	}
 	else
@@ -159,6 +185,82 @@ bool map_class::loadMap(string filename)
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp2, tmp1);
 	crop(tmp1, processed_map);
+	return true;
+}
+
+bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path)
+{
+	if (map==0) return false;
+	if (input_path.size()==0) return false;
+
+	output_path.push(input_path.front());
+
+	while (input_path.size()>0)
+	{
+		cell start_cell=input_path.front(); input_path.pop();
+		
+		std::queue<cell> tmp_path = input_path;
+		while (tmp_path.size()>0)
+		{		
+			static cell old_stop_cell = tmp_path.front();
+			cell stop_cell=tmp_path.front();  tmp_path.pop();
+			if (!checkStraightLine(map, start_cell, stop_cell))
+			{
+				output_path.push(old_stop_cell);
+				break;
+			}
+			old_stop_cell=stop_cell;
+		};
+	};
+	return true;
+};
+
+void map_class::drawPath(IplImage *map, std::queue<cell> path)
+{
+	if (map==0) return;
+	if (path.size()==0) return;
+	cell src;
+	while (path.size()>0)
+	{
+		cell dst = path.front();
+		path.pop();
+		cvLine(map, cvPoint(src.x, src.y), cvPoint(dst.y, dst.y), cvScalar(0, 255, 0));               
+		src=dst;
+	};
+}
+
+bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
+{
+	if (map==0) return false;
+
+	//here using the fast Bresenham algorithm
+	int dx=dst.x-src.x;
+    int dy=dst.y-src.y;
+	int D = 2*dy - dx;
+	int y=src.y;
+	
+	cv::Mat imgMat = map; 
+	for (int x=src.x+1; x<dst.x; x++)
+	{
+		if (D > 0)
+		{
+			y = y+1;
+			cv::Vec3b p= imgMat.at<cv::Vec3b>(x,y);
+			if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
+			D = D + (2*dy-2*dx);
+		}
+		else
+		{
+			cv::Vec3b p= imgMat.at<cv::Vec3b>(x,y);
+			if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
+			D = D + (2*dy);
+		}
+	}
+	return true;
+}
+
+bool map_class::findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path)
+{
 	return true;
 }
 
@@ -231,4 +333,20 @@ bool map_class::crop(IplImage *img, IplImage *dest)
     cvCopy(img, dest); 
 
 	return true;
+}
+
+cell map_class::world2cell (yarp::sig::Vector v)
+{
+	cell c;
+	c.x = int(v[0]/this->size_x);
+	c.y = int(v[1]/this->size_y);
+	return c;
+}
+
+yarp::sig::Vector map_class::cell2world (cell c)
+{
+	yarp::sig::Vector v(2);
+	v[0] = c.x*this->size_x;
+	v[1] = c.y*this->size_y;
+	return v;
 }

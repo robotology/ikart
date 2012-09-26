@@ -36,6 +36,7 @@
 #include <string>
 #include <cv.h>
 #include <highgui.h> 
+#include <queue>
 
 using namespace std;
 using namespace yarp::os;
@@ -45,8 +46,16 @@ using namespace yarp::dev;
 #define M_PI 3.14159265
 #endif
 
+struct cell
+{
+	int x;
+	int y;
+	cell() {x=0; y=0;}
+};
+
 class map_class
 {
+	public:
 	int size_x;
 	int size_y;
 	double                                  resolution;
@@ -64,6 +73,21 @@ class map_class
 	bool crop(IplImage *img, IplImage *imgOrig);
 	bool enlargeObstacles(IplImage* src, IplImage* dst);
 	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port); 
+	
+	//return true if the straight line that connects src with dst does not contain any obstacles
+	bool checkStraightLine(IplImage* map, cell src, cell dst);
+
+	//simplify the path
+	bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
+
+	//draw the path on the map
+	void drawPath(IplImage *map, std::queue<cell> input_path);
+
+	//compute the path
+	bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);
+
+	cell world2cell (yarp::sig::Vector v); 
+	yarp::sig::Vector cell2world (cell c);
 };
 
 #endif

@@ -55,6 +55,10 @@ void PlannerThread::run()
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 {
+	cell goal = map.world2cell(target);
+	cell current_pos = map.world2cell(target);
+	std::queue<cell> path;
+	map.findPath(map.processed_map, current_pos , goal, path);
 }
 
 void PlannerThread::setNewRelTarget(yarp::sig::Vector target)

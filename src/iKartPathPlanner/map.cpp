@@ -34,6 +34,7 @@
 #include <highgui.h> 
 
 #include "map.h"
+#include "aStar.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -46,6 +47,10 @@ map_class::map_class()
 	tmp1          = 0;
 	tmp2          = 0;
 	origin.resize(3,0.0);
+	crop_x        = 0;
+	crop_y        = 0;
+	crop_w        = 0;
+	crop_h        = 0;
 }
 
 bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port)
@@ -123,9 +128,6 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 
 bool map_class::loadMap(string filename)
 {
-	size_x = 100;
-	size_y = 100;
-
 	string pgm_file = filename+".pgm";
 	string yaml_file = filename+".yaml";
 
@@ -138,6 +140,11 @@ bool map_class::loadMap(string filename)
 	processed_map = cvCloneImage(loaded_map);
 	tmp1 = cvCloneImage(loaded_map);
 	tmp2 = cvCloneImage(loaded_map);
+
+	crop_x=0;
+	crop_y=0;
+	crop_w=size_x=loaded_map->width;
+	crop_h=size_y=loaded_map->height;
 
 	FILE * pFile=0;
 	pFile = fopen (yaml_file.c_str(),"r");
@@ -179,11 +186,14 @@ bool map_class::loadMap(string filename)
 	}
 
 	enlargeObstacles(loaded_map, tmp1);
+#define ENLARGE
+#ifdef ENLARGE
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp2, tmp1);
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp2, tmp1);
+#endif
 	crop(tmp1, processed_map);
 	return true;
 }
@@ -215,16 +225,16 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
 	return true;
 };
 
-void map_class::drawPath(IplImage *map, std::queue<cell> path)
+void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path)
 {
 	if (map==0) return;
 	if (path.size()==0) return;
-	cell src;
+	cell src = start;
 	while (path.size()>0)
 	{
 		cell dst = path.front();
 		path.pop();
-		cvLine(map, cvPoint(src.x, src.y), cvPoint(dst.y, dst.y), cvScalar(0, 255, 0));               
+		cvLine(map, cvPoint(src.x, src.y), cvPoint(dst.x, dst.y), cvScalar(0, 150, 0));               
 		src=dst;
 	};
 }
@@ -261,7 +271,8 @@ bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
 
 bool map_class::findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path)
 {
-	return true;
+	//return find_dijkstra_path(img, start, goal, path);
+	return find_astar_path(img, start, goal, path);
 }
 
 bool map_class::crop(IplImage *img, IplImage *dest)
@@ -331,6 +342,11 @@ bool map_class::crop(IplImage *img, IplImage *dest)
 		cvReleaseImage (&dest);
     dest = cvCreateImage(cvSize(right-left,  bottom-top), IPL_DEPTH_8U, 3 );
     cvCopy(img, dest); 
+
+	crop_x=left;
+	crop_y=top;
+	crop_w=right;
+	crop_h=bottom;
 
 	return true;
 }

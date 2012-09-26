@@ -46,15 +46,15 @@ public:
 
         plannerThread = new PlannerThread(10,rf,p);
 
-        if (!plannerThread->start())
+        rpcPort.open("/ikart/planner/rpc:i");
+        attach(rpcPort);
+        //attachTerminal();
+
+		if (!plannerThread->start())
         {
             delete plannerThread;
             return false;
         }
-
-        rpcPort.open("/ikart/planner/rpc:i");
-        attach(rpcPort);
-        //attachTerminal();
 
         return true;
     }

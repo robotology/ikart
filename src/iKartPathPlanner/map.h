@@ -50,7 +50,8 @@ struct cell
 {
 	int x;
 	int y;
-	cell() {x=0; y=0;}
+	cell()             {x=0; y=0;}
+	cell(int u, int v) {x=u; y=v;}
 };
 
 class map_class
@@ -58,6 +59,10 @@ class map_class
 	public:
 	int size_x;
 	int size_y;
+	int crop_x;
+	int crop_y;
+	int crop_w;
+	int crop_h;
 	double                                  resolution;
 	yarp::sig::Vector                       origin;
 	IplImage*                               loaded_map;
@@ -81,7 +86,7 @@ class map_class
 	bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
 
 	//draw the path on the map
-	void drawPath(IplImage *map, std::queue<cell> input_path);
+	void drawPath(IplImage *map, cell start, std::queue<cell> input_path);
 
 	//compute the path
 	bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);

@@ -50,7 +50,15 @@ void PlannerThread::run()
     port_commands_output.write();
 	*/
 
-	this->map.sendToPort(&port_map_output);
+	std::queue<cell> path;
+	cell start (150, 150);
+	cell goal  (250, 270);
+	path.push(start);
+	path.push(goal);
+	std::queue<cell> found_path;
+	map.findPath(map.processed_map,start,goal,found_path);
+	map.drawPath(map.processed_map, start, path); 
+	map.sendToPort(&port_map_output);
 }
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)

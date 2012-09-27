@@ -64,6 +64,7 @@ void LaserThread::run()
     //fprintf(stderr,"before laser reading\n");
     double before_laser=Time::now();
     int res = iLaser->read(laser_data);
+	laserStamp.update();
     double after_laser=Time::now();
     if (after_laser-before_laser > 0.040) { timeout_counter++; timeout_counter_tot++;}
     //fprintf(stderr,"after laser reading\n");
@@ -73,7 +74,6 @@ void LaserThread::run()
         {
             yarp::sig::Vector &plaser_data=port_laser_output.prepare();
             plaser_data=laser_data;
-			laserStamp.update();
 			port_laser_output.setEnvelope(laserStamp);
             port_laser_output.write();
         }

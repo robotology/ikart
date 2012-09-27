@@ -16,6 +16,8 @@ SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path pre
 				
 add_subdirectory(iKart)
 add_subdirectory(iKartGoto)
+add_subdirectory(iKartNav)
+add_subdirectory(iKartPathPlanner)
 add_subdirectory(laserScannerGui)
 add_subdirectory(forceGuidance)
 

@@ -25,6 +25,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Os.h>
+#include <yarp/os/Stamp.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/dev/Drivers.h>
@@ -51,6 +52,7 @@ class LaserThread: public yarp::os::RateThread
     int                             timeout_counter_tot;
     bool                            fake_laser;
     double                          thread_period;
+	yarp::os::Stamp                 laserStamp;
 
     public:
     LaserThread(unsigned int _period, ResourceFinder &_rf, Property options,

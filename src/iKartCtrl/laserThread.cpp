@@ -73,8 +73,8 @@ void LaserThread::run()
         {
             yarp::sig::Vector &plaser_data=port_laser_output.prepare();
             plaser_data=laser_data;
-            //lastStateStamp.update();
-            //port_laser_data.setEnvelope(lastStateStamp);
+			laserStamp.update();
+			port_laser_output.setEnvelope(laserStamp);
             port_laser_output.write();
         }
     }

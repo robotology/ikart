@@ -128,8 +128,8 @@ void PlannerThread::run()
 	
 	//draw the map
 	cell start = map.world2cell(localization_data);
-	start.x = 150;//&&&&& 150
-	start.y = 150;//&&&&&
+	//start.x = 150;//&&&&& 150
+	//start.y = 150;//&&&&&
 
 	static IplImage* map_with_path = 0;
 	if (map_with_path==0) map_with_path = cvCloneImage(map.processed_map);

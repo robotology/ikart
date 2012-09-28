@@ -373,15 +373,21 @@ bool map_class::crop(IplImage *img, IplImage* &dest)
 cell map_class::world2cell (yarp::sig::Vector v)
 {
 	cell c;
-	c.x = int(v[0]/this->resolution);
-	c.y = int(v[1]/this->resolution);
+	c.x = int((v[0]-this->origin[0])/this->resolution);
+	c.y = int((-v[1]-this->origin[1])/this->resolution);
+	c.x -= this->crop_x;
+	c.y -= this->crop_y;
 	return c;
 }
 
 yarp::sig::Vector map_class::cell2world (cell c)
 {
+	c.x += this->crop_x;
+	c.y += this->crop_y;
 	yarp::sig::Vector v(2);
-	v[0] = c.x*this->resolution;
-	v[1] = c.y*this->resolution;
+	v[0] = double(c.x)*this->resolution;
+	v[1] = double(c.y)*this->resolution;
+	v[0] = v[0]+this->origin[0];
+	v[1] = -(v[1]+this->origin[1]);
 	return v;
 }

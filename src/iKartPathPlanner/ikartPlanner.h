@@ -55,32 +55,38 @@ class PlannerThread: public yarp::os::RateThread
 	map_class map;
 
     //ports
-	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> port_map_output;
 	BufferedPort<yarp::sig::Vector>						  port_localization_input;
-	BufferedPort<yarp::sig::Vector>						  port_target_input;
+	BufferedPort<yarp::os::Bottle>						  port_status_input;
     BufferedPort<yarp::sig::Vector>						  port_laser_input;
-    BufferedPort<yarp::os::Bottle>						  port_commands_output;
+
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> port_map_output;
+    BufferedPort<yarp::os::Bottle>						  port_status_output;
+	BufferedPort<yarp::os::Bottle>						  port_commands_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
-    yarp::sig::Vector   target_data;
+	yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
-	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED} status;
-    int                 timeout_counter;
-    int                 retreat_counter;
+	int                 loc_timeout_counter;
+	int                 inner_status_timeout_counter;
 
+	std::queue<cell>    current_path;
+	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED};
+	status_type         planner_status;
+	status_type         inner_status;
 
     public:
     PlannerThread(unsigned int _period, ResourceFinder &_rf, Property options) :
                RateThread(_period),     rf(_rf),
                iKartCtrl_options (options)
     {
-        status = IDLE;
-        timeout_counter     = 0;
+        planner_status = IDLE;
+		inner_status = IDLE;
         localization_data.resize(3,0.0);
-        target_data.resize(3,0.0);
         laser_data.resize(1080,1000.0);
+		loc_timeout_counter = 0;
+		inner_status_timeout_counter = 0;
     }
 
     virtual bool threadInit()
@@ -97,6 +103,9 @@ class PlannerThread: public yarp::os::RateThread
 		string localName = "/ikartPathPlanner";
         port_localization_input.open((localName+"/localization:i").c_str());
 		port_laser_input.open((localName+"/laser:i").c_str());
+		port_status_input.open((localName+"/navigationStatus:i").c_str());
+		port_status_output.open((localName+"/plannerStatus:o").c_str());
+		port_commands_output.open((localName+"/commands:o").c_str());
 		port_map_output.open((localName+"/map:o").c_str());
 
         //automatic port connections
@@ -125,6 +134,12 @@ class PlannerThread: public yarp::os::RateThread
         port_laser_input.close();
 		port_map_output.interrupt();
 		port_map_output.close();
+		port_status_input.interrupt();
+		port_status_input.close();
+		port_status_output.interrupt();
+		port_status_output.close();
+		port_commands_output.interrupt();
+		port_commands_output.close();
     }
 
     void printStats();

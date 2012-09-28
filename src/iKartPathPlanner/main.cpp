@@ -99,71 +99,84 @@ public:
     {
 		reply.clear(); 
 
-        if (command.get(0).asString()=="quit") return false;     
-
-		else if (command.get(0).asString()=="help")
+		if (command.get(0).isVocab())
 		{
-			reply.addString("Available commands are:");
-            reply.addString("goToAbs <x> <y> <angle>");
-			reply.addString("goToRel <x> <y> <angle>");
-			reply.addString("stop");
-			reply.addString("pause");
-			reply.addString("resume");
-			reply.addString("quit");
-		}
-
-		else if (command.get(0).asString()=="gotoAbs")
-		{
-			yarp::sig::Vector v(3, 0.0);
-			v[0]=command.get(1).asDouble();
-			v[1]=command.get(2).asDouble();
-			v[2]=command.get(3).asDouble();
-			plannerThread->setNewAbsTarget(v);
-            reply.addString("new absolute target received");
-		}
-
-		else if (command.get(0).asString()=="gotoRel")
-		{
-			yarp::sig::Vector v(3, 0.0);
-			v[0]=command.get(1).asDouble();
-			v[1]=command.get(2).asDouble();
-			v[2]=command.get(3).asDouble();
-			plannerThread->setNewRelTarget(v);
-            reply.addString("new relative target received");
-		}
-
-		else if (command.get(0).asString()=="get")
-		{
-			if (command.get(1).asString()=="navigation_status")
+			if (command.get(0).asVocab() == VOCAB3('p','n','t'))
 			{
-				string s = plannerThread->getNavigationStatus();
-				reply.addString(s.c_str());
+				yarp::sig::Vector v;
+				v.push_back(command.get(1).asDouble());
+				v.push_back(command.get(2).asDouble());
+				plannerThread->setNewAbsTarget(v);
+				reply.addString("new absolute target received from gui");
 			}
 		}
-		else if (command.get(0).asString()=="stop")
+	
+		else if (command.get(0).isString())
 		{
-			plannerThread->stopMovement();
-            reply.addString("Stopping movement.");
-		}
-		else if (command.get(0).asString()=="pause")
-		{
-			double time = -1;
-			if (command.size() > 1)
-				time = command.get(1).asDouble();
-			plannerThread->pauseMovement(time);
-			reply.addString("Pausing.");
-		}
-		else if (command.get(0).asString()=="resume")
-		{
-			plannerThread->resumeMovement();
-			reply.addString("Resuming.");
-		}
-        else
-        {
-            reply.addString("Unknown command.");
-        }
+			if (command.get(0).asString()=="quit") return false;     
 
-        return true;
+			else if (command.get(0).asString()=="help")
+			{
+				reply.addString("Available commands are:");
+				reply.addString("goToAbs <x> <y> <angle>");
+				reply.addString("goToRel <x> <y> <angle>");
+				reply.addString("stop");
+				reply.addString("pause");
+				reply.addString("resume");
+				reply.addString("quit");
+			}
+
+			else if (command.get(0).asString()=="gotoAbs")
+			{
+				yarp::sig::Vector v;
+				v.push_back(command.get(1).asDouble());
+				v.push_back(command.get(2).asDouble());
+				if (command.size()==4) v.push_back(command.get(3).asDouble());			
+				plannerThread->setNewAbsTarget(v);
+				reply.addString("new absolute target received");
+			}
+
+			else if (command.get(0).asString()=="gotoRel")
+			{
+				yarp::sig::Vector v;
+				v.push_back(command.get(1).asDouble());
+				v.push_back(command.get(2).asDouble());
+				if (command.size()==4) v.push_back(command.get(3).asDouble());
+				plannerThread->setNewRelTarget(v);
+				reply.addString("new relative target received");
+			}
+
+			else if (command.get(0).asString()=="get")
+			{
+				if (command.get(1).asString()=="navigation_status")
+				{
+					string s = plannerThread->getNavigationStatus();
+					reply.addString(s.c_str());
+				}
+			}
+			else if (command.get(0).asString()=="stop")
+			{
+				plannerThread->stopMovement();
+				reply.addString("Stopping movement.");
+			}
+			else if (command.get(0).asString()=="pause")
+			{
+				double time = -1;
+				if (command.size() > 1)
+					time = command.get(1).asDouble();
+				plannerThread->pauseMovement(time);
+				reply.addString("Pausing.");
+			}
+			else if (command.get(0).asString()=="resume")
+			{
+				plannerThread->resumeMovement();
+				reply.addString("Resuming.");
+			}
+			else
+			{
+				reply.addString("Unknown command.");
+			}
+		}
         return true;
     }
 };

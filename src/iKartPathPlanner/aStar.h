@@ -220,8 +220,10 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 				while (!(c.x==start.x && c.y==start.y))
 				{
 					inverse_path.push_back(c);
-					c.x=map.nodes[c.x][c.y].came_from.x;
-					c.y=map.nodes[c.x][c.y].came_from.y;
+					int old_cx = c.x;
+					int old_cy = c.y;
+					c.x=map.nodes[old_cx][old_cy].came_from.x;
+					c.y=map.nodes[old_cx][old_cy].came_from.y;
 				}
 				printf("size: %d\n", inverse_path.size());
 
@@ -236,20 +238,35 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 		closed_set.insert(curr);
 
 		list<node_type> neighbors;
-		neighbors.push_back(map.nodes[curr.x][curr.y+1]);
-		neighbors.push_back(map.nodes[curr.x][curr.y-1]);
-		neighbors.push_back(map.nodes[curr.x+1][curr.y]);
-		neighbors.push_back(map.nodes[curr.x-1][curr.y]);
-		neighbors.push_back(map.nodes[curr.x+1][curr.y+1]);
-		neighbors.push_back(map.nodes[curr.x+1][curr.y-1]);
-		neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
-		neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
+		//printf ("%d %d \n", curr.x, curr.y);
+		if (map.nodes[curr.x][curr.y+1].empty)   neighbors.push_back(map.nodes[curr.x][curr.y+1]);
+		if (map.nodes[curr.x][curr.y-1].empty)   neighbors.push_back(map.nodes[curr.x][curr.y-1]);
+		if (map.nodes[curr.x+1][curr.y].empty)   neighbors.push_back(map.nodes[curr.x+1][curr.y]);
+		if (map.nodes[curr.x-1][curr.y].empty)   neighbors.push_back(map.nodes[curr.x-1][curr.y]);
+		if (map.nodes[curr.x+1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x+1][curr.y+1]);
+		if (map.nodes[curr.x+1][curr.y-1].empty) neighbors.push_back(map.nodes[curr.x+1][curr.y-1]);
+		if (map.nodes[curr.x-1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
+		if (map.nodes[curr.x-1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
+		/*int cl = curr.x-1>0?curr.x-1:0;
+		int cu = curr.y-1>0?curr.y-1:0;
+		int cr = curr.x+1<map.w?curr.x+1:map.w-1;
+		int cd = curr.y+1<map.h?curr.y+1:map.h-1;
+
+		neighbors.push_back(map.nodes[curr.x][cd]);
+		neighbors.push_back(map.nodes[curr.x][cu]);
+		neighbors.push_back(map.nodes[cr][curr.y]);
+		neighbors.push_back(map.nodes[cl][curr.y]);
+		neighbors.push_back(map.nodes[cr][cd]);
+		neighbors.push_back(map.nodes[cr][cu]);
+		neighbors.push_back(map.nodes[cl][cd]);
+		neighbors.push_back(map.nodes[cl][cd]);*/
+		//printf ("%d %d \n", curr.x, curr.y);
 
 		while(neighbors.size()>0)
 		{
 			node_type neighbor = neighbors.front();
 
-			if (closed_set.find(neighbor))
+			if (closed_set.find(neighbor) || !neighbor.empty)
 			{
 				neighbors.pop_front();
 				continue;
@@ -259,15 +276,15 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
 			int ny = neighbor.y;
 			double tentative_g_score=0;
 			if (neighbor.empty)
-				{
-					// add the distance between curr and neigh
-					if ( (nx==curr.x+1 && ny==curr.y   ) ||
-						 (nx==curr.x-1 && ny==curr.y   ) ||
-						 (nx==curr.x   && ny==curr.y+1 ) ||
-						 (nx==curr.x   && ny==curr.y-1 ) ) tentative_g_score = curr.g_score + 10;
-					else 
-						tentative_g_score = curr.g_score + 14;     
-				}
+			{
+				// add the distance between curr and neigh
+				if ( (nx==curr.x+1 && ny==curr.y   ) ||
+					 (nx==curr.x-1 && ny==curr.y   ) ||
+					 (nx==curr.x   && ny==curr.y+1 ) ||
+					 (nx==curr.x   && ny==curr.y-1 ) ) tentative_g_score = curr.g_score + 10;
+				else 
+					tentative_g_score = curr.g_score + 14;     
+			}
 			else
 				tentative_g_score = curr.g_score + 1e10;
 			

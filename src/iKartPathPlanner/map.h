@@ -67,15 +67,12 @@ class map_class
 	yarp::sig::Vector                       origin;
 	IplImage*                               loaded_map;
 	IplImage*                               processed_map;
-	IplImage*                               map_with_path;
-	IplImage*                               tmp1;
-	IplImage*                               tmp2;
 	
 	public:
 	map_class();
 
 	bool loadMap(string filename);
-	bool crop(IplImage *img, IplImage *imgOrig);
+	bool crop(IplImage* img, IplImage* &imgOrig);
 	bool enlargeObstacles(IplImage* src, IplImage* dst);
 	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port, IplImage* image_to_send); 
 	
@@ -85,8 +82,9 @@ class map_class
 	//simplify the path
 	bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
 
-	//draw the path on the map
+	//draw stuff on the map
 	void drawPath(IplImage *map, cell start, std::queue<cell> input_path, const CvScalar& color);
+	void drawCurrentPosition(IplImage *map, cell current, const CvScalar& color);
 
 	//compute the path
 	bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);

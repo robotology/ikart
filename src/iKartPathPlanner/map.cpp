@@ -43,10 +43,7 @@ using namespace yarp::dev;
 map_class::map_class()
 {
 	processed_map = 0;
-	map_with_path = 0;
 	loaded_map    = 0;
-	tmp1          = 0;
-	tmp2          = 0;
 	origin.resize(3,0.0);
 	crop_x        = 0;
 	crop_y        = 0;
@@ -92,21 +89,26 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 				dst_mat.at<cv::Vec3b>(i,j)[1]= src_mat.at<cv::Vec3b>(i,j)[1];
 				dst_mat.at<cv::Vec3b>(i,j)[2]= src_mat.at<cv::Vec3b>(i,j)[2];
 				cv::Vec3b* b;
-				b = &dst_mat.at<cv::Vec3b>(i-1,j);
+				int il = i-1>0?i-1:0;
+				int ir = i+1<src_mat.rows-1?i+1:src_mat.rows-1;
+				int ju = j-1>0?j-1:0;
+				int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
+				printf ("-- %d %d %d %d\n", il, ir, ju, jd);
+				b = &dst_mat.at<cv::Vec3b>(il,j);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i+1,j);
+				b = &dst_mat.at<cv::Vec3b>(ir,j);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i,j-1);
+				b = &dst_mat.at<cv::Vec3b>(i,ju);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i,j+1);
+				b = &dst_mat.at<cv::Vec3b>(i,jd);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i-1,j-1);
+				b = &dst_mat.at<cv::Vec3b>(il,ju);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i-1,j+1);
+				b = &dst_mat.at<cv::Vec3b>(il,jd);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i+1,j+1);
+				b = &dst_mat.at<cv::Vec3b>(ir,jd);
 				if ((*b) == white) (*b) = red;
-				b = &dst_mat.at<cv::Vec3b>(i+1,j-1);
+				b = &dst_mat.at<cv::Vec3b>(ir,ju);
 				if ((*b) == white) (*b) = red;
 			}
 		}
@@ -126,9 +128,6 @@ bool map_class::loadMap(string filename)
 		fprintf(stderr, "unable to load pgm map file %s\n", filename.c_str());
 		return false;
 	}
-	processed_map = cvCloneImage(loaded_map);
-	tmp1 = cvCloneImage(loaded_map);
-	tmp2 = cvCloneImage(loaded_map);
 
 	crop_x=0;
 	crop_y=0;
@@ -174,16 +173,26 @@ bool map_class::loadMap(string filename)
 		return false;
 	}
 
+	
+	IplImage *cropped_map = 0;
+	
+	crop(loaded_map, cropped_map);
+	cvReleaseImage (&loaded_map);
+	loaded_map = cropped_map;
+
+	IplImage*  tmp1 = cvCloneImage(loaded_map);
+	IplImage*  tmp2 = cvCloneImage(loaded_map);
+	processed_map   = cvCloneImage(loaded_map);
+
 	enlargeObstacles(loaded_map, tmp1);
-#define ENLARGE
-#ifdef ENLARGE
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp2, tmp1);
 	enlargeObstacles(tmp1, tmp2);
 	enlargeObstacles(tmp1, tmp2);
-	enlargeObstacles(tmp2, tmp1);
-#endif
-	crop(tmp1, processed_map);
+	enlargeObstacles(tmp2, processed_map);
+	
+	cvReleaseImage (&tmp1);
+	cvReleaseImage (&tmp2);
 	return true;
 }
 
@@ -238,6 +247,12 @@ void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path, const
 	};
 }
 
+void map_class::drawCurrentPosition(IplImage *map, cell current, const CvScalar& color)
+{
+	if (map==0) return;
+	cvCircle(map, cvPoint(current.x, current.y), 6, color);               
+}
+
 bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
 {
 	if (map==0) return false;
@@ -279,7 +294,7 @@ bool map_class::findPath(IplImage *img, cell start, cell goal, std::queue<cell>&
 	return find_astar_path(img, start, goal, path);
 }
 
-bool map_class::crop(IplImage *img, IplImage *dest)
+bool map_class::crop(IplImage *img, IplImage* &dest)
 {
     int top = -1;
     int left = -1;
@@ -290,9 +305,9 @@ bool map_class::crop(IplImage *img, IplImage *dest)
  
     for (int j=0;j<imgMat.rows;j++){
         for (int i=0;i<imgMat.cols;i++){
-            if ( imgMat.at<cv::Vec3b>(j,i)[0] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[1] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[2] == 0 )
+            if ( imgMat.at<cv::Vec3b>(j,i)[0] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[1] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[2] != 205 )
             {
                     top = j; 
                     goto topFound;
@@ -303,11 +318,11 @@ bool map_class::crop(IplImage *img, IplImage *dest)
     topFound:
     for (int j=imgMat.rows-1; j>0; j--){
         for (int i=imgMat.cols-1; i>0 ;i--){
-            if ( imgMat.at<cv::Vec3b>(j,i)[0] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[1] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[2] == 0 )
+            if ( imgMat.at<cv::Vec3b>(j,i)[0] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[1] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[2] != 205 )
             {
-                    bottom = j; 
+                    bottom = j+1; 
                     goto bottomFound;
             }
         }
@@ -316,9 +331,9 @@ bool map_class::crop(IplImage *img, IplImage *dest)
     bottomFound:
     for (int i=0;i<imgMat.cols;i++){
         for (int j=0;j<imgMat.rows;j++){    
-            if ( imgMat.at<cv::Vec3b>(j,i)[0] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[1] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[2] == 0 )
+            if ( imgMat.at<cv::Vec3b>(j,i)[0] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[1] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[2] != 205 )
             {
                     left = i; 
                     goto leftFound;
@@ -329,9 +344,9 @@ bool map_class::crop(IplImage *img, IplImage *dest)
     leftFound:
     for (int i=imgMat.cols-1;i>0;i--){
         for (int j=0;j<imgMat.rows;j++){    
-            if ( imgMat.at<cv::Vec3b>(j,i)[0] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[1] == 0 &&
-                 imgMat.at<cv::Vec3b>(j,i)[2] == 0 )
+            if ( imgMat.at<cv::Vec3b>(j,i)[0] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[1] != 205 &&
+                 imgMat.at<cv::Vec3b>(j,i)[2] != 205 )
             {
                     right = i; 
                     goto rightFound;
@@ -345,7 +360,7 @@ bool map_class::crop(IplImage *img, IplImage *dest)
 	if (dest != 0)
 		cvReleaseImage (&dest);
     dest = cvCreateImage(cvSize(right-left,  bottom-top), IPL_DEPTH_8U, 3 );
-    cvCopy(img, dest); 
+    cvCopyImage(img, dest); 
 
 	crop_x=left;
 	crop_y=top;

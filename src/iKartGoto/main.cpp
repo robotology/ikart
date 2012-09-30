@@ -123,10 +123,10 @@ public:
 
 		else if (command.get(0).asString()=="gotoRel")
 		{
-			yarp::sig::Vector v(3, 0.0);
-			v[0]=command.get(1).asDouble();
-			v[1]=command.get(2).asDouble();
-			v[2]=command.get(3).asDouble();
+			yarp::sig::Vector v;
+			v.push_back(command.get(1).asDouble());
+			v.push_back(command.get(2).asDouble());
+			if (command.size()==4) v.push_back(command.get(3).asDouble());
 			gotoThread->setNewRelTarget(v);
             reply.addString("new relative target received");
 		}

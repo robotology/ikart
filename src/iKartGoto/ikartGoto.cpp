@@ -230,9 +230,10 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
 void GotoThread::setNewRelTarget(yarp::sig::Vector target)
 {
 	//data is formatted as follows: x, y, angle
+	if (target.size()==2) target.push_back(0.0);
 	double a = localization_data[2]/180.0*M_PI;
-	target_data[0]=target[0] * cos (a) + localization_data[0] ;
-	target_data[1]=target[1] * sin (a) + localization_data[1] ;
+	target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
+	target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
 	target_data[2]=-target[2] + localization_data[2];
     status=MOVING;
 	fprintf (stdout, "received new target\n");

@@ -11,12 +11,18 @@
    <tag>iKartGoto</tag>
 </module>
 
-
 <module>
    <name>iKartPathPlanner</name>
    <parameters></parameters>
    <node>icub14</node>
    <tag>iKartPathPlanner</tag>
+</module>
+
+<module>
+   <name>yarpview</name>
+   <parameters>--name plannerView</parameters>
+   <node>icub14</node>
+   <tag>PlannerViewer</tag>
 </module>
 
 <connection>
@@ -28,6 +34,12 @@
 <connection>
   <from>/ikart_ros_bridge/localization:o</from>
   <to>/ikartGoto/localization:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/iKartPathPlanner/map:o</from>
+  <to>/plannerView</to>
   <protocol>udp</protocol>
 </connection>
 

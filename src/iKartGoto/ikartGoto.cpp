@@ -125,7 +125,7 @@ void GotoThread::run()
 	//printf ("%f %f %f \n", gamma, beta, distance);
 	if (status == MOVING)
 	{
-		if (fabs(distance) < 0.05 && fabs(gamma) < 0.6) 
+		if (fabs(distance) < goal_tolerance_lin && fabs(gamma) < goal_tolerance_ang) 
 		{
 			status=REACHED;
             fprintf (stdout, "Goal reached!\n");
@@ -221,6 +221,12 @@ void GotoThread::sendOutput()
 void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
 {
 	//data is formatted as follows: x, y, angle
+	if (target.size()==2) 
+	{
+		//if the angle information is missing use as final orientation the direction in which the iKart has to move
+		double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
+		target.push_back(beta);
+	}
 	target_data=target;
     status=MOVING;
 	fprintf (stdout, "received new target\n");

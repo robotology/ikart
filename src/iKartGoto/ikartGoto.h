@@ -54,10 +54,12 @@ class GotoThread: public yarp::os::RateThread
     //configuration parameters
     double k_ang_gain;
     double k_lin_gain;
-    double max_lin_speed;    //m/s
-    double max_ang_speed;    //deg/s
-    double robot_radius;     //m
+    double max_lin_speed;       //m/s
+    double max_ang_speed;       //deg/s
+    double robot_radius;        //m
     int    retreat_duration; 
+	double goal_tolerance_lin;  //m 
+	double goal_tolerance_ang;  //deg
 
 	//pause info
 	double pause_start;
@@ -101,6 +103,8 @@ class GotoThread: public yarp::os::RateThread
 		control_out.resize(3,0.0);
 		pause_start = 0;
 		pause_duration = 0;
+		goal_tolerance_lin = 0.05;
+		goal_tolerance_ang = 0.6;
     }
 
     virtual bool threadInit()
@@ -112,11 +116,13 @@ class GotoThread: public yarp::os::RateThread
         max_ang_speed = 10.0; //deg/s
         robot_radius = 0.30;  //m
 		printf ("Using following paramters:\n %s\n", rf.toString().c_str());
-		if (rf.check("ang_speed_gain"))	{k_ang_gain = rf.find("ang_speed_gain").asDouble();}
-		if (rf.check("lin_speed_gain"))	{k_lin_gain = rf.find("lin_speed_gain").asDouble();}
-		if (rf.check("max_lin_speed"))  {max_lin_speed = rf.find("max_lin_speed").asDouble();}
-		if (rf.check("max_ang_speed"))  {max_ang_speed = rf.find("max_ang_speed").asDouble();}
-		if (rf.check("robot_radius"))   {robot_radius = rf.find("robot_radius").asDouble();}
+		if (rf.check("ang_speed_gain"))	    {k_ang_gain = rf.find("ang_speed_gain").asDouble();}
+		if (rf.check("lin_speed_gain"))	    {k_lin_gain = rf.find("lin_speed_gain").asDouble();}
+		if (rf.check("max_lin_speed"))      {max_lin_speed = rf.find("max_lin_speed").asDouble();}
+		if (rf.check("max_ang_speed"))      {max_ang_speed = rf.find("max_ang_speed").asDouble();}
+		if (rf.check("robot_radius"))       {robot_radius = rf.find("robot_radius").asDouble();}
+	    if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
+	    if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
 
         enable_retreat = false;
         retreat_duration = 300;

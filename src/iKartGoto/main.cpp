@@ -106,17 +106,20 @@ public:
 		else if (command.get(0).asString()=="help")
 		{
 			reply.addString("Available commands are:");
-            reply.addString("goTo <x> <y> <angle>");
+            reply.addString("goToAbs <x> <y> <angle>");
+			reply.addString("goToRel <x> <y> <angle>");
 			reply.addString("stop");
+			reply.addString("pause");
+			reply.addString("resume");
 			reply.addString("quit");
 		}
 
 		else if (command.get(0).asString()=="gotoAbs")
 		{
-			yarp::sig::Vector v(3, 0.0);
-			v[0]=command.get(1).asDouble();
-			v[1]=command.get(2).asDouble();
-			v[2]=command.get(3).asDouble();
+			yarp::sig::Vector v;
+			v.push_back(command.get(1).asDouble());
+			v.push_back(command.get(2).asDouble());
+			if (command.size()==4) v.push_back(command.get(3).asDouble());
 			gotoThread->setNewAbsTarget(v);
             reply.addString("new absolute target received");
 		}

@@ -13,14 +13,14 @@
 
 <module>
    <name>iKartPathPlanner</name>
-   <parameters>--map_file example</parameters>
+   <parameters>--map_file rbcsLab</parameters>
    <node>ikart</node>
    <tag>iKartPathPlanner</tag>
 </module>
 
 <module>
    <name>yarpview</name>
-   <parameters>--name plannerView</parameters>
+   <parameters>--name /plannerView</parameters>
    <node>icub14</node>
    <tag>PlannerViewer</tag>
 </module>

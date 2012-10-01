@@ -12,6 +12,7 @@ file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
 
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
                   ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.xml)
+file(GLOB maps    ${CMAKE_CURRENT_SOURCE_DIR}/maps/*.*)
 
 icub_app_install(${appname}
 		FILES ${conf}
@@ -20,6 +21,10 @@ icub_app_install(${appname}
 icub_app_install(${appname} 
                  FILES ${scripts}
                  DESTINATION scripts)
+
+icub_app_install(${appname} 
+                 FILES ${maps}
+                 DESTINATION scripts/../maps)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_start.sh ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_stop.sh 
         DESTINATION bin 

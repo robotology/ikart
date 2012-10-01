@@ -49,6 +49,8 @@ class GotoThread: public yarp::os::RateThread
 	public:
 	bool   enable_stop_on_obstacles;
     bool   enable_retreat;
+	double goal_tolerance_lin;  //m 
+	double goal_tolerance_ang;  //deg
 
     protected:
     //configuration parameters
@@ -58,8 +60,6 @@ class GotoThread: public yarp::os::RateThread
     double max_ang_speed;       //deg/s
     double robot_radius;        //m
     int    retreat_duration; 
-	double goal_tolerance_lin;  //m 
-	double goal_tolerance_ang;  //deg
 
 	//pause info
 	double pause_start;

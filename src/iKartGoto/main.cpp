@@ -112,6 +112,8 @@ public:
 			reply.addString("pause");
 			reply.addString("resume");
 			reply.addString("quit");
+			reply.addString("set linear_tol <m>");
+			reply.addString("set linear_ang <deg>");
 		}
 
 		else if (command.get(0).asString()=="gotoAbs")
@@ -133,7 +135,17 @@ public:
 			gotoThread->setNewRelTarget(v);
             reply.addString("new relative target received");
 		}
-
+		else if (command.get(0).asString()=="set")
+		{
+			if (command.get(1).asString()=="linear_tol")
+			{
+				gotoThread->goal_tolerance_lin=command.get(2).asDouble();
+			}
+			else if (command.get(1).asString()=="angular_tol")
+			{
+				gotoThread->goal_tolerance_ang=command.get(2).asDouble();
+			}
+		}
 		else if (command.get(0).asString()=="get")
 		{
 			if (command.get(1).asString()=="navigation_status")

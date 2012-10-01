@@ -202,17 +202,25 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
 	if (input_path.size()==0) return false;
 
 	output_path.push(input_path.front());
-
+	
+	std::vector <cell> path;
 	for (unsigned int i=0; i<input_path.size(); i++)
 	{
-		cell start_cell=input_path._Get_container().at(i);
+		cell tmp = input_path.front();
+		input_path.pop();
+		path.push_back(tmp);
+	}
+
+	for (unsigned int i=0; i<path.size(); i++)
+	{
+		cell start_cell= path.at(i);
 		cell old_stop_cell;
 		cell stop_cell;
 		unsigned int j;
 		for (j=i+1; j<input_path.size(); j++)
 		{
-			old_stop_cell = input_path._Get_container().at(j-1);
-			stop_cell     = input_path._Get_container().at(j);
+			old_stop_cell = path.at(j-1);
+			stop_cell     = path.at(j);
 			//printf ("%d %d -> %d %d\n", start_cell.x, start_cell.y, stop_cell.x, stop_cell.y);
 			if (!checkStraightLine(map, start_cell, stop_cell))
 			{

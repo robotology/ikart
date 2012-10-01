@@ -7,14 +7,14 @@
 <module>
    <name>iKartGoto</name>
    <parameters></parameters>
-   <node>icub14</node>
+   <node>ikart</node>
    <tag>iKartGoto</tag>
 </module>
 
 <module>
    <name>iKartPathPlanner</name>
-   <parameters></parameters>
-   <node>icub14</node>
+   <parameters>--map_file example</parameters>
+   <node>ikart</node>
    <tag>iKartPathPlanner</tag>
 </module>
 

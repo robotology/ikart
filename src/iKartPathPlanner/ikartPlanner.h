@@ -48,6 +48,10 @@ using namespace yarp::dev;
 class PlannerThread: public yarp::os::RateThread
 {
 	public:
+    double goal_tolerance_lin;      //m 
+	double goal_tolerance_ang;      //deg
+	double waypoint_tolerance_lin;  //m 
+	double waypoint_tolerance_ang;  //deg
 
     protected:
     //configuration parameters
@@ -87,6 +91,10 @@ class PlannerThread: public yarp::os::RateThread
         laser_data.resize(1080,1000.0);
 		loc_timeout_counter = 0;
 		inner_status_timeout_counter = 0;
+		goal_tolerance_lin = 0.05;
+		goal_tolerance_ang = 0.6;
+		waypoint_tolerance_lin = 0.05;
+		waypoint_tolerance_ang = 0.6;
     }
 
     virtual bool threadInit()
@@ -98,6 +106,11 @@ class PlannerThread: public yarp::os::RateThread
 			printf("map file not found, closing\n");
 			return false;
 		}
+
+		if (rf.check("waypoint_tolerance_lin")) {waypoint_tolerance_lin = rf.find("waypoint_tolerance_lin").asDouble();}
+	    if (rf.check("waypoint_tolerance_ang")) {waypoint_tolerance_ang = rf.find("waypoint_tolerance_ang").asDouble();}
+		if (rf.check("goal_tolerance_lin"))     {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
+	    if (rf.check("goal_tolerance_ang"))     {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
 
         //open module ports
 		string localName = "/ikartPathPlanner";

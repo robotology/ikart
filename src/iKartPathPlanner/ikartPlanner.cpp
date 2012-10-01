@@ -88,6 +88,7 @@ void PlannerThread::run()
 					b.addDouble(target_data[3]);
 				}
 				port_status_output.write();
+				printf ("sending command: %s\n", b.toString().c_str());
 			}
 		}
 		else if (inner_status == MOVING)
@@ -175,6 +176,21 @@ void PlannerThread::startNewPath(cell target)
 		cell c = simpler_path._Get_container().at(i);
 		printf ("%d %d %d\n",i,c.x, c.y);
 	}
+
+	//send the tolerance to the inner controller
+	Bottle &b1=this->port_status_output.prepare();
+	b1.clear();
+	b1.addString("set"); 
+	b1.addString("linear_tol");
+	b1.addDouble(waypoint_tolerance_lin);
+	port_status_output.write();
+
+	Bottle &b2=this->port_status_output.prepare();
+	b2.clear();
+	b2.addString("set"); 
+	b2.addString("angular_tol");
+	b2.addDouble(waypoint_tolerance_ang);
+	port_status_output.write();
 }
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)

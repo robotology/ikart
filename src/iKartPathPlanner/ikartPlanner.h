@@ -72,7 +72,7 @@ class PlannerThread: public yarp::os::RateThread
 	int                 inner_status_timeout_counter;
 
 	std::queue<cell>    current_path;
-	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED};
+	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
 	status_type         planner_status;
 	status_type         inner_status;
 
@@ -121,6 +121,7 @@ class PlannerThread: public yarp::os::RateThread
 
 	void setNewAbsTarget(yarp::sig::Vector target);
 	void setNewRelTarget(yarp::sig::Vector target);
+	void startNewPath(cell target);
 	void stopMovement();
 	void pauseMovement (double secs);
 	void resumeMovement();

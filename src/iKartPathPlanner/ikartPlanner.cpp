@@ -148,19 +148,16 @@ void PlannerThread::run()
 	map.sendToPort(&port_map_output,map_with_location);
 }
 
-void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
+void PlannerThread::startNewPath(cell target)
 {
-	cell goal = map.world2cell(target);
 	cell start = map.world2cell(localization_data);
 	start.x = 150;//&&&&&
 	start.y = 150;//&&&&&
-	target_data = target;
-	goal.x = target_data[0];
-	goal.y = target_data[1];
+
 	double t1 = yarp::os::Time::now();
 	std::queue<cell> empty;
     std::swap(current_path, empty );
-	bool b = map.findPath(map.processed_map, start , goal, current_path);
+	bool b = map.findPath(map.processed_map, start , target, current_path);
 	if (!b)
 	{
 		printf ("path not found\n");
@@ -180,21 +177,60 @@ void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 	}
 }
 
+void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
+{
+	if (planner_status != IDLE)
+	{
+		printf ("Not in idle state, send a 'stop' first\n");
+		return;
+	}
+
+	target_data = target;
+	cell goal = map.world2cell(target);
+	goal.x = target_data[0]; //&&&&&
+	goal.y = target_data[1]; //&&&&&
+	startNewPath(goal);
+}
+
 void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
 {
-	target_data = target;
+	if (planner_status != IDLE)
+	{
+		printf ("Not in idle state, send a 'stop' first\n");
+		return;
+	}
+
+	double a = localization_data[2]/180.0*M_PI;
+	target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
+	target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
+	target_data[2]=-target[2] + localization_data[2];
+	cell goal = map.world2cell(target);
+	startNewPath(goal);
 }
 
 void PlannerThread::stopMovement()
 {
+	if (planner_status != IDLE)
+	{
+		printf ("Navigation stopped\n");
+		planner_status=IDLE;
+		yarp::sig::Vector v(3,0.0);
+		setNewRelTarget(v);
+	}
+	else
+	{
+		printf ("Already not moving\n");
+	}
 }
 
 void PlannerThread::resumeMovement()
 {
+	printf ("Not yet implemented\n");
 }
 
 void PlannerThread::pauseMovement(double d)
 {
+	printf ("Not yet implemented\n");
 }
 
 void PlannerThread::printStats()

@@ -6,7 +6,7 @@ add_subdirectory(iKartBatteryDisplay)
 add_subdirectory(forceGuidance)
 add_subdirectory(iKartUtils)
 add_subdirectory(iKartGoto)
-#add_subdirectory(iKartPathPlanner)
+add_subdirectory(iKartPathPlanner)
 add_subdirectory(laserScannerGui)
 add_subdirectory(laserUtils)
 

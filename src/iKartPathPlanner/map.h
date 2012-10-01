@@ -74,7 +74,7 @@ class map_class
 	bool loadMap(string filename);
 	bool crop(IplImage* img, IplImage* &imgOrig);
 	bool enlargeObstacles(IplImage* src, IplImage* dst);
-	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port, IplImage* image_to_send); 
+	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >* port, IplImage* image_to_send); 
 	
 	//return true if the straight line that connects src with dst does not contain any obstacles
 	bool checkStraightLine(IplImage* map, cell src, cell dst);

@@ -51,7 +51,7 @@ map_class::map_class()
 	crop_h        = 0;
 }
 
-bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>>* port, IplImage* image_to_send)
+bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >* port, IplImage* image_to_send)
 {
 	if (port!=0 && port->getOutputCount()>0)
 	{

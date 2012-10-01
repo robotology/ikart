@@ -63,7 +63,7 @@ class PlannerThread: public yarp::os::RateThread
 	BufferedPort<yarp::os::Bottle>						  port_status_input;
     BufferedPort<yarp::sig::Vector>						  port_laser_input;
 
-	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> port_map_output;
+	BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > port_map_output;
     BufferedPort<yarp::os::Bottle>						  port_status_output;
 	BufferedPort<yarp::os::Bottle>						  port_commands_output;
 
@@ -100,7 +100,7 @@ class PlannerThread: public yarp::os::RateThread
     virtual bool threadInit()
     {
         //read configuration parametes
-		string map_filename = rf.find("map_file").asString();
+		string map_filename = rf.find("map_file").asString().c_str();
 		if (!map.loadMap(map_filename))
 		{
 			printf("map file not found, closing\n");

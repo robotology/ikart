@@ -54,7 +54,7 @@ void PlannerThread::run()
 	yarp::os::Bottle *st = port_status_input.read(false);
 	if (st)
 	{
-		string s = st->get(0).toString();
+		string s = st->get(0).toString().c_str();
 		inner_status_timeout_counter=0;
 		inner_status = IDLE; //convet s to inner status
 	}
@@ -171,11 +171,11 @@ void PlannerThread::startNewPath(cell target)
 	//current_path = simpler_path;
 
 	printf ("time: %f\n", t2-t1);
-	for (int i=0; i<simpler_path.size(); i++)
+	/*for (int i=0; i<simpler_path.size(); i++)
 	{
 		cell c = simpler_path._Get_container().at(i);
 		printf ("%d %d %d\n",i,c.x, c.y);
-	}
+	}*/
 
 	//send the tolerance to the inner controller
 	Bottle &b1=this->port_status_output.prepare();

@@ -83,12 +83,13 @@ private:
     yarp::sig::Vector encv;
 
 public:
-    //estimated cartesian velocity in the fixed odometry reference frame
+    //estimated cartesian velocity in the fixed odometry reference frame (world)
     double              odom_vel_x;
     double              odom_vel_y;
     double              odom_vel_heading;
+	double              odom_vel_theta;
 
-    //estimated cartesian velocity in the ikart realtive reference frame
+    //estimated cartesian velocity in the ikart relative reference frame
     double              ikart_vel_lin;
     double              ikart_vel_x;
     double              ikart_vel_y;

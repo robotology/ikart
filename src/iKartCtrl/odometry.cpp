@@ -161,6 +161,7 @@ void Odometry::compute()
     kin(2,0) = 0;
     kin(2,1) = -1.0;
     kin(2,2) = geom_L;
+	kin      = kin/geom_r;
     yarp::sig::Matrix ikin = luinv(kin);
 
     //build the rotation matrix
@@ -182,19 +183,22 @@ void Odometry::compute()
     m2(1,1) = cos (0.0);
     m2(2,2) = 1;
 
-    yarp::sig::Vector odom_cart_vels;
-    yarp::sig::Vector ikart_cart_vels;
-    odom_cart_vels = m1*ikin*encv;
+    yarp::sig::Vector odom_cart_vels;  //velocities expressed in the world reference frame
+    yarp::sig::Vector ikart_cart_vels; //velocities expressed in the ikart reference frame
+    odom_cart_vels  = m1*ikin*encv;
     ikart_cart_vels = m2*ikin*encv;
-    //printf ("%+5.5f, %+5.5f  %+5.5f\n", encv[0], encv[1], encv[2]);
-    //BEWARE: the following variables are expressed in the fixed odometry reference frame,
-    //not in the relative iKart reference frame.
-    ikart_vel_x    = ikart_cart_vels[1]*geom_r;
-    ikart_vel_y    = ikart_cart_vels[0]*geom_r;
-    odom_vel_x     = odom_cart_vels[1]*geom_r;
-    odom_vel_y     = odom_cart_vels[0]*geom_r;
-    ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);
-    if (ikart_vel_lin<0.001)
+
+    ikart_vel_x     = ikart_cart_vels[1];
+    ikart_vel_y     = ikart_cart_vels[0];
+	ikart_vel_theta = ikart_cart_vels[2];
+	ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);
+    
+	odom_vel_x      = odom_cart_vels[1];
+    odom_vel_y      = odom_cart_vels[0];
+	odom_vel_theta  = odom_cart_vels[2];
+  
+	//these are not currently used
+	if (ikart_vel_lin<0.001)
     {
         odom_vel_heading  = 0;
         ikart_vel_heading = 0;
@@ -204,20 +208,14 @@ void Odometry::compute()
         odom_vel_heading  = atan2(odom_vel_x,odom_vel_y)*57.2957795;
         ikart_vel_heading = atan2(ikart_vel_x,ikart_vel_y)*57.2957795;
     }
-    ikart_vel_theta = ikart_cart_vels[2];
 
-    /*double co3p = cos (M_PI/3+odom_theta);
-    double si3p = cos (M_PI/3+odom_theta);
-    double co3m = cos (M_PI/3-odom_theta);
-    double si3m = cos (M_PI/3-odom_theta);*/
-    
     //the integration step
     odom_x=odom_x + (odom_vel_x * period/1000.0);
     odom_y=odom_y + (odom_vel_y * period/1000.0);
 
     //compute traveled distance (odometer)
-    traveled_distance = traveled_distance + fabs(ikart_vel_lin * period/1000.0);
-    traveled_angle = traveled_angle + fabs(ikart_vel_theta * period/1000.0);
+    traveled_distance = traveled_distance + fabs(ikart_vel_lin   * period/1000.0);
+    traveled_angle    = traveled_angle    + fabs(ikart_vel_theta * period/1000.0);
 
     /* [ -(3^(1/2)*r)/3, (3^(1/2)*r)/3,        0]
         [            r/3,           r/3, -(2*r)/3]
@@ -242,7 +240,10 @@ void Odometry::compute()
     */
 
     //convert from radians back to degrees
-    odom_theta *= 57.2957795;
+    odom_theta       *= 57.2957795;
+	ikart_vel_theta  *= 57.2957795;
+    odom_vel_theta   *= 57.2957795;
+    traveled_angle   *= 57.2957795;
 
     mutex.post();
 
@@ -255,7 +256,7 @@ void Odometry::compute()
         b.addDouble(odom_theta);
         b.addDouble(odom_vel_x);
         b.addDouble(odom_vel_y);
-        b.addDouble(ikart_vel_theta);
+        b.addDouble(odom_vel_theta);
         port_odometry.write();
     }
 

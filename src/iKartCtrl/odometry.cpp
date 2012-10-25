@@ -49,8 +49,8 @@ void Odometry::close()
     port_odometry.close();
     port_odometer.interrupt();
     port_odometer.close();
-	port_ikart_vels.interrupt();
-	port_ikart_vels.close();
+    port_ikart_vels.interrupt();
+    port_ikart_vels.close();
 }
 
 Odometry::~Odometry()
@@ -107,7 +107,7 @@ bool Odometry::open()
     // open control input ports
     port_odometry.open((localName+"/odometry:o").c_str());
     port_odometer.open((localName+"/odometer:o").c_str());
-	port_ikart_vels.open((localName+"/velocity:o").c_str());
+    port_ikart_vels.open((localName+"/velocity:o").c_str());
 
     //reset odometry
     reset_odometry();
@@ -161,7 +161,7 @@ void Odometry::compute()
     kin(2,0) = 0;
     kin(2,1) = -1.0;
     kin(2,2) = geom_L;
-	kin      = kin/geom_r;
+    kin      = kin/geom_r;
     yarp::sig::Matrix ikin = luinv(kin);
 
     //build the rotation matrix
@@ -190,15 +190,15 @@ void Odometry::compute()
 
     ikart_vel_x     = ikart_cart_vels[1];
     ikart_vel_y     = ikart_cart_vels[0];
-	ikart_vel_theta = ikart_cart_vels[2];
-	ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);
+    ikart_vel_theta = ikart_cart_vels[2];
+    ikart_vel_lin   = sqrt(odom_vel_x*odom_vel_x + odom_vel_y*odom_vel_y);
     
-	odom_vel_x      = odom_cart_vels[1];
+    odom_vel_x      = odom_cart_vels[1];
     odom_vel_y      = odom_cart_vels[0];
-	odom_vel_theta  = odom_cart_vels[2];
+    odom_vel_theta  = odom_cart_vels[2];
   
-	//these are not currently used
-	if (ikart_vel_lin<0.001)
+    //these are not currently used
+    if (ikart_vel_lin<0.001)
     {
         odom_vel_heading  = 0;
         ikart_vel_heading = 0;
@@ -241,7 +241,7 @@ void Odometry::compute()
 
     //convert from radians back to degrees
     odom_theta       *= 57.2957795;
-	ikart_vel_theta  *= 57.2957795;
+    ikart_vel_theta  *= 57.2957795;
     odom_vel_theta   *= 57.2957795;
     traveled_angle   *= 57.2957795;
 
@@ -269,13 +269,13 @@ void Odometry::compute()
         port_odometer.write();
     }
 
-	if (port_ikart_vels.getOutputCount()>0)
-	{
-		Bottle &v=port_ikart_vels.prepare();
-		v.clear();
-		v.addDouble(ikart_vel_x);
-		v.addDouble(ikart_vel_y);
-		v.addDouble(ikart_vel_theta);
-		port_ikart_vels.write();
-	}
+    if (port_ikart_vels.getOutputCount()>0)
+    {
+        Bottle &v=port_ikart_vels.prepare();
+        v.clear();
+        v.addDouble(ikart_vel_x);
+        v.addDouble(ikart_vel_y);
+        v.addDouble(ikart_vel_theta);
+        port_ikart_vels.write();
+    }
 }

@@ -52,7 +52,7 @@ class LaserThread: public yarp::os::RateThread
     int                             timeout_counter_tot;
     bool                            fake_laser;
     double                          thread_period;
-	yarp::os::Stamp                 laserStamp;
+    yarp::os::Stamp                 laserStamp;
 
     public:
     LaserThread(unsigned int _period, ResourceFinder &_rf, Property options,

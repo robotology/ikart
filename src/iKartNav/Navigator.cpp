@@ -83,12 +83,12 @@ Navigator::Navigator(yarp::os::ResourceFinder *rf)
     const double sigma=0.5;
     mK=-1.0/(2.0*sigma*sigma);
     for (int x=-10; x<=10; ++x)
-	{
-	    for (int y=-10; y<=10; ++y)
+    {
+        for (int y=-10; y<=10; ++y)
         {
-	        mMask[x][y]=exp(mK*0.01*double(x*x+y*y));
-	    }
-	}
+            mMask[x][y]=exp(mK*0.01*double(x*x+y*y));
+        }
+    }
 
     mTargetH=0.0;
     mHaveTarget=false;
@@ -422,25 +422,25 @@ void Navigator::updateZeta()
     static const int MODULE=(2*DIM+1)*(2*DIM+1);
 
     while(head!=tail)
-	{
+    {
         head%=MODULE;
 
-	    int xc=mQueueX[head  ];
-	    int yc=mQueueY[head++];
+        int xc=mQueueX[head  ];
+        int yc=mQueueY[head++];
         
-	    mQueued[xc][yc]=false;
+        mQueued[xc][yc]=false;
 
         int xa=xc-1; if (xa<-DIM) xa=-DIM;
-	    int xb=xc+1; if (xb> DIM) xb= DIM;
-	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
-	    int yb=yc+1; if (yb> DIM) yb= DIM;  
+        int xb=xc+1; if (xb> DIM) xb= DIM;
+        int ya=yc-1; if (ya<-DIM) ya=-DIM; 
+        int yb=yc+1; if (yb> DIM) yb= DIM;  
 
-	    for (int x=xa; x<=xb; ++x)
+        for (int x=xa; x<=xb; ++x)
         {
             for (int y=ya; y<=yb; ++y)
             {
                 if (x!=xc || y!=yc)
-	            {
+                {
                     unsigned short k=(x==xc||y==yc)?5:7;
 
                     if (mReach[x][y] && mReach[x][y]>mReach[xc][yc]+k)
@@ -448,9 +448,9 @@ void Navigator::updateZeta()
                         mReach[x][y]=mReach[xc][yc]+k;
                         
                         tail%=MODULE;
-		                mQueueX[tail  ]=x;
-		                mQueueY[tail++]=y;
-		                mQueued[x][y]=true;
+                        mQueueX[tail  ]=x;
+                        mQueueY[tail++]=y;
+                        mQueued[x][y]=true;
                     }
                 }
             }
@@ -497,47 +497,47 @@ void Navigator::updateGNF()
     static const int MODULE=(2*DIM+1)*(2*DIM+1);
 
     while(head!=tail)
-	{
+    {
         head%=MODULE;
 
-	    int xc=mQueueX[head  ];
-	    int yc=mQueueY[head++];
+        int xc=mQueueX[head  ];
+        int yc=mQueueY[head++];
         
-	    mQueued[xc][yc]=false;
-	  
+        mQueued[xc][yc]=false;
+      
         double D=0.1*(1.0+SAFETY*mZeta[xc][yc]);
         double dNewDL=      D+mD[xc][yc];
         double dNewDT=1.414*D+mD[xc][yc];
 
         int xa=xc-1; if (xa<-DIM) xa=-DIM;
-	    int xb=xc+1; if (xb> DIM) xb= DIM;
-	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
-	    int yb=yc+1; if (yb> DIM) yb= DIM;  
+        int xb=xc+1; if (xb> DIM) xb= DIM;
+        int ya=yc-1; if (ya<-DIM) ya=-DIM; 
+        int yb=yc+1; if (yb> DIM) yb= DIM;  
 
-	    for (int x=xa; x<=xb; ++x)
+        for (int x=xa; x<=xb; ++x)
         {
             for (int y=ya; y<=yb; ++y)
             {
                 if (x!=xc || y!=yc)
-	            {
-	                double dNewD=(x==xc||y==yc)?dNewDL:dNewDT;
+                {
+                    double dNewD=(x==xc||y==yc)?dNewDL:dNewDT;
        
                     if (mD[x][y]>dNewD)
-		            {
-		                mD[x][y]=dNewD;
+                    {
+                        mD[x][y]=dNewD;
 
                         if (!mQueued[x][y] && !mReach[x][y])
-		                {
-		                    tail%=MODULE;
-		                    mQueueX[tail  ]=x;
-		                    mQueueY[tail++]=y;
-		                    mQueued[x][y]=true;
+                        {
+                            tail%=MODULE;
+                            mQueueX[tail  ]=x;
+                            mQueueY[tail++]=y;
+                            mQueued[x][y]=true;
                         }
                     }
-		        }
-		    }
-	    }
-	}
+                }
+            }
+        }
+    }
 
     head=tail=0;
 
@@ -555,29 +555,29 @@ void Navigator::updateGNF()
     }
 
     while(head!=tail)
-	{
+    {
         head%=MODULE;
 
-	    int xc=mQueueX[head  ];
-	    int yc=mQueueY[head++];
+        int xc=mQueueX[head  ];
+        int yc=mQueueY[head++];
         
-	    mQueued[xc][yc]=false;
+        mQueued[xc][yc]=false;
 
         double D=0.1*(1.0+SAFETY*mZeta[xc][yc]);
         double dNewDL=      D+mD[xc][yc];
         double dNewDT=1.414*D+mD[xc][yc];
 
         int xa=xc-1; if (xa<-DIM) xa=-DIM;
-	    int xb=xc+1; if (xb> DIM) xb= DIM;
-	    int ya=yc-1; if (ya<-DIM) ya=-DIM; 
-	    int yb=yc+1; if (yb> DIM) yb= DIM;  
+        int xb=xc+1; if (xb> DIM) xb= DIM;
+        int ya=yc-1; if (ya<-DIM) ya=-DIM; 
+        int yb=yc+1; if (yb> DIM) yb= DIM;  
 
-	    for (int x=xa; x<=xb; ++x)
+        for (int x=xa; x<=xb; ++x)
         {
             for (int y=ya; y<=yb; ++y)
             {
                 if (x!=xc || y!=yc)
-	            {
+                {
                     double dNewD=(x==xc||y==yc)?dNewDL:dNewDT;
 
                     if (mReach[x][y] && mReach[x][y]>=mReach[xc][yc] && mD[x][y]>dNewD)
@@ -585,9 +585,9 @@ void Navigator::updateGNF()
                         mD[x][y]=dNewD;
 
                         tail%=MODULE;
-		                mQueueX[tail  ]=x;
-		                mQueueY[tail++]=y;
-		                mQueued[x][y]=true;
+                        mQueueX[tail  ]=x;
+                        mQueueY[tail++]=y;
+                        mQueued[x][y]=true;
                     }
                 }
             }
@@ -706,7 +706,7 @@ void Navigator::run()
                 fflush(stdout);
             }
         }
-		else if (cmd=="gotoRel")
+        else if (cmd=="gotoRel")
         {   
             if (bot->size()>=4)
             {
@@ -714,23 +714,23 @@ void Navigator::run()
                 printf("NEW TARGET X=%.3f Y=%.3f H=%.1f\n",mTarget.x,mTarget.y,mTargetH);
                 fflush(stdout);
                 mHaveTargetH=true;
-				mPaused=false;
+                mPaused=false;
             }
             else
             {
                 printf("NEW TARGET X=%.3f Y=%.3f\n",mTarget.x,mTarget.y);
                 fflush(stdout);
                 mHaveTargetH=false;
-				mPaused=false;
+                mPaused=false;
             }
 
             setUserTarget(-bot->get(1).asDouble(),bot->get(2).asDouble());
         }
-		else if (cmd=="gotoAbs")
+        else if (cmd=="gotoAbs")
         {   
-			printf("Not yet implemented\n");
-			fflush(stdout);
-		}
+            printf("Not yet implemented\n");
+            fflush(stdout);
+        }
         else if (cmd=="event" || cmd=="e")
         {
             addEvent(-bot->get(1).asDouble(),bot->get(2).asDouble(),bot->get(3).asDouble());
@@ -753,18 +753,18 @@ void Navigator::run()
             fflush(stdout);
             mPaused=false;
         }
-		else if (cmd=="help")
-		{
-			printf("available commands:\n");
-			printf("- go\n");
-			printf("- pause\n");
-			printf("- resume\n");
-			printf("- stop\n");
-			printf("- event <1> <2> <3> \n");
-			printf("- target <x> <y> <h> \n");
-			printf("- gotoAbs <x> <y> <h> \n");
-			printf("- gotoRel <x> <y> <h> \n");
-		}
+        else if (cmd=="help")
+        {
+            printf("available commands:\n");
+            printf("- go\n");
+            printf("- pause\n");
+            printf("- resume\n");
+            printf("- stop\n");
+            printf("- event <1> <2> <3> \n");
+            printf("- target <x> <y> <h> \n");
+            printf("- gotoAbs <x> <y> <h> \n");
+            printf("- gotoRel <x> <y> <h> \n");
+        }
     } 
     
     for (yarp::os::Bottle* bot; bot=mVisionPortI.read(false);)

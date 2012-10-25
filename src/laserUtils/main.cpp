@@ -34,21 +34,21 @@ class laserUtilsModule: public RFModule
 {
     Port                  rpcPort;
     BufferedPort<Vector>  port_laser_i1;
-	BufferedPort<Vector>  port_laser_i2;
-	BufferedPort<Vector>  port_laser_o1;
-	Vector                laser1;
-	Vector                laser2;
-	Vector                laser_out;
+    BufferedPort<Vector>  port_laser_i2;
+    BufferedPort<Vector>  port_laser_o1;
+    Vector                laser1;
+    Vector                laser2;
+    Vector                laser_out;
 
-	bool                  option_merge_lasers;
+    bool                  option_merge_lasers;
 
 public:
     laserUtilsModule()
     {
-		laser1.resize(1080,1000.0);
-		laser2.resize(1080,1000.0);
-		laser_out.resize(1080,1000.0);
-		option_merge_lasers = true;
+        laser1.resize(1080,1000.0);
+        laser2.resize(1080,1000.0);
+        laser_out.resize(1080,1000.0);
+        option_merge_lasers = true;
     }
 
     virtual bool configure(ResourceFinder &rf)
@@ -80,28 +80,28 @@ public:
     {
         rpcPort.close();
         port_laser_i1.close();
-		port_laser_i2.close();
-		port_laser_o1.close();
+        port_laser_i2.close();
+        port_laser_o1.close();
         return true;
     }
 
     virtual double getPeriod()
-	{
-		return 0.01;
-	}
+    {
+        return 0.01;
+    }
 
     virtual bool   updateModule() 
     {
-		Vector* v1 = port_laser_i1.read(false);
-		if (v1) laser1 = *v1;
-		Vector* v2 = port_laser_i2.read(false);
-		if (v2) laser2 = *v2;
-		if (option_merge_lasers == true)
-		for (int i=0; i<1080; i++)
-			{
-				if (laser2[i] < laser1[i]) laser_out[i] = laser2[i];
-				else laser_out[i] = laser1[i];
-			}
+        Vector* v1 = port_laser_i1.read(false);
+        if (v1) laser1 = *v1;
+        Vector* v2 = port_laser_i2.read(false);
+        if (v2) laser2 = *v2;
+        if (option_merge_lasers == true)
+        for (int i=0; i<1080; i++)
+            {
+                if (laser2[i] < laser1[i]) laser_out[i] = laser2[i];
+                else laser_out[i] = laser1[i];
+            }
         return true; 
     }
 

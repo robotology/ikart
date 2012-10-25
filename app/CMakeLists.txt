@@ -13,7 +13,7 @@ include(iCubHelpers)
 
 # default prefix for applications
 SET(ICUB_APPLICATIONS_PREFIX "$ENV{ICUB_ROOT}"  CACHE PATH "Application path prefix")
-				
+
 add_subdirectory(iKart)
 add_subdirectory(iKartGoto)
 add_subdirectory(iKartNav)

@@ -14,8 +14,8 @@ file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
                   ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.xml)
 
 icub_app_install(${appname}
-		FILES ${conf}
-		DESTINATION conf)
+        FILES ${conf}
+        DESTINATION conf)
 
 icub_app_install(${appname} 
                  FILES ${scripts}

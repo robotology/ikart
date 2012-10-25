@@ -43,14 +43,14 @@ using namespace yarp::dev;
 
 class GotoThread: public yarp::os::RateThread
 {
-	private:
-	void sendOutput();
+    private:
+    void sendOutput();
 
-	public:
-	bool   enable_stop_on_obstacles;
+    public:
+    bool   enable_stop_on_obstacles;
     bool   enable_retreat;
-	double goal_tolerance_lin;  //m 
-	double goal_tolerance_ang;  //deg
+    double goal_tolerance_lin;  //m 
+    double goal_tolerance_ang;  //deg
 
     protected:
     //configuration parameters
@@ -61,31 +61,31 @@ class GotoThread: public yarp::os::RateThread
     double robot_radius;        //m
     int    retreat_duration; 
 
-	//pause info
-	double pause_start;
-	double pause_duration;
+    //pause info
+    double pause_start;
+    double pause_duration;
 
     //ports
-	BufferedPort<yarp::sig::Vector> port_odometry_input;
-	BufferedPort<yarp::sig::Vector> port_localization_input;
-	BufferedPort<yarp::sig::Vector> port_target_input;
+    BufferedPort<yarp::sig::Vector> port_odometry_input;
+    BufferedPort<yarp::sig::Vector> port_localization_input;
+    BufferedPort<yarp::sig::Vector> port_target_input;
     BufferedPort<yarp::sig::Vector> port_laser_input;
     BufferedPort<yarp::os::Bottle>  port_commands_output;
-	BufferedPort<yarp::os::Bottle>  port_status_output;
+    BufferedPort<yarp::os::Bottle>  port_status_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
-	yarp::sig::Vector   odometry_data;
+    yarp::sig::Vector   odometry_data;
     yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
-	yarp::sig::Vector   control_out;
-	enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED} status;
+    yarp::sig::Vector   control_out;
+    enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED} status;
     int                 loc_timeout_counter;
-	int                 odm_timeout_counter;
+    int                 odm_timeout_counter;
     int                 retreat_counter;
-	double              obstacle_time;
-	string              status_string;
+    double              obstacle_time;
+    string              status_string;
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -94,17 +94,17 @@ class GotoThread: public yarp::os::RateThread
     {
         status = IDLE;
         loc_timeout_counter = 0;
-		odm_timeout_counter = 0;
+        odm_timeout_counter = 0;
         localization_data.resize(3,0.0);
         target_data.resize(3,0.0);
         laser_data.resize(1080,1000.0);
         retreat_counter = 0;
-		enable_stop_on_obstacles = true;
-		control_out.resize(3,0.0);
-		pause_start = 0;
-		pause_duration = 0;
-		goal_tolerance_lin = 0.05;
-		goal_tolerance_ang = 0.6;
+        enable_stop_on_obstacles = true;
+        control_out.resize(3,0.0);
+        pause_start = 0;
+        pause_duration = 0;
+        goal_tolerance_lin = 0.05;
+        goal_tolerance_ang = 0.6;
     }
 
     virtual bool threadInit()
@@ -115,26 +115,26 @@ class GotoThread: public yarp::os::RateThread
         max_lin_speed = 0.9;  //m/s
         max_ang_speed = 10.0; //deg/s
         robot_radius = 0.30;  //m
-		printf ("Using following paramters:\n %s\n", rf.toString().c_str());
-		if (rf.check("ang_speed_gain"))	    {k_ang_gain = rf.find("ang_speed_gain").asDouble();}
-		if (rf.check("lin_speed_gain"))	    {k_lin_gain = rf.find("lin_speed_gain").asDouble();}
-		if (rf.check("max_lin_speed"))      {max_lin_speed = rf.find("max_lin_speed").asDouble();}
-		if (rf.check("max_ang_speed"))      {max_ang_speed = rf.find("max_ang_speed").asDouble();}
-		if (rf.check("robot_radius"))       {robot_radius = rf.find("robot_radius").asDouble();}
-	    if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
-	    if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
+        printf ("Using following paramters:\n %s\n", rf.toString().c_str());
+        if (rf.check("ang_speed_gain"))     {k_ang_gain = rf.find("ang_speed_gain").asDouble();}
+        if (rf.check("lin_speed_gain"))     {k_lin_gain = rf.find("lin_speed_gain").asDouble();}
+        if (rf.check("max_lin_speed"))      {max_lin_speed = rf.find("max_lin_speed").asDouble();}
+        if (rf.check("max_ang_speed"))      {max_ang_speed = rf.find("max_ang_speed").asDouble();}
+        if (rf.check("robot_radius"))       {robot_radius = rf.find("robot_radius").asDouble();}
+        if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
+        if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
 
         enable_retreat = false;
         retreat_duration = 300;
 
         //open module ports
-		string localName = "/ikartGoto";
+        string localName = "/ikartGoto";
         port_localization_input.open((localName+"/localization:i").c_str());
         port_target_input.open((localName+"/target:i").c_str());
-		port_laser_input.open((localName+"/laser:i").c_str());
-		port_commands_output.open((localName+"/control:o").c_str());
-		port_status_output.open((localName+"/status:o").c_str());
-		port_odometry_input.open((localName+"/odometry:i").c_str());
+        port_laser_input.open((localName+"/laser:i").c_str());
+        port_commands_output.open((localName+"/control:o").c_str());
+        port_status_output.open((localName+"/status:o").c_str());
+        port_odometry_input.open((localName+"/odometry:i").c_str());
 
         //automatic port connections
         /*bool b = false;
@@ -149,12 +149,12 @@ class GotoThread: public yarp::os::RateThread
 
     virtual void run();
 
-	void setNewAbsTarget(yarp::sig::Vector target);
-	void setNewRelTarget(yarp::sig::Vector target);
-	void stopMovement();
-	void pauseMovement (double secs);
-	void resumeMovement();
-	string getNavigationStatus();
+    void setNewAbsTarget(yarp::sig::Vector target);
+    void setNewRelTarget(yarp::sig::Vector target);
+    void stopMovement();
+    void pauseMovement (double secs);
+    void resumeMovement();
+    string getNavigationStatus();
 
     virtual void threadRelease()
     {    
@@ -162,18 +162,18 @@ class GotoThread: public yarp::os::RateThread
         port_localization_input.close();
         port_target_input.interrupt();
         port_target_input.close();
-		port_laser_input.interrupt();
+        port_laser_input.interrupt();
         port_laser_input.close();
-	    port_commands_output.interrupt();
+        port_commands_output.interrupt();
         port_commands_output.close();
-		port_status_output.interrupt();
-		port_status_output.close();
-		port_odometry_input.interrupt();
-		port_odometry_input.close();
+        port_status_output.interrupt();
+        port_status_output.close();
+        port_odometry_input.interrupt();
+        port_odometry_input.close();
     }
 
     void printStats();
-	bool check_obstacles_in_path();
+    bool check_obstacles_in_path();
 
 };
 

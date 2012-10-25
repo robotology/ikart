@@ -45,7 +45,7 @@ public:
         if (configFile!="") p.fromConfigFile(configFile.c_str());
 
         gotoThread = new GotoThread(10,rf,p);
-		if (rf.check("no_stop_on_obstacles")) gotoThread->enable_stop_on_obstacles=false;
+        if (rf.check("no_stop_on_obstacles")) gotoThread->enable_stop_on_obstacles=false;
 
         if (!gotoThread->start())
         {
@@ -82,7 +82,7 @@ public:
 
     virtual double getPeriod()
     { 
-		if (gotoThread) gotoThread->printStats();
+        if (gotoThread) gotoThread->printStats();
         return 1.0; 
     }
     
@@ -99,79 +99,79 @@ public:
 
     virtual bool respond(const yarp::os::Bottle& command,yarp::os::Bottle& reply) 
     {
-		reply.clear(); 
+        reply.clear(); 
 
         if (command.get(0).asString()=="quit") return false;     
 
-		else if (command.get(0).asString()=="help")
-		{
-			reply.addString("Available commands are:");
+        else if (command.get(0).asString()=="help")
+        {
+            reply.addString("Available commands are:");
             reply.addString("goToAbs <x> <y> <angle>");
-			reply.addString("goToRel <x> <y> <angle>");
-			reply.addString("stop");
-			reply.addString("pause");
-			reply.addString("resume");
-			reply.addString("quit");
-			reply.addString("set linear_tol <m>");
-			reply.addString("set linear_ang <deg>");
-		}
+            reply.addString("goToRel <x> <y> <angle>");
+            reply.addString("stop");
+            reply.addString("pause");
+            reply.addString("resume");
+            reply.addString("quit");
+            reply.addString("set linear_tol <m>");
+            reply.addString("set linear_ang <deg>");
+        }
 
-		else if (command.get(0).asString()=="gotoAbs")
-		{
-			yarp::sig::Vector v;
-			v.push_back(command.get(1).asDouble());
-			v.push_back(command.get(2).asDouble());
-			if (command.size()==4) v.push_back(command.get(3).asDouble());
-			gotoThread->setNewAbsTarget(v);
+        else if (command.get(0).asString()=="gotoAbs")
+        {
+            yarp::sig::Vector v;
+            v.push_back(command.get(1).asDouble());
+            v.push_back(command.get(2).asDouble());
+            if (command.size()==4) v.push_back(command.get(3).asDouble());
+            gotoThread->setNewAbsTarget(v);
             reply.addString("new absolute target received");
-		}
+        }
 
-		else if (command.get(0).asString()=="gotoRel")
-		{
-			yarp::sig::Vector v;
-			v.push_back(command.get(1).asDouble());
-			v.push_back(command.get(2).asDouble());
-			if (command.size()==4) v.push_back(command.get(3).asDouble());
-			gotoThread->setNewRelTarget(v);
+        else if (command.get(0).asString()=="gotoRel")
+        {
+            yarp::sig::Vector v;
+            v.push_back(command.get(1).asDouble());
+            v.push_back(command.get(2).asDouble());
+            if (command.size()==4) v.push_back(command.get(3).asDouble());
+            gotoThread->setNewRelTarget(v);
             reply.addString("new relative target received");
-		}
-		else if (command.get(0).asString()=="set")
-		{
-			if (command.get(1).asString()=="linear_tol")
-			{
-				gotoThread->goal_tolerance_lin=command.get(2).asDouble();
-			}
-			else if (command.get(1).asString()=="angular_tol")
-			{
-				gotoThread->goal_tolerance_ang=command.get(2).asDouble();
-			}
-		}
-		else if (command.get(0).asString()=="get")
-		{
-			if (command.get(1).asString()=="navigation_status")
-			{
-				string s = gotoThread->getNavigationStatus();
-				reply.addString(s.c_str());
-			}
-		}
-		else if (command.get(0).asString()=="stop")
-		{
-			gotoThread->stopMovement();
+        }
+        else if (command.get(0).asString()=="set")
+        {
+            if (command.get(1).asString()=="linear_tol")
+            {
+                gotoThread->goal_tolerance_lin=command.get(2).asDouble();
+            }
+            else if (command.get(1).asString()=="angular_tol")
+            {
+                gotoThread->goal_tolerance_ang=command.get(2).asDouble();
+            }
+        }
+        else if (command.get(0).asString()=="get")
+        {
+            if (command.get(1).asString()=="navigation_status")
+            {
+                string s = gotoThread->getNavigationStatus();
+                reply.addString(s.c_str());
+            }
+        }
+        else if (command.get(0).asString()=="stop")
+        {
+            gotoThread->stopMovement();
             reply.addString("Stopping movement.");
-		}
-		else if (command.get(0).asString()=="pause")
-		{
-			double time = -1;
-			if (command.size() > 1)
-				time = command.get(1).asDouble();
-			gotoThread->pauseMovement(time);
-			reply.addString("Pausing.");
-		}
-		else if (command.get(0).asString()=="resume")
-		{
-			gotoThread->resumeMovement();
-			reply.addString("Resuming.");
-		}
+        }
+        else if (command.get(0).asString()=="pause")
+        {
+            double time = -1;
+            if (command.size() > 1)
+                time = command.get(1).asDouble();
+            gotoThread->pauseMovement(time);
+            reply.addString("Pausing.");
+        }
+        else if (command.get(0).asString()=="resume")
+        {
+            gotoThread->resumeMovement();
+            reply.addString("Resuming.");
+        }
         else
         {
             reply.addString("Unknown command.");
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("iKartGoto.ini");		   //overridden by --from parameter
+    rf.setDefaultConfigFile("iKartGoto.ini");           //overridden by --from parameter
     rf.setDefaultContext("iKartGoto/conf");                //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     

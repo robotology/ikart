@@ -180,7 +180,7 @@ void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
 
     double center_angle;
     if (!absolute) center_angle=0;
-    else center_angle = -180-(*comp)[0];	
+    else center_angle = -180-(*comp)[0];
     center.x = (int)(img->width/2  + (laser_position*scale)*sin(center_angle/180*3.14) );
     center.y = (int)(img->height/2 - (laser_position*scale)*cos(center_angle/180*3.14) );
 

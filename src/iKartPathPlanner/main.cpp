@@ -50,7 +50,7 @@ public:
         attach(rpcPort);
         //attachTerminal();
 
-		if (!plannerThread->start())
+        if (!plannerThread->start())
         {
             delete plannerThread;
             return false;
@@ -97,86 +97,86 @@ public:
 
     virtual bool respond(const yarp::os::Bottle& command,yarp::os::Bottle& reply) 
     {
-		reply.clear(); 
+        reply.clear(); 
 
-		if (command.get(0).isVocab())
-		{
-			if (command.get(0).asVocab() == VOCAB3('p','n','t'))
-			{
-				yarp::sig::Vector v;
-				v.push_back(command.get(1).asDouble());
-				v.push_back(command.get(2).asDouble());
-				plannerThread->setNewAbsTarget(v);
-				reply.addString("new absolute target received from gui");
-			}
-		}
-	
-		else if (command.get(0).isString())
-		{
-			if (command.get(0).asString()=="quit") return false;     
+        if (command.get(0).isVocab())
+        {
+            if (command.get(0).asVocab() == VOCAB3('p','n','t'))
+            {
+                yarp::sig::Vector v;
+                v.push_back(command.get(1).asDouble());
+                v.push_back(command.get(2).asDouble());
+                plannerThread->setNewAbsTarget(v);
+                reply.addString("new absolute target received from gui");
+            }
+        }
+    
+        else if (command.get(0).isString())
+        {
+            if (command.get(0).asString()=="quit") return false;
 
-			else if (command.get(0).asString()=="help")
-			{
-				reply.addString("Available commands are:");
-				reply.addString("goToAbs <x> <y> <angle>");
-				reply.addString("goToRel <x> <y> <angle>");
-				reply.addString("stop");
-				reply.addString("pause");
-				reply.addString("resume");
-				reply.addString("quit");
-			}
+            else if (command.get(0).asString()=="help")
+            {
+                reply.addString("Available commands are:");
+                reply.addString("goToAbs <x> <y> <angle>");
+                reply.addString("goToRel <x> <y> <angle>");
+                reply.addString("stop");
+                reply.addString("pause");
+                reply.addString("resume");
+                reply.addString("quit");
+            }
 
-			else if (command.get(0).asString()=="gotoAbs")
-			{
-				yarp::sig::Vector v;
-				v.push_back(command.get(1).asDouble());
-				v.push_back(command.get(2).asDouble());
-				if (command.size()==4) v.push_back(command.get(3).asDouble());			
-				plannerThread->setNewAbsTarget(v);
-				reply.addString("new absolute target received");
-			}
+            else if (command.get(0).asString()=="gotoAbs")
+            {
+                yarp::sig::Vector v;
+                v.push_back(command.get(1).asDouble());
+                v.push_back(command.get(2).asDouble());
+                if (command.size()==4) v.push_back(command.get(3).asDouble());
+                plannerThread->setNewAbsTarget(v);
+                reply.addString("new absolute target received");
+            }
 
-			else if (command.get(0).asString()=="gotoRel")
-			{
-				yarp::sig::Vector v;
-				v.push_back(command.get(1).asDouble());
-				v.push_back(command.get(2).asDouble());
-				if (command.size()==4) v.push_back(command.get(3).asDouble());
-				plannerThread->setNewRelTarget(v);
-				reply.addString("new relative target received");
-			}
+            else if (command.get(0).asString()=="gotoRel")
+            {
+                yarp::sig::Vector v;
+                v.push_back(command.get(1).asDouble());
+                v.push_back(command.get(2).asDouble());
+                if (command.size()==4) v.push_back(command.get(3).asDouble());
+                plannerThread->setNewRelTarget(v);
+                reply.addString("new relative target received");
+            }
 
-			else if (command.get(0).asString()=="get")
-			{
-				if (command.get(1).asString()=="navigation_status")
-				{
-					string s = plannerThread->getNavigationStatus();
-					reply.addString(s.c_str());
-				}
-			}
-			else if (command.get(0).asString()=="stop")
-			{
-				plannerThread->stopMovement();
-				reply.addString("Stopping movement.");
-			}
-			else if (command.get(0).asString()=="pause")
-			{
-				double time = -1;
-				if (command.size() > 1)
-					time = command.get(1).asDouble();
-				plannerThread->pauseMovement(time);
-				reply.addString("Pausing.");
-			}
-			else if (command.get(0).asString()=="resume")
-			{
-				plannerThread->resumeMovement();
-				reply.addString("Resuming.");
-			}
-			else
-			{
-				reply.addString("Unknown command.");
-			}
-		}
+            else if (command.get(0).asString()=="get")
+            {
+                if (command.get(1).asString()=="navigation_status")
+                {
+                    string s = plannerThread->getNavigationStatus();
+                    reply.addString(s.c_str());
+                }
+            }
+            else if (command.get(0).asString()=="stop")
+            {
+                plannerThread->stopMovement();
+                reply.addString("Stopping movement.");
+            }
+            else if (command.get(0).asString()=="pause")
+            {
+                double time = -1;
+                if (command.size() > 1)
+                    time = command.get(1).asDouble();
+                plannerThread->pauseMovement(time);
+                reply.addString("Pausing.");
+            }
+            else if (command.get(0).asString()=="resume")
+            {
+                plannerThread->resumeMovement();
+                reply.addString("Resuming.");
+            }
+            else
+            {
+                reply.addString("Unknown command.");
+            }
+        }
         return true;
     }
 };
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("iKartPlanner.ini");		   //overridden by --from parameter
+    rf.setDefaultConfigFile("iKartPlanner.ini");           //overridden by --from parameter
     rf.setDefaultContext("iKartPlanner/conf");             //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     

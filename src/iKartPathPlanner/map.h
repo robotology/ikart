@@ -48,49 +48,49 @@ using namespace yarp::dev;
 
 struct cell
 {
-	int x;
-	int y;
-	cell()             {x=0; y=0;}
-	cell(int u, int v) {x=u; y=v;}
+    int x;
+    int y;
+    cell()             {x=0; y=0;}
+    cell(int u, int v) {x=u; y=v;}
 };
 
 class map_class
 {
-	public:
-	int size_x;
-	int size_y;
-	int crop_x;
-	int crop_y;
-	int crop_w;
-	int crop_h;
-	double                                  resolution;
-	yarp::sig::Vector                       origin;
-	IplImage*                               loaded_map;
-	IplImage*                               processed_map;
-	
-	public:
-	map_class();
+    public:
+    int size_x;
+    int size_y;
+    int crop_x;
+    int crop_y;
+    int crop_w;
+    int crop_h;
+    double                                  resolution;
+    yarp::sig::Vector                       origin;
+    IplImage*                               loaded_map;
+    IplImage*                               processed_map;
+    
+    public:
+    map_class();
 
-	bool loadMap(string filename);
-	bool crop(IplImage* img, IplImage* &imgOrig);
-	bool enlargeObstacles(IplImage* src, IplImage* dst);
-	bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >* port, IplImage* image_to_send); 
-	
-	//return true if the straight line that connects src with dst does not contain any obstacles
-	bool checkStraightLine(IplImage* map, cell src, cell dst);
+    bool loadMap(string filename);
+    bool crop(IplImage* img, IplImage* &imgOrig);
+    bool enlargeObstacles(IplImage* src, IplImage* dst);
+    bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >* port, IplImage* image_to_send); 
+    
+    //return true if the straight line that connects src with dst does not contain any obstacles
+    bool checkStraightLine(IplImage* map, cell src, cell dst);
 
-	//simplify the path
-	bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
+    //simplify the path
+    bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
 
-	//draw stuff on the map
-	void drawPath(IplImage *map, cell start, std::queue<cell> input_path, const CvScalar& color);
-	void drawCurrentPosition(IplImage *map, cell current, const CvScalar& color);
+    //draw stuff on the map
+    void drawPath(IplImage *map, cell start, std::queue<cell> input_path, const CvScalar& color);
+    void drawCurrentPosition(IplImage *map, cell current, const CvScalar& color);
 
-	//compute the path
-	bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);
+    //compute the path
+    bool findPath(IplImage *img, cell start, cell goal, std::queue<cell>& path);
 
-	cell world2cell (yarp::sig::Vector v); 
-	yarp::sig::Vector cell2world (cell c);
+    cell world2cell (yarp::sig::Vector v); 
+    yarp::sig::Vector cell2world (cell c);
 };
 
 #endif

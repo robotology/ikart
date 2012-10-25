@@ -87,7 +87,7 @@ public:
     double              odom_vel_x;
     double              odom_vel_y;
     double              odom_vel_heading;
-	double              odom_vel_theta;
+    double              odom_vel_theta;
 
     //estimated cartesian velocity in the ikart relative reference frame
     double              ikart_vel_lin;
@@ -110,7 +110,7 @@ private:
     PolyDriver                      *control_board_driver;
     BufferedPort<Bottle>            port_odometry;
     BufferedPort<Bottle>            port_odometer;
-	BufferedPort<Bottle>            port_ikart_vels;
+    BufferedPort<Bottle>            port_ikart_vels;
 
     string                          localName;
     IEncoders                       *ienc;

@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("iKartNav.ini");		   //overridden by --from parameter
+    rf.setDefaultConfigFile("iKartNav.ini");           //overridden by --from parameter
     rf.setDefaultContext("iKart/conf");                //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     

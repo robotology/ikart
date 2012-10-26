@@ -140,10 +140,16 @@ public:
             if (command.get(1).asString()=="linear_tol")
             {
                 gotoThread->goal_tolerance_lin=command.get(2).asDouble();
+                reply.addString("linear_tol set.");
             }
             else if (command.get(1).asString()=="angular_tol")
             {
                 gotoThread->goal_tolerance_ang=command.get(2).asDouble();
+                reply.addString("angular_tol set.");
+            }
+            else
+            {
+                reply.addString("Unknown set.");
             }
         }
         else if (command.get(0).asString()=="get")
@@ -152,6 +158,10 @@ public:
             {
                 string s = gotoThread->getNavigationStatus();
                 reply.addString(s.c_str());
+            }
+            else
+            {
+                reply.addString("Unknown get.");
             }
         }
         else if (command.get(0).asString()=="stop")

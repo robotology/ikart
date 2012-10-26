@@ -56,7 +56,19 @@ void PlannerThread::run()
     {
         string s = st->get(0).toString().c_str();
         inner_status_timeout_counter=0;
-        inner_status = IDLE; //convet s to inner status
+        //convet s to inner status
+        //enum status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
+        if      (s=="IDLE")     inner_status = IDLE;
+        else if (s=="MOVING")   inner_status = MOVING;
+        else if (s=="WAITING_OBSTACLE")  inner_status = WAITING_OBSTACLE;
+        else if (s=="REACHED")  inner_status = REACHED;
+        else if (s=="ABORTED")  inner_status = ABORTED;
+        else if (s=="PAUSED")   inner_status = PAUSED;
+        else 
+        {
+            printf ("ERROR: unknown status of inner controller!");
+            inner_status = IDLE;
+        }
     }
     else inner_status_timeout_counter++;
 
@@ -73,22 +85,8 @@ void PlannerThread::run()
             }
             else
             {
-                //get the next waypoint from the list
-                cell waypoint = current_path.front();
-                current_path.pop();
-                //send the waypoint to the inner controller
-                Bottle &b=this->port_status_output.prepare();
-                b.clear();
-                b.addString("gotoAbs"); 
-                b.addDouble(waypoint.x);
-                b.addDouble(waypoint.y);
-                if (current_path.size()==1 && target_data.size()==3)
-                {
-                    //add the orientation to the last waypoint
-                    b.addDouble(target_data[3]);
-                }
-                port_status_output.write();
-                printf ("sending command: %s\n", b.toString().c_str());
+                //send the next waypoint
+                sendWaypoint();
             }
         }
         else if (inner_status == MOVING)
@@ -101,6 +99,15 @@ void PlannerThread::run()
             planner_status = ABORTED;
             printf ("unable to reach next waypoint, aborting navigation\n");
             //current_path.clear();
+        }
+        else if (inner_status == IDLE)
+        {
+            //send the first waypoint
+            sendWaypoint();
+        }
+        else
+        {
+            printf ("unrecognized inner status: %d\n", inner_status);
         }
     }
     else if (planner_status == REACHED)
@@ -123,7 +130,7 @@ void PlannerThread::run()
         string s;
         Bottle &b=this->port_status_output.prepare();
         b.clear();
-        b.addString(s.c_str());    
+        b.addString(s.c_str());
         port_status_output.write();
     }
     
@@ -149,12 +156,33 @@ void PlannerThread::run()
     map.sendToPort(&port_map_output,map_with_location);
 }
 
+void PlannerThread::sendWaypoint()
+{
+    //get the next waypoint from the list
+    cell waypoint = current_path.front();
+    current_path.pop();
+    //send the waypoint to the inner controller
+    Bottle &b=this->port_status_output.prepare();
+    b.clear();
+    b.addString("gotoAbs"); 
+    b.addDouble(waypoint.x);
+    b.addDouble(waypoint.y);
+    if (current_path.size()==1 && target_data.size()==3)
+    {
+        //add the orientation to the last waypoint
+        b.addDouble(target_data[3]);
+    }
+    port_status_output.write();
+    printf ("sending command: %s\n", b.toString().c_str());
+}
+
 void PlannerThread::startNewPath(cell target)
 {
     cell start = map.world2cell(localization_data);
+#ifdef DEBUG_WITH_CELLS
     start.x = 150;//&&&&&
     start.y = 150;//&&&&&
-
+#endif
     double t1 = yarp::os::Time::now();
     std::queue<cell> empty;
     std::swap(current_path, empty );
@@ -178,19 +206,23 @@ void PlannerThread::startNewPath(cell target)
     }*/
 
     //send the tolerance to the inner controller
-    Bottle &b1=this->port_status_output.prepare();
+    Bottle &b1=this->port_commands_output.prepare();
     b1.clear();
     b1.addString("set"); 
     b1.addString("linear_tol");
     b1.addDouble(waypoint_tolerance_lin);
-    port_status_output.write();
+    port_commands_output.write();
 
-    Bottle &b2=this->port_status_output.prepare();
+    Bottle &b2=this->port_commands_output.prepare();
     b2.clear();
     b2.addString("set"); 
     b2.addString("angular_tol");
     b2.addDouble(waypoint_tolerance_ang);
-    port_status_output.write();
+    port_commands_output.write();
+
+    //just set the status to moving, do not set position commands.
+    //The wayypoint ist set in the main 'run' loop.
+    planner_status = MOVING;
 }
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
@@ -203,8 +235,10 @@ void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 
     target_data = target;
     cell goal = map.world2cell(target);
+#ifdef DEBUG_WITH_CELLS
     goal.x = (int)target_data[0]; //&&&&&
     goal.y = (int)target_data[1]; //&&&&&
+#endif
     startNewPath(goal);
 }
 

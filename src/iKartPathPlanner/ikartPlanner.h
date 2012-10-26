@@ -143,6 +143,7 @@ class PlannerThread: public yarp::os::RateThread
 
     void setNewAbsTarget(yarp::sig::Vector target);
     void setNewRelTarget(yarp::sig::Vector target);
+    void sendWaypoint();
     void startNewPath(cell target);
     void stopMovement();
     void pauseMovement (double secs);

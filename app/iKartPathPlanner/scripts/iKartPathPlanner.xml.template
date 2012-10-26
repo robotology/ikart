@@ -44,6 +44,12 @@
 </connection>
 
 <connection>
+  <from>/ikartPathPlanner/commands:o</from>
+  <to>/ikartGoto/rpc:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
   <from>/ikartGoto/status:o</from>
   <to>/ikartPathPlanner/navigationStatus:i</to>
   <protocol>udp</protocol>

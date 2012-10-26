@@ -44,6 +44,12 @@
 </connection>
 
 <connection>
+  <from>/ikartGoto/status:o</from>
+  <to>/ikartPathPlanner/navigationStatus:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
   <from>/ikart/odometry:o</from>
   <to>/ikartGoto/odometry:i</to>
   <protocol>udp</protocol>

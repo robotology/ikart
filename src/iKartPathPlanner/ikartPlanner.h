@@ -106,8 +106,10 @@ class PlannerThread: public yarp::os::RateThread
         mapFinder.setDefaultContext(default_map_path.c_str());
         mapFinder.configure("ICUB_ROOT",0,0);
 
-        string map_filename = mapFinder.getContextPath() + "/" + rf.find("map_file").asString();
-        //string map_filename = rf.find("map_file").asString().c_str();
+        string map_filename;
+        map_filename = mapFinder.getContextPath().c_str() + string("/");
+        map_filename = map_filename + rf.find("map_file").asString().c_str();
+        //map_filename = rf.find("map_file").asString().c_str();
         if (!map.loadMap(map_filename))
         {
             printf("map file not found, closing\n");

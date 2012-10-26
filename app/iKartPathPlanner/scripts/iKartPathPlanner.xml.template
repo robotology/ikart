@@ -38,7 +38,7 @@
 </connection>
 
 <connection>
-  <from>/iKartPathPlanner/map:o</from>
+  <from>/ikartPathPlanner/map:o</from>
   <to>/plannerView</to>
   <protocol>udp</protocol>
 </connection>

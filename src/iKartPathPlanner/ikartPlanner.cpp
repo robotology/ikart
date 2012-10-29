@@ -176,19 +176,27 @@ void PlannerThread::sendWaypoint()
     cell waypoint = current_path.front();
     current_path.pop();
     //send the waypoint to the inner controller
-    Bottle &b=this->port_commands_output.prepare();
-    b.clear();
-    b.addString("gotoAbs"); 
+    Bottle cmd1, ans1;
+    cmd1.addString("gotoAbs"); 
     yarp::sig::Vector v = map.cell2world(waypoint);
-    b.addDouble(v[0]);
-    b.addDouble(v[1]);
+    cmd1.addDouble(v[0]);
+    cmd1.addDouble(v[1]);
     if (current_path.size()==1 && target_data.size()==3)
     {
         //add the orientation to the last waypoint
-        b.addDouble(target_data[3]);
+        cmd1.addDouble(target_data[3]);
     }
-    printf ("sending command: %s\n", b.toString().c_str());
-    port_commands_output.write();
+    printf ("sending command: %s\n", cmd1.toString().c_str());
+    port_commands_output.write(cmd1,ans1);
+    printf ("received answer: %s\n", ans1.toString().c_str());
+
+    Bottle cmd2, ans2;
+    cmd2.addString("get");
+    cmd2.addString("navigation_status");
+    printf ("sending command: %s\n", cmd2.toString().c_str());
+    port_commands_output.write(cmd2,ans2);
+    printf ("received answer: %s\n", ans2.toString().c_str());
+    inner_status = string2status(ans2.toString().c_str());
 }
 
 void PlannerThread::startNewPath(cell target)
@@ -221,19 +229,17 @@ void PlannerThread::startNewPath(cell target)
     }*/
 
     //send the tolerance to the inner controller
-    Bottle &b1=this->port_commands_output.prepare();
-    b1.clear();
-    b1.addString("set"); 
-    b1.addString("linear_tol");
-    b1.addDouble(waypoint_tolerance_lin);
-    port_commands_output.write();
+    Bottle cmd1, ans1;
+    cmd1.addString("set"); 
+    cmd1.addString("linear_tol");
+    cmd1.addDouble(waypoint_tolerance_lin);
+    port_commands_output.write(cmd1,ans1);
 
-    Bottle &b2=this->port_commands_output.prepare();
-    b2.clear();
-    b2.addString("set"); 
-    b2.addString("angular_tol");
-    b2.addDouble(waypoint_tolerance_ang);
-    port_commands_output.write();
+    Bottle cmd2, ans2;
+    cmd2.addString("set"); 
+    cmd2.addString("angular_tol");
+    cmd2.addDouble(waypoint_tolerance_ang);
+    port_commands_output.write(cmd2,ans2);
 
     //just set the status to moving, do not set position commands.
     //The wayypoint ist set in the main 'run' loop.

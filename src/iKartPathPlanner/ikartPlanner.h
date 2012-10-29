@@ -33,8 +33,10 @@
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
+#include <yarp/os/RpcClient.h>
 #include <string>
 
+#include "status.h"
 #include "map.h"
 
 using namespace std;
@@ -44,89 +46,6 @@ using namespace yarp::dev;
 #ifndef M_PI
 #define M_PI 3.14159265
 #endif
-
-enum    status_enum {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
-
-class   status_type
-{
-    private:
-    status_enum internal_status;
-
-    public:
-    status_type ()
-    {
-        internal_status = IDLE;
-    }
-
-    string      getStatusAsString()
-    {
-        string s;
-        if      (internal_status == IDLE)     s = "IDLE";
-        else if (internal_status == MOVING)   s = "MOVING";
-        else if (internal_status == WAITING_OBSTACLE)  s = "WAITING_OBSTACLE";
-        else if (internal_status == REACHED)  s = "REACHED";
-        else if (internal_status == ABORTED)  s = "ABORTED";
-        else if (internal_status == PAUSED)   s = "PAUSED";
-        else 
-        {
-            printf ("ERROR: unknown status of inner controller!");
-            s = "IDLE";
-        }
-        return s;
-    }
-
-    //status_type getStatusAsEnum();
-    //status_type getStatusAsVocab();
-
-    status_type& operator=(const status_enum &s)
-    {
-        this->internal_status=s;
-        return *this;
-    }
-
-    status_type& operator=(const string &s)
-    {
-        //enum status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
-        status_enum status;
-        if      (s=="IDLE")     status = IDLE;
-        else if (s=="MOVING")   status = MOVING;
-        else if (s=="WAITING_OBSTACLE")  status = WAITING_OBSTACLE;
-        else if (s=="REACHED")  status = REACHED;
-        else if (s=="ABORTED")  status = ABORTED;
-        else if (s=="PAUSED")   status = PAUSED;
-        else 
-        {
-            printf ("ERROR: unknown status of inner controller!");
-            status = IDLE;
-        }
-        this->internal_status=status;
-        return *this;
-    }
-
-    bool operator==(const status_type &s) const
-    {
-        if (s.internal_status==this->internal_status)
-            return true;
-        else
-            return false;
-    }
-
-    bool operator==(const status_enum &s) const
-    {
-        if (s==this->internal_status)
-            return true;
-        else
-            return false;
-    }
-
-    bool operator!=(const status_enum &s) const
-    {
-        if (s!=this->internal_status)
-            return true;
-        else
-            return false;
-    }
-};
 
 class PlannerThread: public yarp::os::RateThread
 {
@@ -148,7 +67,7 @@ class PlannerThread: public yarp::os::RateThread
 
     BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > port_map_output;
     BufferedPort<yarp::os::Bottle>                         port_status_output;
-    BufferedPort<yarp::os::Bottle>                         port_commands_output;
+    RpcClient                                              port_commands_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;

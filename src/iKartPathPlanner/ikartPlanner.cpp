@@ -128,7 +128,7 @@ void PlannerThread::run()
     else
     {
         //unknown status
-        printf ("unknown status:%d\n", planner_status);
+        printf ("unknown status:%d\n", planner_status.getStatusAsInt());
     }
 
     //broadcast the planner status

@@ -37,6 +37,11 @@ class   status_type
         internal_status = IDLE;
     }
 
+    int getStatusAsInt()
+    {
+        return internal_status;
+    }
+
     string      getStatusAsString()
     {
         string s;

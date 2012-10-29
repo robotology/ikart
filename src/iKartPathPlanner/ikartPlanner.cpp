@@ -158,21 +158,28 @@ void PlannerThread::run()
 
 void PlannerThread::sendWaypoint()
 {
+    if (current_path.size()==0)
+    {
+        printf("Path queue is empty!\n");
+        planner_status=IDLE;
+        return;
+    }
     //get the next waypoint from the list
     cell waypoint = current_path.front();
     current_path.pop();
     //send the waypoint to the inner controller
-    Bottle &b=this->port_status_output.prepare();
+    Bottle &b=this->port_commands_output.prepare();
     b.clear();
     b.addString("gotoAbs"); 
-    b.addDouble(waypoint.x);
-    b.addDouble(waypoint.y);
+    yarp::sig::Vector v = map.cell2world(waypoint);
+    b.addDouble(v[0]);
+    b.addDouble(v[1]);
     if (current_path.size()==1 && target_data.size()==3)
     {
         //add the orientation to the last waypoint
         b.addDouble(target_data[3]);
     }
-    port_status_output.write();
+    port_commands_output.write();
     printf ("sending command: %s\n", b.toString().c_str());
 }
 

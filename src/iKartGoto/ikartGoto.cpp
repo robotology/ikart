@@ -166,30 +166,6 @@ void GotoThread::run()
         retreat_counter--;
     }
 
-    //update status string
-    status_string = "ERROR";
-    switch (status)
-    {
-        case IDLE:
-        status_string = "IDLE";
-        break;
-        case MOVING:
-        status_string = "MOVING";
-        break;
-        case WAITING_OBSTACLE:
-        status_string = "WAITING_OBSTACLE";
-        break;
-        case REACHED:    
-        status_string = "REACHED";
-        break;
-        case ABORTED:
-        status_string = "ABORTED";
-        break;
-        case PAUSED:
-        status_string = "PAUSED";
-        break;
-    }
-
     sendOutput();
 }
 
@@ -210,7 +186,7 @@ void GotoThread::sendOutput()
     if (port_status_output.getOutputCount()>0)
     {
         string string_out;
-        string_out = status_string;
+        string_out = status.getStatusAsString();
         Bottle &b=port_status_output.prepare();
         b.clear();
         b.addString(string_out.c_str());
@@ -287,7 +263,7 @@ void GotoThread::stopMovement()
 
 string GotoThread::getNavigationStatus()
 {
-    return status_string;
+    return status.getStatusAsString();
 }
 
 void GotoThread::printStats()
@@ -296,5 +272,5 @@ void GotoThread::printStats()
     fprintf (stdout,"* ikartGoto thread:\n");
     fprintf (stdout,"loc timeouts: %d\n",loc_timeout_counter);
     fprintf (stdout,"odm timeouts: %d\n",odm_timeout_counter);
-    fprintf (stdout,"status: %s\n",status_string.c_str());
+    fprintf (stdout,"status: %s\n",status.getStatusAsString().c_str());
 }

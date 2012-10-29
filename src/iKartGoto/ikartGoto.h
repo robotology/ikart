@@ -33,6 +33,8 @@
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
 
+#include "status.h"
+
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
@@ -80,12 +82,11 @@ class GotoThread: public yarp::os::RateThread
     yarp::sig::Vector   target_data;
     yarp::sig::Vector   laser_data;
     yarp::sig::Vector   control_out;
-    enum                status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED} status;
+    status_type         status;
     int                 loc_timeout_counter;
     int                 odm_timeout_counter;
     int                 retreat_counter;
     double              obstacle_time;
-    string              status_string;
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :

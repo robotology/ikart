@@ -114,7 +114,7 @@ void PlannerThread::run()
         }
         else
         {
-            printf ("unrecognized inner status: %d\n", inner_status);
+            printf ("unrecognized inner status: %d\n", inner_status.getStatusAsInt());
         }
     }
     else if (planner_status == REACHED)

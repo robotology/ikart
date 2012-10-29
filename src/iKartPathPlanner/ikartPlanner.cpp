@@ -39,6 +39,24 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+status_type string2status(string s)
+{
+    //enum status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
+    status_type status;
+    if      (s=="IDLE")     status = IDLE;
+    else if (s=="MOVING")   status = MOVING;
+    else if (s=="WAITING_OBSTACLE")  status = WAITING_OBSTACLE;
+    else if (s=="REACHED")  status = REACHED;
+    else if (s=="ABORTED")  status = ABORTED;
+    else if (s=="PAUSED")   status = PAUSED;
+    else 
+    {
+        printf ("ERROR: unknown status of inner controller!");
+        status = IDLE;
+    }
+    return status;
+}
+
 void PlannerThread::run()
 {
     //read the localization data
@@ -57,18 +75,7 @@ void PlannerThread::run()
         string s = st->get(0).toString().c_str();
         inner_status_timeout_counter=0;
         //convet s to inner status
-        //enum status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
-        if      (s=="IDLE")     inner_status = IDLE;
-        else if (s=="MOVING")   inner_status = MOVING;
-        else if (s=="WAITING_OBSTACLE")  inner_status = WAITING_OBSTACLE;
-        else if (s=="REACHED")  inner_status = REACHED;
-        else if (s=="ABORTED")  inner_status = ABORTED;
-        else if (s=="PAUSED")   inner_status = PAUSED;
-        else 
-        {
-            printf ("ERROR: unknown status of inner controller!");
-            inner_status = IDLE;
-        }
+        inner_status = string2status(s);
     }
     else inner_status_timeout_counter++;
 
@@ -127,7 +134,7 @@ void PlannerThread::run()
     //broadcast the planner status
     if (port_status_output.getOutputCount()>0)
     {
-        string s;
+        string s = planner_status.getStatusAsString();
         Bottle &b=this->port_status_output.prepare();
         b.clear();
         b.addString(s.c_str());
@@ -158,7 +165,8 @@ void PlannerThread::run()
 
 void PlannerThread::sendWaypoint()
 {
-    if (current_path.size()==0)
+    int path_size = current_path.size();
+    if (path_size==0)
     {
         printf("Path queue is empty!\n");
         planner_status=IDLE;
@@ -179,8 +187,8 @@ void PlannerThread::sendWaypoint()
         //add the orientation to the last waypoint
         b.addDouble(target_data[3]);
     }
-    port_commands_output.write();
     printf ("sending command: %s\n", b.toString().c_str());
+    port_commands_output.write();
 }
 
 void PlannerThread::startNewPath(cell target)
@@ -296,7 +304,7 @@ void PlannerThread::printStats()
 
 string PlannerThread::getNavigationStatus()
 {
-    string s= "IDLE";
+    string s= planner_status.getStatusAsString();
     return s;
 }
 

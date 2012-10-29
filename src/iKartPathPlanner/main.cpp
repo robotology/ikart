@@ -118,8 +118,8 @@ public:
             else if (command.get(0).asString()=="help")
             {
                 reply.addString("Available commands are:");
-                reply.addString("goToAbs <x> <y> <angle>");
-                reply.addString("goToRel <x> <y> <angle>");
+                reply.addString("gotoAbs <x> <y> <angle>");
+                reply.addString("gotoRel <x> <y> <angle>");
                 reply.addString("stop");
                 reply.addString("pause");
                 reply.addString("resume");

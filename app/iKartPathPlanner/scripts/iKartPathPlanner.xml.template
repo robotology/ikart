@@ -20,7 +20,7 @@
 
 <module>
    <name>yarpview</name>
-   <parameters>--name /plannerView</parameters>
+   <parameters>--name /plannerView:i --out /mapClick:o</parameters>
    <node>icub14</node>
    <tag>PlannerViewer</tag>
 </module>
@@ -39,7 +39,7 @@
 
 <connection>
   <from>/ikartPathPlanner/map:o</from>
-  <to>/plannerView</to>
+  <to>/plannerView:i</to>
   <protocol>udp</protocol>
 </connection>
 
@@ -52,13 +52,19 @@
 <connection>
   <from>/ikartGoto/status:o</from>
   <to>/ikartPathPlanner/navigationStatus:i</to>
-  <protocol>udp</protocol>
+  <protocol>tcp</protocol>
 </connection>
 
 <connection>
   <from>/ikart/odometry:o</from>
   <to>/ikartGoto/odometry:i</to>
   <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/mapClick:o</from>
+  <to>/yarpviewTarget:i</to>
+  <protocol>tcp</protocol>
 </connection>
 
 </application>

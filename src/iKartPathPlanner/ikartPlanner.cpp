@@ -90,9 +90,16 @@ void PlannerThread::run()
                 printf ("navigation complete\n");
                 planner_status = REACHED;
             }
+            else if (current_path.size() == 1)
+            {
+                 //send the next waypoint
+                printf ("sending the last waypoint\n");
+                sendWaypoint();
+            }
             else
             {
                 //send the next waypoint
+                 printf ("sending the next waypoint\n");
                 sendWaypoint();
             }
         }
@@ -110,6 +117,7 @@ void PlannerThread::run()
         else if (inner_status == IDLE)
         {
             //send the first waypoint
+            printf ("sending the first waypoint\n");
             sendWaypoint();
         }
         else

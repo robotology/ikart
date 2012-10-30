@@ -80,17 +80,18 @@ void PlannerThread::run()
     else inner_status_timeout_counter++;
 
     //check if the next waypoint has to be sent
+    int path_size = current_path.size();
     if (planner_status == MOVING)
     {
         if (inner_status == REACHED)
         {
-            if (current_path.size() == 0)
+            if (path_size == 0)
             {
                 //navigation is complete
                 printf ("navigation complete\n");
                 planner_status = REACHED;
             }
-            else if (current_path.size() == 1)
+            else if (path_size == 1)
             {
                  //send the next waypoint
                 printf ("sending the last waypoint\n");
@@ -192,7 +193,7 @@ void PlannerThread::sendWaypoint()
     if (current_path.size()==1 && target_data.size()==3)
     {
         //add the orientation to the last waypoint
-        cmd1.addDouble(target_data[3]);
+        cmd1.addDouble(target_data[2]);
     }
     printf ("sending command: %s\n", cmd1.toString().c_str());
     port_commands_output.write(cmd1,ans1);

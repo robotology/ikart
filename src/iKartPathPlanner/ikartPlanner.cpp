@@ -59,6 +59,17 @@ status_type string2status(string s)
 
 void PlannerThread::run()
 {
+    //read a target set from a yarpview
+    yarp::os::Bottle *gui_targ = port_yarpview_target_input.read(false);
+    if (gui_targ)
+    {
+        cell c;
+        c.x=(*gui_targ).get(0).asInt();
+        c.y=(*gui_targ).get(1).asInt();
+        yarp::sig::Vector v = map.cell2world(c);
+        printf ("selected point is located at (%6.3f, %6.3f)\n", v[0], v[1]);
+    }
+
     //read the localization data
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc)

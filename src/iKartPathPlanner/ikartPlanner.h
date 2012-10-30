@@ -64,6 +64,7 @@ class PlannerThread: public yarp::os::RateThread
     BufferedPort<yarp::sig::Vector>                        port_localization_input;
     BufferedPort<yarp::os::Bottle>                         port_status_input;
     BufferedPort<yarp::sig::Vector>                        port_laser_input;
+    BufferedPort<yarp::os::Bottle>                         port_yarpview_target_input;
 
     BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > port_map_output;
     BufferedPort<yarp::os::Bottle>                         port_status_output;
@@ -130,13 +131,14 @@ class PlannerThread: public yarp::os::RateThread
         port_status_output.open((localName+"/plannerStatus:o").c_str());
         port_commands_output.open((localName+"/commands:o").c_str());
         port_map_output.open((localName+"/map:o").c_str());
+        port_yarpview_target_input.open((localName+"/yarpviewTarget:i").c_str());
 
         //automatic port connections
         bool b = false;
         b = Network::connect("/ikart_ros_bridge/localization:o",(localName+"/localization:i").c_str(), "udp", false);
-       // if (!b) {fprintf (stderr,"Unable to connect the localization port!"); return false;}
+        // if (!b) {fprintf (stderr,"Unable to connect the localization port!\n"); return false;}
         b = Network::connect("/ikart/laser:o",(localName+"/laser:i").c_str(), "udp", false);
-        if (!b) {fprintf (stderr,"Unable to connect the laser port!"); }
+        if (!b) {fprintf (stderr,"Unable to connect the laser port!\n"); }
         return true;
     }
 
@@ -165,6 +167,8 @@ class PlannerThread: public yarp::os::RateThread
         port_status_output.close();
         port_commands_output.interrupt();
         port_commands_output.close();
+        port_yarpview_target_input.interrupt();
+        port_yarpview_target_input.close();
     }
 
     void printStats();

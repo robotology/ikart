@@ -190,21 +190,21 @@ void PlannerThread::sendWaypoint()
     yarp::sig::Vector v = map.cell2world(waypoint);
     cmd1.addDouble(v[0]);
     cmd1.addDouble(v[1]);
-    if (current_path.size()==1 && target_data.size()==3)
+    if (path_size==1 && target_data.size()==3)
     {
         //add the orientation to the last waypoint
         cmd1.addDouble(target_data[2]);
     }
     printf ("sending command: %s\n", cmd1.toString().c_str());
     port_commands_output.write(cmd1,ans1);
-    printf ("received answer: %s\n", ans1.toString().c_str());
+    //printf ("received answer: %s\n", ans1.toString().c_str());
 
     Bottle cmd2, ans2;
     cmd2.addString("get");
     cmd2.addString("navigation_status");
-    printf ("sending command: %s\n", cmd2.toString().c_str());
+    //printf ("sending command: %s\n", cmd2.toString().c_str());
     port_commands_output.write(cmd2,ans2);
-    printf ("received answer: %s\n", ans2.toString().c_str());
+    //printf ("received answer: %s\n", ans2.toString().c_str());
     inner_status = string2status(ans2.toString().c_str());
 }
 

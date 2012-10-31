@@ -82,7 +82,8 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
         for(int j=0; j<src_mat.cols; j++) 
         {
             if ((src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0) ||
-                (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0 ))
+                (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0) ||
+                (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36))
             {
                 //dst_mat.at<cv::Vec3b>(i,j)[0]=       0; dst_mat.at<cv::Vec3b>(i,j)[1]=     0; dst_mat.at<cv::Vec3b>(i,j)[2]=     0;
                 dst_mat.at<cv::Vec3b>(i,j)[0]= src_mat.at<cv::Vec3b>(i,j)[0];
@@ -93,7 +94,7 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
                 int ir = i+1<src_mat.rows-1?i+1:src_mat.rows-1;
                 int ju = j-1>0?j-1:0;
                 int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
-                printf ("-- %d %d %d %d\n", il, ir, ju, jd);
+                //printf ("-- %d %d %d %d\n", il, ir, ju, jd);
                 b = &dst_mat.at<cv::Vec3b>(il,j);
                 if ((*b) == white) (*b) = red;
                 b = &dst_mat.at<cv::Vec3b>(ir,j);

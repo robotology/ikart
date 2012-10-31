@@ -50,10 +50,10 @@ using namespace yarp::dev;
 class PlannerThread: public yarp::os::RateThread
 {
     public:
-    double goal_tolerance_lin;      //m 
-    double goal_tolerance_ang;      //deg
-    double waypoint_tolerance_lin;  //m 
-    double waypoint_tolerance_ang;  //deg
+    double goal_tolerance_lin;       //m 
+    double goal_tolerance_ang;       //deg
+    double waypoint_tolerance_lin;   //m 
+    double waypoint_tolerance_ang;   //deg
 
     protected:
     //configuration parameters

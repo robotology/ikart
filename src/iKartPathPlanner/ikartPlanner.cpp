@@ -106,6 +106,20 @@ void PlannerThread::run()
             {
                  //send the next waypoint
                 printf ("sending the last waypoint\n");
+
+                //send the tolerance to the inner controller
+                Bottle cmd1, ans1;
+                cmd1.addString("set"); 
+                cmd1.addString("linear_tol");
+                cmd1.addDouble(goal_tolerance_lin);
+                port_commands_output.write(cmd1,ans1);
+
+                Bottle cmd2, ans2;
+                cmd2.addString("set"); 
+                cmd2.addString("angular_tol");
+                cmd2.addDouble(goal_tolerance_ang);
+                port_commands_output.write(cmd2,ans2);
+
                 sendWaypoint();
             }
             else
@@ -130,6 +144,20 @@ void PlannerThread::run()
         {
             //send the first waypoint
             printf ("sending the first waypoint\n");
+
+            //send the tolerance to the inner controller
+            Bottle cmd1, ans1;
+            cmd1.addString("set"); 
+            cmd1.addString("linear_tol");
+            cmd1.addDouble(waypoint_tolerance_lin);
+            port_commands_output.write(cmd1,ans1);
+
+            Bottle cmd2, ans2;
+            cmd2.addString("set"); 
+            cmd2.addString("angular_tol");
+            cmd2.addDouble(waypoint_tolerance_ang);
+            port_commands_output.write(cmd2,ans2);
+
             sendWaypoint();
         }
         else
@@ -248,19 +276,6 @@ void PlannerThread::startNewPath(cell target)
         printf ("%d %d %d\n",i,c.x, c.y);
     }*/
 
-    //send the tolerance to the inner controller
-    Bottle cmd1, ans1;
-    cmd1.addString("set"); 
-    cmd1.addString("linear_tol");
-    cmd1.addDouble(waypoint_tolerance_lin);
-    port_commands_output.write(cmd1,ans1);
-
-    Bottle cmd2, ans2;
-    cmd2.addString("set"); 
-    cmd2.addString("angular_tol");
-    cmd2.addDouble(waypoint_tolerance_ang);
-    port_commands_output.write(cmd2,ans2);
-
     //just set the status to moving, do not set position commands.
     //The wayypoint ist set in the main 'run' loop.
     planner_status = MOVING;
@@ -305,8 +320,8 @@ void PlannerThread::stopMovement()
     {
         printf ("Navigation stopped\n");
         planner_status=IDLE;
-        yarp::sig::Vector v(3,0.0);
-        setNewRelTarget(v);
+        //yarp::sig::Vector v(3,0.0);
+        //setNewRelTarget(v);
     }
     else
     {

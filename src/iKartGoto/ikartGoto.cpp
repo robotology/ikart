@@ -97,16 +97,23 @@ void GotoThread::run()
     control_out[1] =  k_lin_gain * distance;
     control_out[2] =  k_ang_gain * gamma;
     
-    //saturation
-    if (control_out[2] > +max_ang_speed) control_out[2] =  max_ang_speed;
+    //max saturation
+    if (control_out[2] > +max_ang_speed) control_out[2] = +max_ang_speed;
     if (control_out[2] < -max_ang_speed) control_out[2] = -max_ang_speed;
 
-    if (control_out[1] > +max_lin_speed) control_out[1] =  max_lin_speed;
+    if (control_out[1] > +max_lin_speed) control_out[1] = +max_lin_speed;
     if (control_out[1] < -max_lin_speed) control_out[1] = -max_lin_speed;
 
+    //min saturation
+    if (control_out[2] < +min_ang_speed) control_out[2] = +min_ang_speed;
+    if (control_out[2] > -min_ang_speed) control_out[2] = -min_ang_speed;
+
+    if (control_out[1] < +min_lin_speed) control_out[1] = +min_lin_speed;
+    if (control_out[1] > -min_lin_speed) control_out[1] = -min_lin_speed;
+
     //check for obstacles
-    if (enable_stop_on_obstacles)    
-    {   
+    if (enable_stop_on_obstacles)
+    {
         bool obstacles_in_path = check_obstacles_in_path();
         if (status==MOVING && obstacles_in_path)
         {
@@ -155,7 +162,7 @@ void GotoThread::run()
 
     if (status != MOVING)
     {
-       control_out[0]=control_out[1]=control_out[2] = 0.0;        
+       control_out[0]=control_out[1]=control_out[2] = 0.0;
     }
 
     if (enable_retreat && retreat_counter >0)

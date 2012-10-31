@@ -16,6 +16,7 @@
  * Public License for more details
 */
 
+
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Bottle.h>
@@ -96,21 +97,32 @@ void GotoThread::run()
 //printf ("%f \n", control[0]);
     control_out[1] =  k_lin_gain * distance;
     control_out[2] =  k_ang_gain * gamma;
-    
-    //max saturation
-    if (control_out[2] > +max_ang_speed) control_out[2] = +max_ang_speed;
-    if (control_out[2] < -max_ang_speed) control_out[2] = -max_ang_speed;
 
-    if (control_out[1] > +max_lin_speed) control_out[1] = +max_lin_speed;
-    if (control_out[1] < -max_lin_speed) control_out[1] = -max_lin_speed;
-
-    //min saturation
-    if (control_out[2] < +min_ang_speed) control_out[2] = +min_ang_speed;
-    if (control_out[2] > -min_ang_speed) control_out[2] = -min_ang_speed;
-
-    if (control_out[1] < +min_lin_speed) control_out[1] = +min_lin_speed;
-    if (control_out[1] > -min_lin_speed) control_out[1] = -min_lin_speed;
-
+    //control saturation
+    //printf ("%f %f ", control_out[2], control_out[1]);
+    if (control_out[2] > 0 )
+    {
+      if (control_out[2] > +max_ang_speed) control_out[2] = +max_ang_speed;
+      if (control_out[2] < +min_ang_speed) control_out[2] = +min_ang_speed; 
+    }
+    else
+    {
+      if (control_out[2] < -max_ang_speed) control_out[2] = -max_ang_speed;
+      if (control_out[2] > -min_ang_speed) control_out[2] = -min_ang_speed;
+    }
+   
+    if (control_out[1] > 0 )
+    {
+      if (control_out[1] > +max_lin_speed) control_out[1] = +max_lin_speed;
+      if (control_out[1] < +min_lin_speed) control_out[1] = +min_lin_speed; 
+    }
+    else
+    {
+      if (control_out[1] < -max_lin_speed) control_out[1] = -max_lin_speed;
+      if (control_out[1] > -min_lin_speed) control_out[1] = -min_lin_speed;
+    }
+    //printf ("%f %f \n", control_out[2], control_out[1]);
+      
     //check for obstacles
     if (enable_stop_on_obstacles)
     {

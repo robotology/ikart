@@ -114,6 +114,10 @@ public:
             reply.addString("quit");
             reply.addString("set linear_tol <m>");
             reply.addString("set linear_ang <deg>");
+            reply.addString("set max_lin_speed <m/s>");
+            reply.addString("set max_ang_speed <deg/s>");
+            reply.addString("set min_lin_speed <m/s>");
+            reply.addString("set min_ang_speed <deg/s>");
         }
 
         else if (command.get(0).asString()=="gotoAbs")
@@ -146,6 +150,26 @@ public:
             {
                 gotoThread->goal_tolerance_ang=command.get(2).asDouble();
                 reply.addString("angular_tol set.");
+            }
+            else if (command.get(1).asString()=="max_lin_speed")
+            {
+                gotoThread->max_lin_speed=command.get(2).asDouble();
+                reply.addString("max_lin_speed set.");
+            }
+            else if (command.get(1).asString()=="max_ang_speed")
+            {
+                gotoThread->max_ang_speed=command.get(2).asDouble();
+                reply.addString("max_ang_speed set.");
+            }
+            else if (command.get(1).asString()=="min_lin_speed")
+            {
+                gotoThread->min_lin_speed=command.get(2).asDouble();
+                reply.addString("min_lin_speed set.");
+            }
+            else if (command.get(1).asString()=="min_ang_speed")
+            {
+                gotoThread->min_ang_speed=command.get(2).asDouble();
+                reply.addString("min_ang_speed set.");
             }
             else
             {

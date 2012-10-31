@@ -54,15 +54,18 @@ class GotoThread: public yarp::os::RateThread
     double goal_tolerance_lin;  //m 
     double goal_tolerance_ang;  //deg
 
-    protected:
+    public:
     //configuration parameters
     double k_ang_gain;
     double k_lin_gain;
     double max_lin_speed;       //m/s
     double max_ang_speed;       //deg/s
+    double min_lin_speed;       //m/s
+    double min_ang_speed;       //deg/s
     double robot_radius;        //m
     int    retreat_duration; 
 
+    protected:
     //pause info
     double pause_start;
     double pause_duration;
@@ -115,12 +118,16 @@ class GotoThread: public yarp::os::RateThread
         k_lin_gain = 0.1;
         max_lin_speed = 0.9;  //m/s
         max_ang_speed = 10.0; //deg/s
+        min_lin_speed = 0.0;  //m/s
+        min_ang_speed = 0.0; //deg/s
         robot_radius = 0.30;  //m
         printf ("Using following paramters:\n %s\n", rf.toString().c_str());
         if (rf.check("ang_speed_gain"))     {k_ang_gain = rf.find("ang_speed_gain").asDouble();}
         if (rf.check("lin_speed_gain"))     {k_lin_gain = rf.find("lin_speed_gain").asDouble();}
         if (rf.check("max_lin_speed"))      {max_lin_speed = rf.find("max_lin_speed").asDouble();}
         if (rf.check("max_ang_speed"))      {max_ang_speed = rf.find("max_ang_speed").asDouble();}
+        if (rf.check("min_lin_speed"))      {min_lin_speed = rf.find("min_lin_speed").asDouble();}
+        if (rf.check("min_ang_speed"))      {min_ang_speed = rf.find("min_ang_speed").asDouble();}
         if (rf.check("robot_radius"))       {robot_radius = rf.find("robot_radius").asDouble();}
         if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
         if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}

@@ -63,7 +63,7 @@
 
 <connection>
   <from>/mapClick:o</from>
-  <to>/yarpviewTarget:i</to>
+  <to>/ikartPathPlanner/yarpviewTarget:i</to>
   <protocol>tcp</protocol>
 </connection>
 

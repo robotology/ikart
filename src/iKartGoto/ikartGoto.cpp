@@ -144,10 +144,21 @@ void GotoThread::run()
     //printf ("%f %f %f \n", gamma, beta, distance);
     if (status == MOVING)
     {
-        if (fabs(distance) < goal_tolerance_lin && fabs(gamma) < goal_tolerance_ang) 
+        if (target_data.weak_angle)
         {
-            status=REACHED;
-            fprintf (stdout, "Goal reached!\n");
+             if (fabs(distance) < goal_tolerance_lin)
+            {
+                status=REACHED;
+                fprintf (stdout, "Goal reached!\n");
+            }
+        }
+        else
+        {
+            if (fabs(distance) < goal_tolerance_lin && fabs(gamma) < goal_tolerance_ang) 
+            {
+                status=REACHED;
+                fprintf (stdout, "Goal reached!\n");
+            }
         }
     }
 
@@ -216,13 +227,15 @@ void GotoThread::sendOutput()
 void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
 {
     //data is formatted as follows: x, y, angle
+    target_data.weak_angle=false;
     if (target.size()==2) 
     {
         //if the angle information is missing use as final orientation the direction in which the iKart has to move
         double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
         target.push_back(beta);
+        target_data.weak_angle=true;
     }
-    target_data=target;
+    target_data.target=target;
     status=MOVING;
     fprintf (stdout, "received new target\n");
     retreat_counter = retreat_duration;
@@ -231,7 +244,12 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
 void GotoThread::setNewRelTarget(yarp::sig::Vector target)
 {
     //data is formatted as follows: x, y, angle
-    if (target.size()==2) target.push_back(0.0);
+    target_data.weak_angle=false;
+    if (target.size()==2) 
+    {
+        target.push_back(0.0);
+        target_data.weak_angle=true;
+    }
     double a = localization_data[2]/180.0*M_PI;
     target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
     target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;

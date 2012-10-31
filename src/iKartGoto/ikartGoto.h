@@ -43,6 +43,15 @@ using namespace yarp::dev;
 #define M_PI 3.14159265
 #endif
 
+struct target_type
+{
+    yarp::sig::Vector target;
+    bool              weak_angle;
+
+    target_type() {weak_angle=false; target.resize(3,0.0);}
+    double& operator[] (const int& i) { return target[i]; }
+};
+
 class GotoThread: public yarp::os::RateThread
 {
     private:
@@ -82,7 +91,7 @@ class GotoThread: public yarp::os::RateThread
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
     yarp::sig::Vector   odometry_data;
-    yarp::sig::Vector   target_data;
+    target_type         target_data;
     yarp::sig::Vector   laser_data;
     yarp::sig::Vector   control_out;
     status_type         status;
@@ -100,7 +109,6 @@ class GotoThread: public yarp::os::RateThread
         loc_timeout_counter = 0;
         odm_timeout_counter = 0;
         localization_data.resize(3,0.0);
-        target_data.resize(3,0.0);
         laser_data.resize(1080,1000.0);
         retreat_counter = 0;
         enable_stop_on_obstacles = true;

@@ -245,7 +245,7 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
         if (map.nodes[curr.x+1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x+1][curr.y+1]);
         if (map.nodes[curr.x+1][curr.y-1].empty) neighbors.push_back(map.nodes[curr.x+1][curr.y-1]);
         if (map.nodes[curr.x-1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
-        if (map.nodes[curr.x-1][curr.y+1].empty) neighbors.push_back(map.nodes[curr.x-1][curr.y+1]);
+        if (map.nodes[curr.x-1][curr.y-1].empty) neighbors.push_back(map.nodes[curr.x-1][curr.y-1]);
         /*int cl = curr.x-1>0?curr.x-1:0;
         int cu = curr.y-1>0?curr.y-1:0;
         int cr = curr.x+1<map.w?curr.x+1:map.w-1;

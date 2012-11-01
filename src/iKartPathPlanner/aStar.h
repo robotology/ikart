@@ -225,7 +225,6 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
                     c.x=map.nodes[old_cx][old_cy].came_from.x;
                     c.y=map.nodes[old_cx][old_cy].came_from.y;
                 }
-                printf("size: %d\n", inverse_path.size());
 
                 //reverse the path
                 for (int i=inverse_path.size()-1; i>=0; i--)

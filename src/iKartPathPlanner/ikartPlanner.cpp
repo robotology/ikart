@@ -284,14 +284,7 @@ void PlannerThread::startNewPath(cell target)
 
     //search for an simpler path (waypoint optimization)
     map.simplifyPath(map.processed_map, current_path, current_simplified_path);
-    //current_path = simpler_path;
-
-    printf ("time: %f\n", t2-t1);
-    /*for (int i=0; i<simpler_path.size(); i++)
-    {
-        cell c = simpler_path._Get_container().at(i);
-        printf ("%d %d %d\n",i,c.x, c.y);
-    }*/
+    printf ("path size:%d simplified path size:%d time: %.2f\n\n", current_path.size(), current_simplified_path.size(), t2-t1);
 
     //just set the status to moving, do not set position commands.
     //The wayypoint ist set in the main 'run' loop.

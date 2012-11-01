@@ -70,47 +70,63 @@ bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>
     return false;
 }
 
+void map_class::enlargePixel (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat, cv::Vec3b& color)
+{
+    static cv::Vec3b white (254,254,254);
+    //dst_mat.at<cv::Vec3b>(i,j)[0]=       0; dst_mat.at<cv::Vec3b>(i,j)[1]=     0; dst_mat.at<cv::Vec3b>(i,j)[2]=     0;
+    dst_mat.at<cv::Vec3b>(i,j)[0]= src_mat.at<cv::Vec3b>(i,j)[0];
+    dst_mat.at<cv::Vec3b>(i,j)[1]= src_mat.at<cv::Vec3b>(i,j)[1];
+    dst_mat.at<cv::Vec3b>(i,j)[2]= src_mat.at<cv::Vec3b>(i,j)[2];
+    cv::Vec3b* b;
+    int il = i-1>0?i-1:0;
+    int ir = i+1<src_mat.rows-1?i+1:src_mat.rows-1;
+    int ju = j-1>0?j-1:0;
+    int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
+    //printf ("-- %d %d %d %d\n", il, ir, ju, jd);
+    b = &dst_mat.at<cv::Vec3b>(il,j);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(ir,j);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(i,ju);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(i,jd);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(il,ju);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(il,jd);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(ir,jd);
+    if ((*b) == white) (*b) = color;
+    b = &dst_mat.at<cv::Vec3b>(ir,ju);
+    if ((*b) == white) (*b) = color;
+}
+
 bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 {
     cv::Mat src_mat = src;
     cv::Mat dst_mat = dst;
     //cvErode(loaded_map,processed_map,0,6);
-    cv::Vec3b white (254,254,254);
-    cv::Vec3b red   (255,0,0);
+    cv::Vec3b red    (255,0,0);
+    cv::Vec3b orange (255,100,0);
     for(int i=0; i<src_mat.rows; i++)
     {
         for(int j=0; j<src_mat.cols; j++) 
         {
-            if ((src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0) ||
-                (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0) ||
-                (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36))
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
             {
-                //dst_mat.at<cv::Vec3b>(i,j)[0]=       0; dst_mat.at<cv::Vec3b>(i,j)[1]=     0; dst_mat.at<cv::Vec3b>(i,j)[2]=     0;
-                dst_mat.at<cv::Vec3b>(i,j)[0]= src_mat.at<cv::Vec3b>(i,j)[0];
-                dst_mat.at<cv::Vec3b>(i,j)[1]= src_mat.at<cv::Vec3b>(i,j)[1];
-                dst_mat.at<cv::Vec3b>(i,j)[2]= src_mat.at<cv::Vec3b>(i,j)[2];
-                cv::Vec3b* b;
-                int il = i-1>0?i-1:0;
-                int ir = i+1<src_mat.rows-1?i+1:src_mat.rows-1;
-                int ju = j-1>0?j-1:0;
-                int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
-                //printf ("-- %d %d %d %d\n", il, ir, ju, jd);
-                b = &dst_mat.at<cv::Vec3b>(il,j);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(ir,j);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(i,ju);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(i,jd);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(il,ju);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(il,jd);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(ir,jd);
-                if ((*b) == white) (*b) = red;
-                b = &dst_mat.at<cv::Vec3b>(ir,ju);
-                if ((*b) == white) (*b) = red;
+                enlargePixel (i, j, src_mat, dst_mat, red);
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                enlargePixel (i, j, src_mat, dst_mat, red);
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+            {
+                enlargePixel (i, j, src_mat, dst_mat, orange);
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                enlargePixel (i, j, src_mat, dst_mat, orange);
             }
         }
     }
@@ -199,26 +215,28 @@ bool map_class::loadMap(string filename)
 
 bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path)
 {
+    unsigned int path_size = input_path.size();
     if (map==0) return false;
-    if (input_path.size()==0) return false;
+    if (path_size==0) return false;
 
     output_path.push(input_path.front());
     
+    //make a copy of the path in a vector
     std::vector <cell> path;
-    for (unsigned int i=0; i<input_path.size(); i++)
+    for (unsigned int i=0; i<path_size; i++)
     {
         cell tmp = input_path.front();
         input_path.pop();
         path.push_back(tmp);
     }
 
-    for (unsigned int i=0; i<path.size(); i++)
+    for (unsigned int i=0; i<path_size; i++)
     {
         cell start_cell= path.at(i);
         cell old_stop_cell;
         cell stop_cell;
         unsigned int j;
-        for (j=i+1; j<input_path.size(); j++)
+        for (j=i+1; j<path_size; j++)
         {
             old_stop_cell = path.at(j-1);
             stop_cell     = path.at(j);
@@ -228,7 +246,7 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
                 break;
             }
         };
-        if (j==input_path.size())
+        if (j==path_size)
         {
             output_path.push(stop_cell);
             return true;

@@ -91,6 +91,10 @@ class map_class
 
     cell world2cell (yarp::sig::Vector v); 
     yarp::sig::Vector cell2world (cell c);
+
+    private:
+    //used by enlarge obstacle
+    void enlargePixel (int& i, int& j, cv::Mat& src, cv::Mat& dst, cv::Vec3b& color);
 };
 
 #endif

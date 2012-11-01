@@ -299,7 +299,7 @@ bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
     {
         cv::Vec3b p= imgMat.at<cv::Vec3b>(src.y,src.x);
         if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
-        if (src.x==dst.x && src.y==src.y) break;
+        if (src.x==dst.x && src.y==dst.y) break;
         int e2 = err*2;
         if (e2 > -dy)
         {

@@ -24,7 +24,7 @@
 
 using namespace std;
 
-enum    status_enum {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
+enum    status_enum {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED, THINKING};
 
 class   status_type
 {
@@ -37,6 +37,11 @@ class   status_type
         internal_status = IDLE;
     }
 
+    int getStatusAsInt()
+    {
+        return internal_status;
+    }
+
     string      getStatusAsString()
     {
         string s;
@@ -46,6 +51,7 @@ class   status_type
         else if (internal_status == REACHED)  s = "REACHED";
         else if (internal_status == ABORTED)  s = "ABORTED";
         else if (internal_status == PAUSED)   s = "PAUSED";
+        else if (internal_status == THINKING) s = "THINKING";
         else 
         {
             printf ("ERROR: unknown status of inner controller!");
@@ -65,7 +71,6 @@ class   status_type
 
     status_type& operator=(const string &s)
     {
-        //enum status_type {IDLE=0, MOVING, WAITING_OBSTACLE, REACHED, ABORTED, PAUSED};
         status_enum status;
         if      (s=="IDLE")     status = IDLE;
         else if (s=="MOVING")   status = MOVING;
@@ -73,6 +78,7 @@ class   status_type
         else if (s=="REACHED")  status = REACHED;
         else if (s=="ABORTED")  status = ABORTED;
         else if (s=="PAUSED")   status = PAUSED;
+        else if (s=="THINKING") status = THINKING;
         else 
         {
             printf ("ERROR: unknown status of inner controller!");

@@ -283,7 +283,8 @@ void PlannerThread::startNewPath(cell target)
 
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 {
-    if (planner_status != IDLE)
+    if (planner_status != IDLE &&
+        planner_status != REACHED)
     {
         printf ("Not in idle state, send a 'stop' first\n");
         return;
@@ -300,7 +301,8 @@ void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 
 void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
 {
-    if (planner_status != IDLE)
+    if (planner_status != IDLE &&
+        planner_status != REACHED)
     {
         printf ("Not in idle state, send a 'stop' first\n");
         return;
@@ -316,12 +318,17 @@ void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
 
 void PlannerThread::stopMovement()
 {
+    //stop the inner navigation loop
+    Bottle cmd1, ans1;
+    cmd1.addString("stop"); 
+    port_commands_output.write(cmd1,ans1);
+
+    //stop the outer navigation loop
+    planner_status=IDLE;
+
     if (planner_status != IDLE)
     {
         printf ("Navigation stopped\n");
-        planner_status=IDLE;
-        //yarp::sig::Vector v(3,0.0);
-        //setNewRelTarget(v);
     }
     else
     {

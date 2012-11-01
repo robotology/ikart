@@ -56,13 +56,36 @@ void GotoThread::run()
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) {localization_data = *loc; loc_timeout_counter=0;}
     else loc_timeout_counter++;
+    if (loc_timeout_counter>100)
+    {
+        if (status == MOVING)
+        {
+            printf ("stopping navigation because of localization timeouts!");
+            status = ABORTED;
+        }
+    }
 
     yarp::sig::Vector *odm = port_odometry_input.read(false);
     if (odm) {odometry_data = *odm; odm_timeout_counter=0;}
     else odm_timeout_counter++;
+    if (odm_timeout_counter>100)
+    {
+        if (status == MOVING)
+        {
+            printf ("stopping navigation because of odometry timeouts!");
+            status = ABORTED;
+        }
+    }
 
     yarp::sig::Vector *las = port_laser_input.read(false);
-    if (las) laser_data = *las;
+    if (las) {laser_data = *las; las_timeout_counter=0;}
+    else las_timeout_counter++;
+    if (las_timeout_counter>100)
+    {
+        if (status == MOVING)
+        {
+        }
+    }
 
     //computes the control action
     control_out.zero();
@@ -309,5 +332,6 @@ void GotoThread::printStats()
     fprintf (stdout,"* ikartGoto thread:\n");
     fprintf (stdout,"loc timeouts: %d\n",loc_timeout_counter);
     fprintf (stdout,"odm timeouts: %d\n",odm_timeout_counter);
+    fprintf (stdout,"las timeouts: %d\n",las_timeout_counter);
     fprintf (stdout,"status: %s\n",status.getStatusAsString().c_str());
 }

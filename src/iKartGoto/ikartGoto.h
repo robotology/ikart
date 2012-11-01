@@ -97,6 +97,7 @@ class GotoThread: public yarp::os::RateThread
     status_type         status;
     int                 loc_timeout_counter;
     int                 odm_timeout_counter;
+    int                 las_timeout_counter;
     int                 retreat_counter;
     double              obstacle_time;
 
@@ -108,6 +109,7 @@ class GotoThread: public yarp::os::RateThread
         status = IDLE;
         loc_timeout_counter = 0;
         odm_timeout_counter = 0;
+        las_timeout_counter = 0;
         localization_data.resize(3,0.0);
         laser_data.resize(1080,1000.0);
         retreat_counter = 0;

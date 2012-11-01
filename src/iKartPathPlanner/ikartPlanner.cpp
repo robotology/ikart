@@ -177,6 +177,10 @@ void PlannerThread::run()
     {
         //do nothing, just wait
     }
+    else if (planner_status == ABORTED)
+    {
+        //do nothing, just wait
+    }
     else
     {
         //unknown status
@@ -273,6 +277,7 @@ void PlannerThread::startNewPath(cell target)
     if (!b)
     {
         printf ("path not found\n");
+        planner_status = ABORTED;
         return;
     }
     double t2 = yarp::os::Time::now();
@@ -296,7 +301,8 @@ void PlannerThread::startNewPath(cell target)
 void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 {
     if (planner_status != IDLE &&
-        planner_status != REACHED)
+        planner_status != REACHED &&
+        planner_status != ABORTED)
     {
         printf ("Not in idle state, send a 'stop' first\n");
         return;
@@ -314,7 +320,8 @@ void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
 void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
 {
     if (planner_status != IDLE &&
-        planner_status != REACHED)
+        planner_status != REACHED &&
+        planner_status != ABORTED)
     {
         printf ("Not in idle state, send a 'stop' first\n");
         return;

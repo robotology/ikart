@@ -233,28 +233,33 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
     for (unsigned int i=0; i<path_size; i++)
     {
         cell start_cell= path.at(i);
-        cell old_stop_cell;
-        cell stop_cell;
-        unsigned int j;
-        for (j=i+1; j<path_size; j++)
+        cell old_stop_cell = start_cell;
+        cell best_old_stop_cell = start_cell;
+        cell stop_cell = start_cell;
+        cell best_stop_cell = start_cell;
+        unsigned int j=i+1;
+        unsigned int best_j=j;
+        for (; j<path_size; j++)
         {
             old_stop_cell = path.at(j-1);
             stop_cell     = path.at(j);
             //printf ("%d %d -> %d %d\n", start_cell.x, start_cell.y, stop_cell.x, stop_cell.y);
-            if (!checkStraightLine(map, start_cell, stop_cell))
+            if (checkStraightLine(map, start_cell, stop_cell))
             {
-                break;
+                best_old_stop_cell=old_stop_cell;
+                best_stop_cell=stop_cell;
+                best_j = j;
             }
         };
-        if (j==path_size)
+        if (best_j==path_size)
         {
-            output_path.push(stop_cell);
+            output_path.push(best_stop_cell);
             return true;
         }
         else
         {
-            output_path.push(old_stop_cell);
-            i=j-1;
+            output_path.push(best_old_stop_cell);
+            i=best_j-1;
         }
     };
     return true;

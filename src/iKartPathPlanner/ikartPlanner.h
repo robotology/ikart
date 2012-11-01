@@ -59,6 +59,7 @@ class PlannerThread: public yarp::os::RateThread
     //configuration parameters
     double    robot_radius;     //m
     map_class map;
+    bool      use_optimized_path;
 
     //ports
     BufferedPort<yarp::sig::Vector>                        port_localization_input;
@@ -78,8 +79,9 @@ class PlannerThread: public yarp::os::RateThread
     int                 loc_timeout_counter;
     int                 inner_status_timeout_counter;
 
-    std::queue<cell>    current_path;
-    std::queue<cell>    current_simplified_path;
+    std::queue<cell>    computed_path;
+    std::queue<cell>    computed_simplified_path;
+    std::queue<cell>*   current_path;
     status_type         planner_status;
     status_type         inner_status;
 
@@ -98,6 +100,8 @@ class PlannerThread: public yarp::os::RateThread
         goal_tolerance_ang = 0.6;
         waypoint_tolerance_lin = 0.05;
         waypoint_tolerance_ang = 0.6;
+        use_optimized_path = true;
+        current_path=&computed_simplified_path;
     }
 
     virtual bool threadInit()
@@ -123,6 +127,7 @@ class PlannerThread: public yarp::os::RateThread
         if (rf.check("waypoint_tolerance_ang")) {waypoint_tolerance_ang = rf.find("waypoint_tolerance_ang").asDouble();}
         if (rf.check("goal_tolerance_lin"))     {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
         if (rf.check("goal_tolerance_ang"))     {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
+        if (rf.check("use_optimized_path"))     {int p=rf.find("use_optimized_path").asInt(); select_optimized_path(p==1);}
 
         //open module ports
         string localName = "/ikartPathPlanner";
@@ -153,6 +158,7 @@ class PlannerThread: public yarp::os::RateThread
     void pauseMovement (double secs);
     void resumeMovement();
     string getNavigationStatus();
+    void select_optimized_path(bool b);
 
     virtual void threadRelease()
     {    

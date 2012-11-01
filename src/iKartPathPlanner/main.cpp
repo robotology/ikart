@@ -192,8 +192,8 @@ int main(int argc, char *argv[])
 
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
-    rf.setDefaultConfigFile("iKartPlanner.ini");           //overridden by --from parameter
-    rf.setDefaultContext("iKartPlanner/conf");             //overridden by --context parameter
+    rf.setDefaultConfigFile("iKartPathPlanner.ini");           //overridden by --from parameter
+    rf.setDefaultContext("iKartPathPlanner/conf");             //overridden by --context parameter
     rf.configure("ICUB_ROOT",argc,argv);
     
     iKartPlannerModule iKartPlanner;

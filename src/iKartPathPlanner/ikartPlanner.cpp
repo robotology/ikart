@@ -57,6 +57,21 @@ status_type string2status(string s)
     return status;
 }
 
+void PlannerThread::select_optimized_path(bool b)
+{
+    if (b)
+    {
+        printf ("using optimized path planning\n");
+        use_optimized_path = true;
+        current_path=&computed_simplified_path;
+    }
+    else
+    {
+        printf ("using raw path planning\n");
+        use_optimized_path = false;
+        current_path=&computed_path;
+    }
+}
 void PlannerThread::run()
 {
     //read a target set from a yarpview
@@ -91,7 +106,7 @@ void PlannerThread::run()
     else inner_status_timeout_counter++;
 
     //check if the next waypoint has to be sent
-    int path_size = current_path.size();
+    int path_size = current_path->size();
     if (planner_status == MOVING)
     {
         if (inner_status == REACHED)
@@ -208,8 +223,12 @@ void PlannerThread::run()
 
     CvScalar color = cvScalar(0,200,0);
     CvScalar color2 = cvScalar(0,200,100);
-    map.drawPath(map_with_path, start, current_path, color); 
-    map.drawPath(map_with_path, start, current_simplified_path, color2);
+#ifdef DRAW_BOTH_PATHS
+    map.drawPath(map_with_path, start, computed_path, color); 
+    map.drawPath(map_with_path, start, computed_simplified_path, color2);
+#else
+    map.drawPath(map_with_path, start, *current_path, color); 
+#endif
 
     static IplImage* map_with_location = 0;
     static CvScalar blue_color = cvScalar(0,0,200);
@@ -223,7 +242,7 @@ void PlannerThread::run()
 
 void PlannerThread::sendWaypoint()
 {
-    int path_size = current_path.size();
+    int path_size = current_path->size();
     if (path_size==0)
     {
         printf("Path queue is empty!\n");
@@ -231,8 +250,8 @@ void PlannerThread::sendWaypoint()
         return;
     }
     //get the next waypoint from the list
-    cell waypoint = current_path.front();
-    current_path.pop();
+    cell waypoint = current_path->front();
+    current_path->pop();
     //send the waypoint to the inner controller
     Bottle cmd1, ans1;
     cmd1.addString("gotoAbs"); 
@@ -267,13 +286,13 @@ void PlannerThread::startNewPath(cell target)
     double t1 = yarp::os::Time::now();
     //clear the memory 
     std::queue<cell> empty;
-    std::swap(current_path, empty );
+    std::swap(computed_path, empty );
     std::queue<cell> empty2;
-    std::swap( current_simplified_path, empty2 );
+    std::swap( computed_simplified_path, empty2 );
     planner_status = THINKING;
 
     //search for a path
-    bool b = map.findPath(map.processed_map, start , target, current_path);
+    bool b = map.findPath(map.processed_map, start , target, computed_path);
     if (!b)
     {
         printf ("path not found\n");
@@ -283,8 +302,18 @@ void PlannerThread::startNewPath(cell target)
     double t2 = yarp::os::Time::now();
 
     //search for an simpler path (waypoint optimization)
-    map.simplifyPath(map.processed_map, current_path, current_simplified_path);
-    printf ("path size:%d simplified path size:%d time: %.2f\n\n", current_path.size(), current_simplified_path.size(), t2-t1);
+    map.simplifyPath(map.processed_map, computed_path, computed_simplified_path);
+    printf ("path size:%d simplified path size:%d time: %.2f\n\n", computed_path.size(), computed_simplified_path.size(), t2-t1);
+
+    //choose the path to use
+    if (use_optimized_path)
+    {
+        current_path=&computed_simplified_path;
+    }
+    else
+    {
+        current_path=&computed_path;
+    }
 
     //just set the status to moving, do not set position commands.
     //The wayypoint ist set in the main 'run' loop.

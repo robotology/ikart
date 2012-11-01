@@ -118,7 +118,10 @@ class node_map_type
 
 double heuristic_cost_estimate (node_type start, node_type goal)
 {
-    return 0;
+    double dist = sqrt ( double((start.x-goal.x)*(start.x-goal.x) +
+                                (start.y-goal.y)*(start.y-goal.y)))*10;
+    //double dist = 0;
+    return dist;
 }
 
 class ordered_set_type

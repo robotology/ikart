@@ -79,6 +79,7 @@ class PlannerThread: public yarp::os::RateThread
     int                 inner_status_timeout_counter;
 
     std::queue<cell>    current_path;
+    std::queue<cell>    current_simplified_path;
     status_type         planner_status;
     status_type         inner_status;
 

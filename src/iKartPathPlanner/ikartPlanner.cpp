@@ -173,6 +173,10 @@ void PlannerThread::run()
     {
         //do nothing, just wait
     }
+    else if (planner_status == THINKING)
+    {
+        //do nothing, just wait
+    }
     else
     {
         //unknown status
@@ -199,7 +203,9 @@ void PlannerThread::run()
     else cvCopyImage(map.processed_map,map_with_path);
 
     CvScalar color = cvScalar(0,200,0);
+    CvScalar color2 = cvScalar(0,200,100);
     map.drawPath(map_with_path, start, current_path, color); 
+    map.drawPath(map_with_path, start, current_simplified_path, color2);
 
     static IplImage* map_with_location = 0;
     static CvScalar blue_color = cvScalar(0,0,200);
@@ -255,8 +261,14 @@ void PlannerThread::startNewPath(cell target)
     start.y = 150;//&&&&&
 #endif
     double t1 = yarp::os::Time::now();
+    //clear the memory 
     std::queue<cell> empty;
     std::swap(current_path, empty );
+    std::queue<cell> empty2;
+    std::swap( current_simplified_path, empty2 );
+    planner_status = THINKING;
+
+    //search for a path
     bool b = map.findPath(map.processed_map, start , target, current_path);
     if (!b)
     {
@@ -265,8 +277,8 @@ void PlannerThread::startNewPath(cell target)
     }
     double t2 = yarp::os::Time::now();
 
-    std::queue<cell> simpler_path;
-    //map.simplifyPath(map.processed_map, current_path, simpler_path);
+    //search for an simpler path (waypoint optimization)
+    map.simplifyPath(map.processed_map, current_path, current_simplified_path);
     //current_path = simpler_path;
 
     printf ("time: %f\n", t2-t1);

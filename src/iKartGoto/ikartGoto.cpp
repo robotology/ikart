@@ -56,7 +56,7 @@ void GotoThread::run()
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) {localization_data = *loc; loc_timeout_counter=0;}
     else loc_timeout_counter++;
-    if (loc_timeout_counter>100)
+    if (loc_timeout_counter>300)
     {
         if (status == MOVING)
         {
@@ -68,7 +68,7 @@ void GotoThread::run()
     yarp::sig::Vector *odm = port_odometry_input.read(false);
     if (odm) {odometry_data = *odm; odm_timeout_counter=0;}
     else odm_timeout_counter++;
-    if (odm_timeout_counter>100)
+    if (odm_timeout_counter>300)
     {
         if (status == MOVING)
         {
@@ -80,7 +80,7 @@ void GotoThread::run()
     yarp::sig::Vector *las = port_laser_input.read(false);
     if (las) {laser_data = *las; las_timeout_counter=0;}
     else las_timeout_counter++;
-    if (las_timeout_counter>100)
+    if (las_timeout_counter>300)
     {
         if (status == MOVING)
         {

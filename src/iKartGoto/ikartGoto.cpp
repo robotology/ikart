@@ -52,6 +52,8 @@ bool GotoThread::check_obstacles_in_path()
 
 void GotoThread::run()
 {
+    mutex.wait();
+    
     //data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) {localization_data = *loc; loc_timeout_counter=0;}
@@ -219,6 +221,7 @@ void GotoThread::run()
     }
 
     sendOutput();
+    mutex.post();
 }
 
 void GotoThread::sendOutput()

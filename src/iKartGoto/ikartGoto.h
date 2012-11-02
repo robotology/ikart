@@ -30,6 +30,7 @@
 #include <yarp/dev/Drivers.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/os/RateThread.h>
+#include <yarp/os/Semaphore.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
 
@@ -73,6 +74,9 @@ class GotoThread: public yarp::os::RateThread
     double min_ang_speed;       //deg/s
     double robot_radius;        //m
     int    retreat_duration; 
+
+    //semaphore
+    Semaphore mutex;
 
     protected:
     //pause info

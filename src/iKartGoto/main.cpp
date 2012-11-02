@@ -101,7 +101,12 @@ public:
     {
         reply.clear(); 
 
-        if (command.get(0).asString()=="quit") return false;     
+        gotoThread->mutex.wait();
+        if (command.get(0).asString()=="quit")
+        {
+            gotoThread->mutex.post();
+            return false;
+        }
 
         else if (command.get(0).asString()=="help")
         {
@@ -211,6 +216,7 @@ public:
             reply.addString("Unknown command.");
         }
 
+        gotoThread->mutex.post();
         return true;
     }
 };

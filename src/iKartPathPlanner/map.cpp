@@ -265,11 +265,13 @@ bool map_class::simplifyPath(IplImage *map, std::queue<cell> input_path, std::qu
     return true;
 };
 
-void map_class::drawPath(IplImage *map, cell start, std::queue<cell> path, const CvScalar& color)
+void map_class::drawPath(IplImage *map, cell current_position, cell current_target, std::queue<cell> path, const CvScalar& color)
 {
     if (map==0) return;
+    cvLine(map, cvPoint(current_position.x, current_position.y), cvPoint(current_target.x, current_target.y), color);
+
     if (path.size()==0) return;
-    cell src = start;
+    cell src = current_target;
     while (path.size()>0)
     {
         cell dst = path.front();

@@ -99,6 +99,7 @@ public:
     {
         reply.clear(); 
 
+        plannerThread->mutex.wait();
         if (command.get(0).isVocab())
         {
             if (command.get(0).asVocab() == VOCAB3('p','n','t'))
@@ -113,7 +114,11 @@ public:
     
         else if (command.get(0).isString())
         {
-            if (command.get(0).asString()=="quit") return false;
+            if (command.get(0).asString()=="quit")
+            {
+                plannerThread->mutex.post();
+                return false;
+            }
 
             else if (command.get(0).asString()=="help")
             {
@@ -177,6 +182,7 @@ public:
                 reply.addString("Unknown command.");
             }
         }
+        plannerThread->mutex.post();
         return true;
     }
 };

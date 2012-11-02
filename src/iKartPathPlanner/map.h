@@ -83,7 +83,7 @@ class map_class
     bool simplifyPath(IplImage *map, std::queue<cell> input_path, std::queue<cell>& output_path);
 
     //draw stuff on the map
-    void drawPath(IplImage *map, cell start, std::queue<cell> input_path, const CvScalar& color);
+    void drawPath(IplImage *map, cell current_position, cell current_target, std::queue<cell> path, const CvScalar& color);
     void drawCurrentPosition(IplImage *map, cell current, const CvScalar& color);
 
     //compute the path

@@ -51,7 +51,7 @@ status_type string2status(string s)
     else if (s=="PAUSED")   status = PAUSED;
     else 
     {
-        printf ("ERROR: unknown status of inner controller!");
+        printf ("ERROR: unknown status of inner controller: '%s'!\n", s.c_str());
         status = IDLE;
     }
     return status;
@@ -74,6 +74,8 @@ void PlannerThread::select_optimized_path(bool b)
 }
 void PlannerThread::run()
 {
+    mutex.wait();
+
     //read a target set from a yarpview
     yarp::os::Bottle *gui_targ = port_yarpview_target_input.read(false);
     if (gui_targ)
@@ -95,7 +97,13 @@ void PlannerThread::run()
     else loc_timeout_counter++;
 
     //read the internal navigation status
-    yarp::os::Bottle *st = port_status_input.read(false);
+    Bottle cmd1, ans1;
+    cmd1.addString("get"); 
+    cmd1.addString("navigation_status");
+    port_commands_output.write(cmd1,ans1);
+    string s = ans1.get(0).toString().c_str();
+    inner_status = string2status(s);
+    /*yarp::os::Bottle *st = port_status_input.read(true);
     if (st)
     {
         string s = st->get(0).toString().c_str();
@@ -104,6 +112,7 @@ void PlannerThread::run()
         inner_status = string2status(s);
     }
     else inner_status_timeout_counter++;
+    */
 
     //check if the next waypoint has to be sent
     int path_size = current_path->size();
@@ -111,6 +120,7 @@ void PlannerThread::run()
     {
         if (inner_status == REACHED)
         {
+            printf ("waypoint reached\n");
             if (path_size == 0)
             {
                 //navigation is complete
@@ -223,12 +233,16 @@ void PlannerThread::run()
 
     CvScalar color = cvScalar(0,200,0);
     CvScalar color2 = cvScalar(0,200,100);
+
+    if (planner_status!=IDLE)
+    {
 #ifdef DRAW_BOTH_PATHS
-    map.drawPath(map_with_path, start, computed_path, color); 
-    map.drawPath(map_with_path, start, computed_simplified_path, color2);
+        map.drawPath(map_with_path, start, computed_path, color); 
+        map.drawPath(map_with_path, start, computed_simplified_path, color2);
 #else
-    map.drawPath(map_with_path, start, *current_path, color); 
+        map.drawPath(map_with_path, start, current_waypoint, *current_path, color); 
 #endif
+    }
 
     static IplImage* map_with_location = 0;
     static CvScalar blue_color = cvScalar(0,0,200);
@@ -238,6 +252,7 @@ void PlannerThread::run()
     map.drawCurrentPosition(map_with_location,start,blue_color);
 
     map.sendToPort(&port_map_output,map_with_location);
+    mutex.post();
 }
 
 void PlannerThread::sendWaypoint()
@@ -250,18 +265,18 @@ void PlannerThread::sendWaypoint()
         return;
     }
     //get the next waypoint from the list
-    cell waypoint = current_path->front();
+    current_waypoint = current_path->front();
     current_path->pop();
     //send the waypoint to the inner controller
     Bottle cmd1, ans1;
     cmd1.addString("gotoAbs"); 
-    yarp::sig::Vector v = map.cell2world(waypoint);
+    yarp::sig::Vector v = map.cell2world(current_waypoint);
     cmd1.addDouble(v[0]);
     cmd1.addDouble(v[1]);
-    if (path_size==1 && target_data.size()==3)
+    if (path_size==1 && goal_data.size()==3)
     {
         //add the orientation to the last waypoint
-        cmd1.addDouble(target_data[2]);
+        cmd1.addDouble(goal_data[2]);
     }
     printf ("sending command: %s\n", cmd1.toString().c_str());
     port_commands_output.write(cmd1,ans1);
@@ -330,7 +345,7 @@ void PlannerThread::setNewAbsTarget(yarp::sig::Vector target)
         return;
     }
 
-    target_data = target;
+    goal_data = target;
     cell goal = map.world2cell(target);
 #ifdef DEBUG_WITH_CELLS
     goal.x = (int)target_data[0]; //&&&&&
@@ -350,10 +365,10 @@ void PlannerThread::setNewRelTarget(yarp::sig::Vector target)
     }
 
     double a = localization_data[2]/180.0*M_PI;
-    target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
-    target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
-    target_data[2]=-target[2] + localization_data[2];
-    cell goal = map.world2cell(target);
+    goal_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
+    goal_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
+    goal_data[2]=-target[2] + localization_data[2];
+    cell goal = map.world2cell(goal_data);
     startNewPath(goal);
 }
 

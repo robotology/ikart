@@ -34,6 +34,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <yarp/os/RpcClient.h>
+#include <yarp/os/Semaphore.h>
 #include <string>
 
 #include "status.h"
@@ -55,6 +56,9 @@ class PlannerThread: public yarp::os::RateThread
     double waypoint_tolerance_lin;   //m 
     double waypoint_tolerance_ang;   //deg
 
+    //semaphore
+    Semaphore mutex;
+
     protected:
     //configuration parameters
     double    robot_radius;     //m
@@ -74,10 +78,11 @@ class PlannerThread: public yarp::os::RateThread
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
-    yarp::sig::Vector   target_data;
+    yarp::sig::Vector   goal_data;
     yarp::sig::Vector   laser_data;
     int                 loc_timeout_counter;
     int                 inner_status_timeout_counter;
+    cell                current_waypoint;
 
     std::queue<cell>    computed_path;
     std::queue<cell>    computed_simplified_path;

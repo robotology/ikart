@@ -256,13 +256,16 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
     if (target.size()==2) 
     {
         //if the angle information is missing use as final orientation the direction in which the iKart has to move
-        double beta = -atan2 (target_data[1]-localization_data[1],target_data[0]-localization_data[0])*180.0/M_PI;
-        target.push_back(beta);
+        double beta = atan2 (localization_data[1]-target[1],localization_data[0]-target[0])*180.0/M_PI;
+        double beta2 = beta-180;
+        if (beta2>+180) beta2=360-beta2;
+        if (beta2<-180) beta2=360+beta2;
+        target.push_back(beta2);
         target_data.weak_angle=true;
     }
     target_data.target=target;
     status=MOVING;
-    fprintf (stdout, "received new target\n");
+    fprintf (stdout, "received new target: abs(%.3f %.3f %.2f)\n", target_data[0], target_data[1], target_data[2]);
     retreat_counter = retreat_duration;
 }
 
@@ -280,7 +283,7 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
     target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
     target_data[2]=-target[2] + localization_data[2];
     status=MOVING;
-    fprintf (stdout, "received new target\n");
+    fprintf (stdout, "received new target: abs(%.3f %.3f %.2f)\n", target_data[0], target_data[1], target_data[2]);
     retreat_counter = retreat_duration;
 }
 

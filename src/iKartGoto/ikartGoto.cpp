@@ -94,30 +94,29 @@ void GotoThread::run()
     double gamma = localization_data[2]-target_data[2];
 
     //beta is the angle between the current ikart position and the target position
-    double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
+    double old_beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
+    double beta = -atan2 (target_data[1]-localization_data[1],target_data[0]-localization_data[0])*180.0/M_PI;
 
     //distance is the distance between the current ikart position and the target position
     double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
 
     //compute the control law
-//    control[0] = -beta;
-    //control[0] = -beta-localization_data[2]; //CHECKME
-//   control[0] = -(beta-localization_data[2]); //CHECKME -180
-//   control[0] = -(beta+localization_data[2]); //CHECKME -90
- //   control[0] = +beta+localization_data[2]-90; //CHECKME -90
- //   control[0] = +beta-localization_data[2]-90; //CHECKME -90
- //   control[0] = -beta+localization_data[2]-90; //CHECKME -90
-//   control[0] = -beta-localization_data[2]-90; //CHECKME -90
- //  control[0] = -beta-localization_data[2]+90; //CHECKME -90
-  // control[0] = -beta+localization_data[2]+90; //CHECKME -90
- //  control[0] = +beta+localization_data[2]+90; //CHECKME -90
- //  control[0] = +beta-localization_data[2]+90; //CHECKME -90
-   //  control[0] = -beta+localization_data[2]; //CHECKME -90
-   //  control[0] =  beta-localization_data[2]; //CHECKME -90
-  control_out[0] =  180-(beta-localization_data[2]); //CHECKME -90
-  
-
-//printf ("%f \n", control[0]);
+//    control_out[0] = -beta;
+//    control_out[0] = -beta-localization_data[2]; //CHECKME
+//    control_out[0] = -(beta-localization_data[2]); //CHECKME -180
+//    control_out[0] = -(beta+localization_data[2]); //CHECKME -90
+//    control_out[0] = +beta+localization_data[2]-90; //CHECKME -90
+//    control_out[0] = +beta-localization_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta+localization_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta-localization_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta-localization_data[2]+90; //CHECKME -90
+//    control_out[0] = -beta+localization_data[2]+90; //CHECKME -90
+//    control_out[0] = +beta+localization_data[2]+90; //CHECKME -90
+//    control_out[0] = +beta-localization_data[2]+90; //CHECKME -90
+//    control_out[0] = -beta+localization_data[2]; //CHECKME -90
+//    control_out[0] =  beta-localization_data[2]; //CHECKME -90
+    control_out[0] =  180-(old_beta-localization_data[2]);
+    //printf ("%f \n", control[0]);
     control_out[1] =  k_lin_gain * distance;
     control_out[2] =  k_ang_gain * gamma;
 
@@ -254,7 +253,7 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
     if (target.size()==2) 
     {
         //if the angle information is missing use as final orientation the direction in which the iKart has to move
-        double beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
+        double beta = -atan2 (target_data[1]-localization_data[1],target_data[0]-localization_data[0])*180.0/M_PI;
         target.push_back(beta);
         target_data.weak_angle=true;
     }

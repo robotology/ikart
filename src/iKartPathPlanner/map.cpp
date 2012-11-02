@@ -122,11 +122,12 @@ bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
             }
             else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
             {
-                enlargePixel (i, j, src_mat, dst_mat, orange);
+                dst_mat.at<cv::Vec3b>(i,j) = orange;
+                //enlargePixel (i, j, src_mat, dst_mat, orange);
             }
             else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
             {
-                enlargePixel (i, j, src_mat, dst_mat, orange);
+                //enlargePixel (i, j, src_mat, dst_mat, orange);
             }
         }
     }
@@ -205,7 +206,8 @@ bool map_class::loadMap(string filename)
     enlargeObstacles(tmp1, tmp2);
     enlargeObstacles(tmp2, tmp1);
     enlargeObstacles(tmp1, tmp2);
-    enlargeObstacles(tmp1, tmp2);
+    //enlargeObstacles(tmp2, tmp1);
+    //enlargeObstacles(tmp1, tmp2);
     enlargeObstacles(tmp2, processed_map);
     
     cvReleaseImage (&tmp1);

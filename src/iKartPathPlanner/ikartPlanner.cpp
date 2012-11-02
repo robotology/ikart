@@ -171,19 +171,54 @@ void PlannerThread::run()
             printf ("sending the first waypoint\n");
 
             //send the tolerance to the inner controller
-            Bottle cmd1, ans1;
-            cmd1.addString("set"); 
-            cmd1.addString("linear_tol");
-            cmd1.addDouble(waypoint_tolerance_lin);
-            port_commands_output.write(cmd1,ans1);
+            {
+                Bottle cmd1, ans1;
+                cmd1.addString("set"); 
+                cmd1.addString("linear_tol");
+                cmd1.addDouble(waypoint_tolerance_lin);
+                port_commands_output.write(cmd1,ans1);
+            }
 
-            Bottle cmd2, ans2;
-            cmd2.addString("set"); 
-            cmd2.addString("angular_tol");
-            cmd2.addDouble(waypoint_tolerance_ang);
-            port_commands_output.write(cmd2,ans2);
+            {
+                Bottle cmd, ans;
+                cmd.addString("set"); 
+                cmd.addString("angular_tol");
+                cmd.addDouble(waypoint_tolerance_ang);
+                port_commands_output.write(cmd,ans);
+            }
 
-            sendWaypoint();
+            {
+                Bottle cmd, ans;
+                cmd.addString("set"); 
+                cmd.addString("max_lin_speed");
+                cmd.addDouble(max_lin_speed);
+                port_commands_output.write(cmd,ans);
+            }
+
+            {
+                Bottle cmd, ans;
+                cmd.addString("set"); 
+                cmd.addString("max_ang_speed");
+                cmd.addDouble(max_ang_speed);
+                port_commands_output.write(cmd,ans);
+            }
+
+            {
+                Bottle cmd, ans;
+                cmd.addString("set"); 
+                cmd.addString("min_lin_speed");
+                cmd.addDouble(min_lin_speed);
+                port_commands_output.write(cmd,ans);
+            }
+
+            {
+                Bottle cmd, ans;
+                cmd.addString("set"); 
+                cmd.addString("min_ang_speed");
+                cmd.addDouble(min_ang_speed);
+                port_commands_output.write(cmd,ans);
+                sendWaypoint();
+            }
         }
         else
         {
@@ -234,7 +269,7 @@ void PlannerThread::run()
     CvScalar color = cvScalar(0,200,0);
     CvScalar color2 = cvScalar(0,200,100);
 
-    if (planner_status!=IDLE)
+    if (planner_status!=IDLE && planner_status!=REACHED)
     {
 #ifdef DRAW_BOTH_PATHS
         map.drawPath(map_with_path, start, computed_path, color); 

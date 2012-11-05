@@ -34,6 +34,7 @@
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <iCub/ctrl/adaptWinPolyEstimator.h>
 #include <yarp/math/Math.h>
+#include <yarp/os/Stamp.h>
 #include <string>
 #include <math.h>
 
@@ -51,6 +52,7 @@ class Odometry
 private:
     Property iKartCtrl_options;
     yarp::os::Semaphore   mutex;
+    yarp::os::Stamp       timeStamp;
 
     //encoder variables
     double              encA_offset;

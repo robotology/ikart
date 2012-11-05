@@ -247,8 +247,10 @@ void Odometry::compute()
 
     mutex.post();
 
+    timeStamp.update();
     if (port_odometry.getOutputCount()>0)
     {
+        port_odometry.setEnvelope(timeStamp);
         Bottle &b=port_odometry.prepare();
         b.clear();
         b.addDouble(odom_x);
@@ -262,6 +264,7 @@ void Odometry::compute()
 
     if (port_odometer.getOutputCount()>0)
     {
+        port_odometer.setEnvelope(timeStamp);
         Bottle &t=port_odometer.prepare();
         t.clear();
         t.addDouble(traveled_distance);
@@ -271,6 +274,7 @@ void Odometry::compute()
 
     if (port_ikart_vels.getOutputCount()>0)
     {
+        port_ikart_vels.setEnvelope(timeStamp);
         Bottle &v=port_ikart_vels.prepare();
         v.clear();
         v.addDouble(ikart_vel_x);

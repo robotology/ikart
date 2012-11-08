@@ -63,12 +63,6 @@ class BridgeThread: public yarp::os::RateThread
     private:
     int    thread_period;
     
-    double ikart_x  ;
-    double ikart_y  ;
-    double ikart_t  ;
-    double ikart_vx ;
-    double ikart_vy ;
-    double ikart_vt ;
     double distance_traveled ;
     double angle_traveled ;
     
@@ -93,11 +87,15 @@ class BridgeThread: public yarp::os::RateThread
         double x;
         double y;
         double t;
-        ikart_pose() {x=0; y=0; t=0;}
+        double vx;
+        double vy;
+        double w;
+        ikart_pose() {x=0; y=0; t=0; vx=0; vy=0; w=0;}
     };
     ikart_pose ikart_home;
     ikart_pose user_target[10];
 
+    ikart_pose ikart_odom;
     ikart_pose ikart_current_position;
 
     protected:
@@ -478,6 +476,9 @@ class BridgeThread: public yarp::os::RateThread
             m.addDouble(ikart_current_position.x);
             m.addDouble(ikart_current_position.y);
             m.addDouble(ikart_current_position.t);
+            m.addDouble(ikart_current_position.vx);
+            m.addDouble(ikart_current_position.vy);
+            m.addDouble(ikart_current_position.w);
             output_localization_port.write();
         }
          
@@ -528,23 +529,23 @@ class BridgeThread: public yarp::os::RateThread
 
 //#define ODOMETRY_DEBUG
 #ifdef ODOMETRY_DEBUG
-        ikart_x  = 7;  //m
-        ikart_y  = 5;  //m
-        ikart_t  = 30; //deg
-        ikart_vx = 0;
-        ikart_vy = 0;
-        ikart_vt = 0;
+        odom_ikart_x  = 7;  //m
+        odom_ikart_y  = 5;  //m
+        odom_ikart_t  = 30; //deg
+        odom_ikart_vx = 0;
+        odom_ikart_vy = 0;
+        odom_ikart_vt = 0;
 #else	
         geometry_msgs::TransformStamped odom_trans;
         nav_msgs::Odometry odom;
         if (odometry_bottle)
         {
-            ikart_x  = odometry_bottle->get(1).asDouble();
-            ikart_y  = -odometry_bottle->get(0).asDouble();
-            ikart_t  = -odometry_bottle->get(2).asDouble();
-            ikart_vx = odometry_bottle->get(4).asDouble();
-            ikart_vy = -odometry_bottle->get(3).asDouble();
-            ikart_vt = -odometry_bottle->get(5).asDouble();
+            odom_ikart_x  = odometry_bottle->get(1).asDouble();
+            odom_ikart_y  = -odometry_bottle->get(0).asDouble();
+            odom_ikart_t  = -odometry_bottle->get(2).asDouble();
+            odom_ikart_vx = odometry_bottle->get(4).asDouble();
+            odom_ikart_vy = -odometry_bottle->get(3).asDouble();
+            odom_ikart_vt = -odometry_bottle->get(5).asDouble();
             odom_trans.header.stamp.sec = now.sec;
             odom_trans.header.stamp.nsec = now.nsec;
             odom.header.stamp.sec = now.sec;

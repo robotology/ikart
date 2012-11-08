@@ -248,9 +248,9 @@ class BridgeThread: public yarp::os::RateThread
         output_command_port.open("/ikart_ros_bridge/command:o");
         output_localization_port.open("/ikart_ros_bridge/localization:o");
 
-        bool conn_lsr = Network::connect ("/ikart/laser:o","/ikart_ros_bridge/laser:i");
-        bool conn_odm = Network::connect ("/ikart/odometry:o","/ikart_ros_bridge/odometry:i");
-        bool conn_odt = Network::connect ("/ikart/odometer:o","/ikart_ros_bridge/odometer:i");
+        bool conn_lsr = Network::connect ("/ikart/laser:o","/ikart_ros_bridge/laser:i","udp");
+        bool conn_odm = Network::connect ("/ikart/odometry:o","/ikart_ros_bridge/odometry:i","udp");
+        bool conn_odt = Network::connect ("/ikart/odometer:o","/ikart_ros_bridge/odometer:i","udp");
         
         if (!conn_lsr || !conn_odm || !conn_odt)
         {
@@ -290,7 +290,7 @@ class BridgeThread: public yarp::os::RateThread
         scan.angle_increment = 4.7123889 / num_readings;
         scan.time_increment = (1 / laser_frequency) / (num_readings);
         scan.range_min = 0.0;
-        scan.range_max = 10; //100m 
+        scan.range_max = 30; //m 
         scan.ranges.resize(num_readings);
         scan.intensities.resize(num_readings);    
         for (int i=0; i< 1080/laser_step; i++)
@@ -308,7 +308,7 @@ class BridgeThread: public yarp::os::RateThread
         scan2.angle_increment = 4.7123889 / num_readings;
         scan2.time_increment = (1 / laser_frequency) / (num_readings);
         scan2.range_min = 0.0;
-        scan2.range_max = 10; //100m 
+        scan2.range_max = 30; //m 
         scan2.ranges.resize(num_readings);
         scan2.intensities.resize(num_readings);    
         for (int i=0; i< 1080/laser_step2; i++)
@@ -341,16 +341,13 @@ class BridgeThread: public yarp::os::RateThread
         //printf("%f %f\n",wdt-wdt_old , double(thread_period)/1000.0 + 0.010);
         wdt_old=wdt;
 
-	//********************************************* FOOTPRINT PART *****************************************
-	footprint_pub.publish (footprint);
+	    //********************************************* FOOTPRINT PART *****************************************
+	    footprint_pub.publish (footprint);
 
         //********************************************* LASER PART *********************************************
         Bottle *laser_bottle = 0;
         laser_bottle = input_laser_port.read(false);
-
-        ros::Time now = ros::Time::now();
-        scan.header.stamp.sec = now.sec;
-        scan.header.stamp.nsec = now.nsec;
+        static ros::Time now;
 
         if (laser_bottle)
         {
@@ -359,6 +356,9 @@ class BridgeThread: public yarp::os::RateThread
                 last_laser[j] = laser_bottle->get(i).asDouble();
                 scan.ranges[j]=last_laser[j];
                 //scan.intensities[j]=101;
+                now = ros::Time::now();
+                scan.header.stamp.sec = now.sec;
+                scan.header.stamp.nsec = now.nsec;
            }
         }
         else  
@@ -372,10 +372,7 @@ class BridgeThread: public yarp::os::RateThread
         //********************************************* LASER2 (OPTIONAL) PART *********************************
         Bottle *laser_bottle2 = 0;
         laser_bottle2 = input_laser_port2.read(false);
-
-        ros::Time now2 = ros::Time::now();
-        scan2.header.stamp.sec = now2.sec;
-        scan2.header.stamp.nsec = now2.nsec;
+        static ros::Time now2;
 
         if (laser_bottle2)
         {
@@ -385,6 +382,9 @@ class BridgeThread: public yarp::os::RateThread
                 scan2.ranges[j]=last_laser2[j];
                 //scan.intensities[j]=101;
            }
+           now2 = ros::Time::now();
+           scan2.header.stamp.sec = now2.sec;           
+           scan2.header.stamp.nsec = now2.nsec;
         }
         else  
         {    
@@ -423,10 +423,13 @@ class BridgeThread: public yarp::os::RateThread
 	pcloud_pub.publish (*pcloud);
         
         //********************************************* CREATE NEW TF *********************************************
-        tf::StampedTransform laser_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.245,0.0,0.2)),now, "base_link", "base_laser");
+        tf::StampedTransform ikart_trans(tf::Transform(tf::createQuaternionFromYaw(-90/180.0*M_PI), tf::Vector3(0.0,0.0,0.0)),now, "base_link", "ikart_root");
+        tf_broadcaster->sendTransform(ikart_trans);
+
+        tf::StampedTransform laser_trans(tf::Transform(tf::createQuaternionFromYaw(+90/180.0*M_PI), tf::Vector3(0.000,0.245,0.2)),now, "ikart_root", "base_laser");
         tf_broadcaster->sendTransform(laser_trans);
 
-        tf::StampedTransform robot_trans(tf::Transform(tf::Quaternion(0,0,0,1), tf::Vector3(0.000,0.0,0.9)),now, "base_link", "robot_root");
+        tf::StampedTransform robot_trans(tf::Transform(tf::createQuaternionFromYaw(-90/180.0*M_PI), tf::Vector3(0.000,0.0,0.9)),now, "ikart_root", "robot_root");
         tf_broadcaster->sendTransform(robot_trans);
 
         mutex_home.wait();
@@ -465,9 +468,9 @@ class BridgeThread: public yarp::os::RateThread
             tf::transformStampedTFToMsg (stamp_loc_trans, loc_trans);
             
             mutex_localiz.wait();
-            ikart_current_position.x = loc_trans.transform.translation.y;
-            ikart_current_position.y = -loc_trans.transform.translation.x;
-            ikart_current_position.t = -tf::getYaw(loc_trans.transform.rotation)*180/M_PI;
+            ikart_current_position.x = loc_trans.transform.translation.x;
+            ikart_current_position.y = loc_trans.transform.translation.y;
+            ikart_current_position.t = tf::getYaw(loc_trans.transform.rotation)*180/M_PI;
             mutex_localiz.post();
             
             Bottle &m = output_localization_port.prepare();
@@ -532,6 +535,8 @@ class BridgeThread: public yarp::os::RateThread
         ikart_vy = 0;
         ikart_vt = 0;
 #else	
+        geometry_msgs::TransformStamped odom_trans;
+        nav_msgs::Odometry odom;
         if (odometry_bottle)
         {
             ikart_x  = odometry_bottle->get(1).asDouble();
@@ -540,6 +545,10 @@ class BridgeThread: public yarp::os::RateThread
             ikart_vx = odometry_bottle->get(4).asDouble();
             ikart_vy = -odometry_bottle->get(3).asDouble();
             ikart_vt = -odometry_bottle->get(5).asDouble();
+            odom_trans.header.stamp.sec = now.sec;
+            odom_trans.header.stamp.nsec = now.nsec;
+            odom.header.stamp.sec = now.sec;
+            odom.header.stamp.nsec = now.nsec;
         }
         else
         {
@@ -549,9 +558,6 @@ class BridgeThread: public yarp::os::RateThread
 
 #endif
         geometry_msgs::Quaternion odom_quat= tf::createQuaternionMsgFromYaw(ikart_t/180.0*M_PI);
-        geometry_msgs::TransformStamped odom_trans;
-        odom_trans.header.stamp.sec = now.sec;
-        odom_trans.header.stamp.nsec = now.nsec;
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
         odom_trans.transform.translation.x = ikart_x;
@@ -560,9 +566,6 @@ class BridgeThread: public yarp::os::RateThread
         odom_trans.transform.rotation = odom_quat;
         tf_broadcaster->sendTransform(odom_trans);
 
-        nav_msgs::Odometry odom;
-        odom.header.stamp.sec = now.sec;
-        odom.header.stamp.nsec = now.nsec;
         odom.header.frame_id = "odom";
         odom.child_frame_id = "base_link";
         odom.pose.pose.position.x = ikart_x;

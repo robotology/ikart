@@ -93,7 +93,12 @@ void GotoThread::run()
     control_out.zero();
 
     //gamma is the angle between the current ikart heading and the target heading
-    double gamma = localization_data[2]-target_data[2];
+    double unwrapped_localization_angle = (localization_data[2]<0)?localization_data[2]+360:localization_data[2];
+    double unwrapped_target_angle = (target_data[2]<0)?target_data[2]+360:target_data[2];      
+    //double gamma  = localization_data[2]-target_data[2];
+    double gamma  = unwrapped_localization_angle-unwrapped_target_angle;
+    if      (gamma >  180) gamma -= 360;
+    else if (gamma < -180) gamma += 360;
 
     //beta is the angle between the current ikart position and the target position
     double old_beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
@@ -265,6 +270,7 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
     }
     target_data.target=target;
     status=MOVING;
+    fprintf (stdout, "current pos: abs(%.3f %.3f %.2f)\n", localization_data[0], localization_data[1], localization_data[2]);
     fprintf (stdout, "received new target: abs(%.3f %.3f %.2f)\n", target_data[0], target_data[1], target_data[2]);
     retreat_counter = retreat_duration;
 }

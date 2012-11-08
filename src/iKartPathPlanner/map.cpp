@@ -101,6 +101,48 @@ void map_class::enlargePixel (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat
     if ((*b) == white) (*b) = color;
 }
 
+bool map_class::skeletonize(IplImage* src, IplImage* dst)
+{
+    cv::Mat src_mat = src;
+    cv::Mat dst_mat = dst;
+    cv::Vec3b red    (255,0,0);
+
+    for(int i=0; i<src_mat.rows; i++)
+    {
+        for(int j=0; j<src_mat.cols; j++) 
+        {
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                enlargePixel (i, j, src_mat, dst_mat, red);
+            }
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+            {
+                enlargePixel (i, j, src_mat, dst_mat, red);
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 254 && src_mat.at<cv::Vec3b>(i,j)[1] == 254 && src_mat.at<cv::Vec3b>(i,j)[2] == 254)
+            {
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 205 && src_mat.at<cv::Vec3b>(i,j)[1] == 205 && src_mat.at<cv::Vec3b>(i,j)[2] == 205)
+            {
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[1] = dst_color[1] + 100;
+                enlargePixel (i, j, src_mat, dst_mat, dst_color);
+            }
+            else
+            {
+                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[1] = dst_color[1] + 10;
+                if (dst_color[1]>200) dst_color[1] = 200;
+                enlargePixel (i, j, src_mat, dst_mat, dst_color);
+            }
+        }
+    }
+    return true;
+}
+
 bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
 {
     cv::Mat src_mat = src;
@@ -203,13 +245,19 @@ bool map_class::loadMap(string filename)
     processed_map   = cvCloneImage(loaded_map);
 
     enlargeObstacles(loaded_map, tmp1);
-    enlargeObstacles(tmp1, tmp2);
-    enlargeObstacles(tmp2, tmp1);
-    enlargeObstacles(tmp1, tmp2);
-    //enlargeObstacles(tmp2, tmp1);
-    //enlargeObstacles(tmp1, tmp2);
-    enlargeObstacles(tmp2, processed_map);
-    
+    for (int i=0; i<3; i++)
+    {
+        enlargeObstacles(tmp1, tmp2);
+        enlargeObstacles(tmp2, tmp1);
+    }
+    /*for (int i=0; i<6; i++)
+    {
+       skeletonize(tmp1, tmp2);
+       skeletonize(tmp2, tmp1);
+    }
+    skeletonize(tmp1, processed_map);*/
+    enlargeObstacles(tmp1, processed_map);
+
     cvReleaseImage (&tmp1);
     cvReleaseImage (&tmp2);
     return true;

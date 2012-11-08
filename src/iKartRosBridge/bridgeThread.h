@@ -146,12 +146,6 @@ class BridgeThread: public yarp::os::RateThread
                iKartCtrl_options (options)
     {
         thread_period = _period;
-        ikart_x  = 0.0;
-        ikart_y  = 0.0;
-        ikart_t  = 0.0;
-        ikart_vx = 0.0;
-        ikart_vy = 0.0;
-        ikart_vt = 0.0;
         command_x = 0.0;
         command_y = 0.0 ;
         command_t = 0.0 ;
@@ -529,23 +523,23 @@ class BridgeThread: public yarp::os::RateThread
 
 //#define ODOMETRY_DEBUG
 #ifdef ODOMETRY_DEBUG
-        odom_ikart_x  = 7;  //m
-        odom_ikart_y  = 5;  //m
-        odom_ikart_t  = 30; //deg
-        odom_ikart_vx = 0;
-        odom_ikart_vy = 0;
-        odom_ikart_vt = 0;
+        ikart_odom.x  = 7;  //m
+        ikart_odom.y  = 5;  //m
+        ikart_odom.t  = 30; //deg
+        ikart_odom.vx = 0;        
+        ikart_odom.vy = 0;
+        ikart_odom.vt = 0;
 #else	
         geometry_msgs::TransformStamped odom_trans;
         nav_msgs::Odometry odom;
         if (odometry_bottle)
         {
-            odom_ikart_x  = odometry_bottle->get(1).asDouble();
-            odom_ikart_y  = -odometry_bottle->get(0).asDouble();
-            odom_ikart_t  = -odometry_bottle->get(2).asDouble();
-            odom_ikart_vx = odometry_bottle->get(4).asDouble();
-            odom_ikart_vy = -odometry_bottle->get(3).asDouble();
-            odom_ikart_vt = -odometry_bottle->get(5).asDouble();
+            ikart_odom.x  = odometry_bottle->get(1).asDouble();
+            ikart_odom.y  = -odometry_bottle->get(0).asDouble();
+            ikart_odom.t  = -odometry_bottle->get(2).asDouble();
+            ikart_odom.vx = odometry_bottle->get(4).asDouble();
+            ikart_odom.vy = -odometry_bottle->get(3).asDouble();
+            ikart_odom.w = -odometry_bottle->get(5).asDouble();
             odom_trans.header.stamp.sec = now.sec;
             odom_trans.header.stamp.nsec = now.nsec;
             odom.header.stamp.sec = now.sec;
@@ -558,24 +552,24 @@ class BridgeThread: public yarp::os::RateThread
         }
 
 #endif
-        geometry_msgs::Quaternion odom_quat= tf::createQuaternionMsgFromYaw(ikart_t/180.0*M_PI);
+        geometry_msgs::Quaternion odom_quat= tf::createQuaternionMsgFromYaw(ikart_odom.t/180.0*M_PI);
         odom_trans.header.frame_id = "odom";
         odom_trans.child_frame_id = "base_link";
-        odom_trans.transform.translation.x = ikart_x;
-        odom_trans.transform.translation.y = ikart_y;
+        odom_trans.transform.translation.x = ikart_odom.x;
+        odom_trans.transform.translation.y = ikart_odom.y;
         odom_trans.transform.translation.z = 0.0;
         odom_trans.transform.rotation = odom_quat;
         tf_broadcaster->sendTransform(odom_trans);
 
         odom.header.frame_id = "odom";
         odom.child_frame_id = "base_link";
-        odom.pose.pose.position.x = ikart_x;
-        odom.pose.pose.position.y = ikart_y;
+        odom.pose.pose.position.x = ikart_odom.x;
+        odom.pose.pose.position.y = ikart_odom.y;
         odom.pose.pose.position.z = 0.0;
         odom.pose.pose.orientation = odom_quat;
-        odom.twist.twist.linear.x = ikart_vx;
-        odom.twist.twist.linear.y = ikart_vy;
-        odom.twist.twist.angular.z = ikart_vt/180.0*M_PI;
+        odom.twist.twist.linear.x = ikart_odom.vx;
+        odom.twist.twist.linear.y = ikart_odom.vy;
+        odom.twist.twist.angular.z = ikart_odom.w/180.0*M_PI;
         odometry_pub.publish (odom);
 
         ros::spinOnce (); //@@@@@@@@@@

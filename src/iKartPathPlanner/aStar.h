@@ -98,9 +98,7 @@ class node_map_type
             for (int x=0; x<w; x++)
                 {
                     //beware: y and x are swapped in imgMat respect to IplImage
-                    if (imgMat.at<cv::Vec3b>(y,x)[0] == 254 &&
-                        imgMat.at<cv::Vec3b>(y,x)[1] == 254 &&
-                        imgMat.at<cv::Vec3b>(y,x)[2] == 254)
+                    if (imgMat.at<cv::Vec3b>(y,x)[0] == 254) //use only the red channel
                         nodes [x][y].empty = true;
                     else
                         nodes [x][y].empty = false;

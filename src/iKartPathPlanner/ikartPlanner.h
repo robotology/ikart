@@ -55,10 +55,11 @@ class PlannerThread: public yarp::os::RateThread
     double goal_tolerance_ang;       //deg
     double waypoint_tolerance_lin;   //m 
     double waypoint_tolerance_ang;   //deg
-    double max_lin_speed; //m/s
-    double min_lin_speed; //m/s
-    double max_ang_speed; //deg/s
-    double min_ang_speed; //deg/s
+    double max_lin_speed;            //m/s
+    double min_lin_speed;            //m/s
+    double max_ang_speed;            //deg/s
+    double min_ang_speed;            //deg/s
+    int    min_waypoint_distance;    //cells
 
     //semaphore
     Semaphore mutex;
@@ -115,6 +116,7 @@ class PlannerThread: public yarp::os::RateThread
         min_ang_speed = 0.0;
         use_optimized_path = true;
         current_path=&computed_simplified_path;
+        min_waypoint_distance = 0;
     }
 
     virtual bool threadInit()
@@ -145,6 +147,7 @@ class PlannerThread: public yarp::os::RateThread
         if (rf.check("max_ang_speed"))          {max_ang_speed = rf.find("max_ang_speed").asDouble();}
         if (rf.check("min_lin_speed"))          {min_lin_speed = rf.find("min_lin_speed").asDouble();}
         if (rf.check("min_ang_speed"))          {min_ang_speed = rf.find("min_ang_speed").asDouble();}
+        if (rf.check("min_waypoint_distance"))  {min_waypoint_distance = rf.find("min_waypoint_distance").asInt();}
 
         //open module ports
         string localName = "/ikartPathPlanner";

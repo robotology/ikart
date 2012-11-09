@@ -128,12 +128,14 @@ bool map_class::skeletonize(IplImage* src, IplImage* dst)
             else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
             {
                 cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[0] = 254;
                 dst_color[1] = dst_color[1] + 100;
                 enlargePixel (i, j, src_mat, dst_mat, dst_color);
             }
             else
             {
                 cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[0] = 254;
                 dst_color[1] = dst_color[1] + 10;
                 if (dst_color[1]>200) dst_color[1] = 200;
                 enlargePixel (i, j, src_mat, dst_mat, dst_color);
@@ -250,12 +252,12 @@ bool map_class::loadMap(string filename)
         enlargeObstacles(tmp1, tmp2);
         enlargeObstacles(tmp2, tmp1);
     }
-    /*for (int i=0; i<6; i++)
+    for (int i=0; i<6; i++)
     {
        skeletonize(tmp1, tmp2);
        skeletonize(tmp2, tmp1);
     }
-    skeletonize(tmp1, processed_map);*/
+    skeletonize(tmp1, processed_map);
     enlargeObstacles(tmp1, processed_map);
 
     cvReleaseImage (&tmp1);
@@ -355,7 +357,7 @@ bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)
     while(1)
     {
         cv::Vec3b p= imgMat.at<cv::Vec3b>(src.y,src.x);
-        if (p[0] != 254 || p[1] != 254 || p[2] != 254) return false;
+        if (p[0] != 254) return false;
         if (src.x==dst.x && src.y==dst.y) break;
         int e2 = err*2;
         if (e2 > -dy)

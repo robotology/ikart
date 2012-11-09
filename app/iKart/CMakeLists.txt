@@ -15,8 +15,8 @@ file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
 file(GLOB maps    ${CMAKE_CURRENT_SOURCE_DIR}/maps/*.*)
 
 icub_app_install(${appname}
-		FILES ${conf}
-		DESTINATION conf)
+        FILES ${conf}
+        DESTINATION conf)
 
 icub_app_install(${appname} 
                  FILES ${scripts}
@@ -26,7 +26,17 @@ icub_app_install(${appname}
                  FILES ${maps}
                  DESTINATION scripts/../maps)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_start.sh ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_stop.sh 
+icub_app_install(OUTPUT *.*
+        COMMAND ${CMAKE_COMMAND} -E unrar e scripts/../maps/*.rar
+        DEPENDS *.rar
+        WORKING_DIRECTORY scripts/../maps
+        COMMENT "Unpacking path/to/file.tar.gz"
+        VERBATIM)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_start.sh
+              ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_stop.sh
+              ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_motors_run.sh 
+              ${CMAKE_CURRENT_SOURCE_DIR}/ikart_boot/ikart_motors_idle.sh
         DESTINATION bin 
         COMPONENT Core
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

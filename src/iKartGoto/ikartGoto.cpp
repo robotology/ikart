@@ -151,7 +151,13 @@ void GotoThread::run()
       if (control_out[1] > -min_lin_speed) control_out[1] = -min_lin_speed;
     }
     //printf ("%f %f \n", control_out[2], control_out[1]);
-      
+    
+    //check for large rotations: inhibit linear movement, to allow a rotation on place
+    if (fabs(gamma)>45.0)
+    {
+        control_out[1] = 0;
+    }
+
     //check for obstacles
     if (enable_stop_on_obstacles)
     {

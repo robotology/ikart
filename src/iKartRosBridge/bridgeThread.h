@@ -66,6 +66,7 @@ class BridgeThread: public yarp::os::RateThread
     double distance_traveled ;
     double angle_traveled ;
     
+    bool   enable_odom_tf;
     int    laser_step;
     double last_laser[1080];
     int    laser_step2;
@@ -162,6 +163,7 @@ class BridgeThread: public yarp::os::RateThread
         timeout_odometer_tot = 0;
         
         laser_step = rf.check("laser_resample",Value(1)).asInt();
+        enable_odom_tf = !(rf.check("no_odom_tf",Value(1)).asInt());
         if (laser_step<=0) laser_step = 1;
         printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
 
@@ -386,33 +388,35 @@ class BridgeThread: public yarp::os::RateThread
 
         laser_pub2.publish (scan2);
 
-	//********************************************* PCL (OPTIONAL) PART ***************************************
+	    //********************************************* PCL (OPTIONAL) PART ***************************************
         ImageOf<PixelRgbFloat> *pcloud_image = 0;
         pcloud_image = input_pcloud_port.read(false);
 
         if (pcloud_image)
         { 
-	   int w_size =  pcloud_image->width();
-	   int h_size =  pcloud_image->height();
+	       int w_size =  pcloud_image->width();
+	       int h_size =  pcloud_image->height();
            int c=0;
-	//   printf ("pcl_size: %d %d\n", w_size, h_size);
+	       //printf ("pcl_size: %d %d\n", w_size, h_size);
            (*pcloud)->points.clear();
-	   for (int x=0; x<w_size; x++)
+	       for (int x=0; x<w_size; x++)
            {
-		for (int y=0; y<h_size; y++)
-		{
-			yarp::sig::PixelRgbFloat p = pcloud_image->pixel(x,y);
- //  printf ("pcl_size: %f %f %f\n", p.r,p.g,p.b);
-			if (p.r!=0 && p.g!=0 && p.b!=0)
-			{(*pcloud)->points.push_back (pcl::PointXYZ(p.r,p.g,p.b)); 
-		 	c++;}
-		}
+		      for (int y=0; y<h_size; y++)
+		      {
+			     yarp::sig::PixelRgbFloat p = pcloud_image->pixel(x,y);
+                 //printf ("pcl_size: %f %f %f\n", p.r,p.g,p.b);
+			     if (p.r!=0 && p.g!=0 && p.b!=0)
+			     {
+                  (*pcloud)->points.push_back (pcl::PointXYZ(p.r,p.g,p.b)); 
+		 	      c++;
+                 }
+		      }
     	   }
            (*pcloud)->height = 1;
-	   (*pcloud)->width = c;
+	       (*pcloud)->width = c;
         }
 
-	pcloud_pub.publish (*pcloud);
+	    pcloud_pub.publish (*pcloud);
         
         //********************************************* CREATE NEW TF *********************************************
         tf::StampedTransform ikart_trans(tf::Transform(tf::createQuaternionFromYaw(-90/180.0*M_PI), tf::Vector3(0.0,0.0,0.0)),now, "base_link", "ikart_root");
@@ -559,7 +563,10 @@ class BridgeThread: public yarp::os::RateThread
         odom_trans.transform.translation.y = ikart_odom.y;
         odom_trans.transform.translation.z = 0.0;
         odom_trans.transform.rotation = odom_quat;
-        tf_broadcaster->sendTransform(odom_trans);
+        if (enable_odom_tf)
+        {
+           tf_broadcaster->sendTransform(odom_trans);
+        }
 
         odom.header.frame_id = "odom";
         odom.child_frame_id = "base_link";

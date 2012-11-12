@@ -220,6 +220,7 @@ int main(int argc, char *argv[])
         printf("\n");
         printf("Available options:");
         printf("--laser_resample <n>\n");
+        printf("--no_odom_tf\n");
         printf("\n");
         return 0;
     }

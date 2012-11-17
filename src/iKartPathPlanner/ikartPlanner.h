@@ -48,6 +48,8 @@ using namespace yarp::dev;
 #define M_PI 3.14159265
 #endif
 
+#define TIMEOUT_MAX 100
+
 class PlannerThread: public yarp::os::RateThread
 {
     public:
@@ -91,9 +93,7 @@ class PlannerThread: public yarp::os::RateThread
         lasermap_type() {x=y=0.0;}
     };
     lasermap_type       laser_data[1080];
-    int                 laser_timeout_counter;
-    int                 loc_timeout_counter;
-    int                 inner_status_timeout_counter;
+    cell                laser_map_cell[1080];
     cell                current_waypoint;
 
     std::queue<cell>    computed_path;
@@ -101,6 +101,12 @@ class PlannerThread: public yarp::os::RateThread
     std::queue<cell>*   current_path;
     status_type         planner_status;
     status_type         inner_status;
+
+    //timeouts
+    public:
+    int                 loc_timeout_counter;
+    int                 laser_timeout_counter;
+    int                 inner_status_timeout_counter;
 
     public:
     PlannerThread(unsigned int _period, ResourceFinder &_rf, Property options) :

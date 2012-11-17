@@ -92,6 +92,19 @@ public:
             return false;
         }
         
+        if (plannerThread->laser_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no laser data received!\n");
+        }
+        if (plannerThread->loc_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no localization data received!\n");
+        }
+        if (plannerThread->inner_status_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no status info received!\n");
+        }
+
         return true; 
     }
 

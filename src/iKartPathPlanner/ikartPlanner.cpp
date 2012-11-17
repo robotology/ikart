@@ -29,7 +29,10 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
+
+#define _USE_MATH_DEFINES
 #include <math.h>
+
 #include <cv.h>
 #include <highgui.h> 
 
@@ -105,6 +108,12 @@ void PlannerThread::run()
             Bottle* b = las_map->get(i).asList();
             laser_data[i].x = b->get(0).asDouble();
             laser_data[i].y = b->get(1).asDouble();
+            yarp::sig::Vector v(2);
+            double cs = cos (localization_data[2]/180.0*M_PI);
+            double ss = sin (localization_data[2]/180.0*M_PI);
+            v[0] = laser_data[i].x*cs - laser_data[i].y*ss + localization_data[0] ;
+            v[1] = laser_data[i].x*ss + laser_data[i].y*cs + localization_data[1] ;
+            laser_map_cell[i] = map.world2cell(v);
         }
         laser_timeout_counter=0;
     }
@@ -299,6 +308,10 @@ void PlannerThread::run()
     else cvCopyImage(map_with_path, map_with_location);
 
     map.drawCurrentPosition(map_with_location,start,blue_color);
+    if (laser_timeout_counter<TIMEOUT_MAX)
+    {
+        map.drawLaserScan(map_with_location,laser_map_cell,blue_color);
+    }
 
     map.sendToPort(&port_map_output,map_with_location);
     mutex.post();

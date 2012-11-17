@@ -68,6 +68,7 @@ Windows, Linux
 #include<string>
 #include<stdio.h>
 
+#define _USE_MATH_DEFINES
 #include<math.h>
 
 #include<cv.h>
@@ -97,10 +98,18 @@ int rate=50; //ms
 CvFont font;
 CvFont fontBig;
 
+const CvScalar color_bwhite = cvScalar(200,200,255);
 const CvScalar color_white = cvScalar(255,255,255);
 const CvScalar color_red   = cvScalar(0,0,255);
 const CvScalar color_black = cvScalar(0,0,0);
 const CvScalar color_gray = cvScalar(100,100,100);
+
+struct lasermap_type
+{
+    double x;
+    double y;
+    lasermap_type() {x=y=0.0;}
+};
 
 void drawGrid(IplImage *img)
 {
@@ -124,7 +133,7 @@ void drawGrid(IplImage *img)
     for (int rad=0; rad<20; rad+=rad_step)
     {
         sprintf (buff,"%3.1fm",float(rad)/2);
-        cvPutText(img, buff, cvPoint(img->width/2,float(img->height)/2.0-float(step)*rad), &font, cvScalar(0, 0, 0, 0));
+        cvPutText(img, buff, cvPoint(img->width/2,int(float(img->height)/2.0-float(step)*rad)), &font, cvScalar(0, 0, 0, 0));
         cvCircle(img,cvPoint(img->width/2,img->height/2),step*rad,color_black);
     }
 
@@ -172,7 +181,7 @@ void drawCompass(const Vector *comp, IplImage *img)
     }
 }
 
-void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
+void drawLaser(const Vector *comp, const Vector *las, const lasermap_type *lmap, IplImage *img)
 {
     cvZero(img);
     cvRectangle(img,cvPoint(0,0),cvPoint(img->width,img->height),cvScalar(255,0,0),-1);
@@ -203,7 +212,7 @@ void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
     {
         lenght=(*las)[i];
         if      (lenght<0)     lenght = 0;
-        else if (lenght>10)    lenght = 10; //10m maximum
+        else if (lenght>15)    lenght = 15; //15m maximum
         angle=i/1080.0*270.0-(90-(360-270)/2);
 
         //lenght=i; //this line is for debug only
@@ -220,6 +229,16 @@ void drawLaser(const Vector *comp, const Vector *las, IplImage *img)
         int thickness = 2;
         //draw a line
         cvLine(img,center,ray,color_white,thickness);
+
+        if (lmap)
+        {
+            CvPoint ray2;
+            ray2.x=int(lmap[i].x*scale);
+            ray2.y= -int(lmap[i].y*scale);
+            ray2.x += (center.x - (laser_position*scale)*sin(center_angle/180*M_PI));
+            ray2.y += (center.y + (laser_position*scale)*cos(center_angle/180*M_PI));
+            cvLine(img,center,ray2,color_bwhite,thickness);
+        }
     }
 }
 
@@ -232,6 +251,8 @@ int main(int argc, char *argv[])
 
     string laser_port_name;
     laser_port_name = "/laserScannerGui/laser:i";
+    string laser_map_port_name;
+    laser_map_port_name = "/laserScannerGui/laser_map:i";
     string compass_port_name;
     compass_port_name = "/laserScannerGui/compass:i";
 
@@ -240,6 +261,8 @@ int main(int argc, char *argv[])
 
     BufferedPort<yarp::sig::Vector> laserInPort;
     laserInPort.open(laser_port_name.c_str());
+    BufferedPort<yarp::os::Bottle> laserMapInPort;
+    laserMapInPort.open(laser_map_port_name.c_str());
     BufferedPort<yarp::sig::Vector> compassInPort;
     compassInPort.open(compass_port_name.c_str());
 
@@ -254,6 +277,7 @@ int main(int argc, char *argv[])
     compass_data.resize(3, 0.0);
 
     yarp::sig::Vector laser_data;
+    lasermap_type     lasermap_data [1080];
     laser_data.resize(1080, 0.0);
 
     while(!exit)
@@ -267,9 +291,23 @@ int main(int argc, char *argv[])
         yarp::sig::Vector *las = laserInPort.read(false);
         if (las) laser_data = *las;
 
+        yarp::os::Bottle *las_map = laserMapInPort.read(false);
+        if (las_map)
+        {
+            for (unsigned int i=0; i<1080; i++)
+            {
+                Bottle* b = las_map->get(i).asList();
+                lasermap_data[i].x = b->get(0).asDouble();
+                lasermap_data[i].y = b->get(1).asDouble();
+            }
+        }
+
         //The drawing functions.
-        {        
-        drawLaser(&compass_data,&laser_data,img);
+        {
+            if (las_map)
+            {drawLaser(&compass_data,&laser_data,lasermap_data,img);}
+            else
+            {drawLaser(&compass_data,&laser_data,0,img);}
             drawRobot(img2);
             drawGrid(img);
             if (compass) drawCompass(&compass_data,img);
@@ -338,6 +376,7 @@ int main(int argc, char *argv[])
 
     laserInPort.close();
     compassInPort.close();
+    laserMapInPort.close();
     cvDestroyAllWindows();
     cvReleaseImage(&img);
 }

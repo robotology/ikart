@@ -89,15 +89,17 @@ void LaserThread::run()
             yarp::os::Bottle &plaser_data=port_laser_cartesian_map_output.prepare();
             for (unsigned int i=0; i<laser_data.size(); i++)
             {
-                yarp::os::Bottle &b = plaser_data.addList();
+                yarp::os::Bottle b;
                 double alpha = ((1080-i)/1080.0*270.0-135.0)*DEG2RAD;
                 double y = laser_data[i]*cos(alpha)+laser_tf;
                 double x = laser_data[i]*sin(alpha);
                 b.addDouble(x);
                 b.addDouble(y);
+                plaser_data.addList() = b;
             }
             port_laser_cartesian_map_output.setEnvelope(laserStamp);
             port_laser_cartesian_map_output.write();
+            plaser_data.clear();
         }
     }
     else

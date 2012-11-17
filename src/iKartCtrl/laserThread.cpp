@@ -17,6 +17,12 @@
 */
 
 #include "laserThread.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+const double laser_tf = 0.245; //m
+const double RAD2DEG  = 180.0/M_PI;
+const double DEG2RAD  = M_PI/180.0;
 
 bool LaserThread::threadInit()
 {
@@ -52,7 +58,8 @@ bool LaserThread::threadInit()
             return false;
         }
         // open the laser output port
-        port_laser_output.open((localName+"/laser:o").c_str());
+        port_laser_polar_output.open((localName+"/laser:o").c_str());
+        port_laser_cartesian_map_output.open((localName+"/laser_map:o").c_str());
     }
 
     return true;
@@ -70,12 +77,27 @@ void LaserThread::run()
     //fprintf(stderr,"after laser reading\n");
     if (res == yarp::dev::IAnalogSensor::AS_OK)
     {
-        if (port_laser_output.getOutputCount()>0)
+        if (port_laser_polar_output.getOutputCount()>0)
         {
-            yarp::sig::Vector &plaser_data=port_laser_output.prepare();
+            yarp::sig::Vector &plaser_data=port_laser_polar_output.prepare();
             plaser_data=laser_data;
-            port_laser_output.setEnvelope(laserStamp);
-            port_laser_output.write();
+            port_laser_polar_output.setEnvelope(laserStamp);
+            port_laser_polar_output.write();
+        }
+        if (port_laser_cartesian_map_output.getOutputCount()>0)
+        {
+            yarp::os::Bottle &plaser_data=port_laser_cartesian_map_output.prepare();
+            for (unsigned int i=0; i<laser_data.size(); i++)
+            {
+                yarp::os::Bottle &b = plaser_data.addList();
+                double alpha = ((1080-i)/1080.0*270.0-135.0)*DEG2RAD;
+                double y = laser_data[i]*cos(alpha)+laser_tf;
+                double x = laser_data[i]*sin(alpha);
+                b.addDouble(x);
+                b.addDouble(y);
+            }
+            port_laser_cartesian_map_output.setEnvelope(laserStamp);
+            port_laser_cartesian_map_output.write();
         }
     }
     else

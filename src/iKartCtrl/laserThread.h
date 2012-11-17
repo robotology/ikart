@@ -44,7 +44,8 @@ class LaserThread: public yarp::os::RateThread
     Property                        iKartCtrl_options;
     ResourceFinder                  &rf;
     PolyDriver                      *laser_driver;
-    BufferedPort<yarp::sig::Vector> port_laser_output;
+    BufferedPort<yarp::sig::Vector> port_laser_polar_output;
+    BufferedPort<yarp::os::Bottle>  port_laser_cartesian_map_output;
     IAnalogSensor                   *iLaser;
     string                          remoteName;
     string                          localName;
@@ -83,8 +84,10 @@ class LaserThread: public yarp::os::RateThread
     virtual void threadRelease()
     {
         delete laser_driver;
-        port_laser_output.interrupt();
-        port_laser_output.close();
+        port_laser_polar_output.interrupt();
+        port_laser_polar_output.close();
+        port_laser_cartesian_map_output.interrupt();
+        port_laser_cartesian_map_output.close();
     }
 
     void printStats();

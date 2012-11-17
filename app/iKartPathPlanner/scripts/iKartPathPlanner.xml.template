@@ -68,6 +68,18 @@
 </connection>
 
 <connection>
+  <from>/ikart/laser_map:o</from>
+  <to>/ikartGoto/laser_map:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
+  <from>/ikart/laser_map:o</from>
+  <to>/ikartPathPlanner/laser_map:i</to>
+  <protocol>udp</protocol>
+</connection>
+
+<connection>
   <from>/mapClick:o</from>
   <to>/ikartPathPlanner/yarpviewTarget:i</to>
   <protocol>tcp</protocol>

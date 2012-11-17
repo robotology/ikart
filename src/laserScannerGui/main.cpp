@@ -235,8 +235,8 @@ void drawLaser(const Vector *comp, const Vector *las, const lasermap_type *lmap,
             CvPoint ray2;
             ray2.x=int(lmap[i].x*scale);
             ray2.y= -int(lmap[i].y*scale);
-            ray2.x += (center.x - (laser_position*scale)*sin(center_angle/180*M_PI));
-            ray2.y += (center.y + (laser_position*scale)*cos(center_angle/180*M_PI));
+            ray2.x += (center.x - int((laser_position*scale)*sin(center_angle/180*M_PI)));
+            ray2.y += (center.y + int((laser_position*scale)*cos(center_angle/180*M_PI)));
             cvLine(img,center,ray2,color_bwhite,thickness);
         }
     }

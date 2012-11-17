@@ -136,8 +136,8 @@ bool map_class::skeletonize(IplImage* src, IplImage* dst)
             {
                 cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
                 dst_color[0] = 254;
-                dst_color[1] = dst_color[1] + 10;
-                if (dst_color[1]>200) dst_color[1] = 200;
+                dst_color[1] = dst_color[1] + 5;
+                if (dst_color[1]>230) dst_color[1] = 230;
                 enlargePixel (i, j, src_mat, dst_mat, dst_color);
             }
         }
@@ -337,6 +337,13 @@ void map_class::drawCurrentPosition(IplImage *map, cell current, const CvScalar&
 {
     if (map==0) return;
     cvCircle(map, cvPoint(current.x, current.y), 6, color);
+}
+
+void map_class::drawLaserScan(IplImage *map, cell* laser_scan, const CvScalar& color)
+{
+    if (map==0) return;
+    for (int i=0; i<1080; i++)
+    cvCircle(map, cvPoint(laser_scan[i].x, laser_scan[i].y), 1, color);
 }
 
 bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)

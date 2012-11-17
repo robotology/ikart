@@ -96,6 +96,20 @@ void PlannerThread::run()
     }
     else loc_timeout_counter++;
 
+    //read the laser data
+    yarp::os::Bottle *las_map = port_laser_map_input.read(false);
+    if (las_map)
+    {
+        for (unsigned int i=0; i<1080; i++)
+        {
+            Bottle* b = las_map->get(i).asList();
+            laser_data[i].x = b->get(0).asDouble();
+            laser_data[i].y = b->get(1).asDouble();
+        }
+        laser_timeout_counter=0;
+    }
+    else laser_timeout_counter++;
+
     //read the internal navigation status
     Bottle cmd1, ans1;
     cmd1.addString("get"); 

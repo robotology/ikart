@@ -93,7 +93,7 @@ class PlannerThread: public yarp::os::RateThread
         lasermap_type() {x=y=0.0;}
     };
     lasermap_type       laser_data[1080];
-    cell                laser_map_cell[1080];
+    std::vector<cell>   laser_map_cell;
     cell                current_waypoint;
 
     std::queue<cell>    computed_path;

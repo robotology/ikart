@@ -103,6 +103,7 @@ void PlannerThread::run()
     yarp::os::Bottle *las_map = port_laser_map_input.read(false);
     if (las_map)
     {
+        laser_map_cell.clear();
         for (unsigned int i=0; i<1080; i++)
         {
             Bottle* b = las_map->get(i).asList();
@@ -113,7 +114,7 @@ void PlannerThread::run()
             double ss = sin (localization_data[2]/180.0*M_PI);
             v[0] = laser_data[i].x*cs - laser_data[i].y*ss + localization_data[0] ;
             v[1] = laser_data[i].x*ss + laser_data[i].y*cs + localization_data[1] ;
-            laser_map_cell[i] = map.world2cell(v);
+            laser_map_cell.push_back(map.world2cell(v));
         }
         laser_timeout_counter=0;
     }

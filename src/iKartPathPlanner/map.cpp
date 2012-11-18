@@ -363,10 +363,10 @@ void map_class::drawCurrentPosition(IplImage *map, cell current, const CvScalar&
     cvCircle(map, cvPoint(current.x, current.y), 6, color);
 }
 
-void map_class::drawLaserScan(IplImage *map, cell* laser_scan, const CvScalar& color)
+void map_class::drawLaserScan(IplImage *map, std::vector <cell>& laser_scan, const CvScalar& color)
 {
     if (map==0) return;
-    for (int i=0; i<1080; i++)
+    for (unsigned int i=0; i<laser_scan.size(); i++)
     cvCircle(map, cvPoint(laser_scan[i].x, laser_scan[i].y), 1, color);
 }
 

@@ -101,81 +101,118 @@ void map_class::enlargePixel (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat
     if ((*b) == white) (*b) = color;
 }
 
-bool map_class::skeletonize(IplImage* src, IplImage* dst)
+bool map_class::skeletonize(const IplImage* src, IplImage*& dst)
 {
-    cv::Mat src_mat = src;
-    cv::Mat dst_mat = dst;
+    double t1 = yarp::os::Time::now();
+    IplImage* src_cpy = 0;
     cv::Vec3b red    (255,0,0);
+    cv::Vec3b orange (255,100,0);
+    
+    if (dst!=0) cvReleaseImage (&dst);
+    dst     = cvCloneImage(src);
+    src_cpy = cvCloneImage(src);
 
-    for(int i=0; i<src_mat.rows; i++)
+    cv::Mat src_mat;
+    cv::Mat dst_mat;
+
+    const unsigned int skeletonization_factor = 12;
+    for (unsigned int i=0; i<skeletonization_factor; i++)
     {
-        for(int j=0; j<src_mat.cols; j++) 
+        IplImage* swap = src_cpy;
+        src_cpy = dst;
+        dst = swap;
+        src_mat = src_cpy;
+        dst_mat = dst;
+
+        for(int i=0; i<src_mat.rows; i++)
         {
-            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            for(int j=0; j<src_mat.cols; j++) 
             {
-                enlargePixel (i, j, src_mat, dst_mat, red);
-            }
-            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
-            {
-                enlargePixel (i, j, src_mat, dst_mat, red);
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 254 && src_mat.at<cv::Vec3b>(i,j)[1] == 254 && src_mat.at<cv::Vec3b>(i,j)[2] == 254)
-            {
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 205 && src_mat.at<cv::Vec3b>(i,j)[1] == 205 && src_mat.at<cv::Vec3b>(i,j)[2] == 205)
-            {
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-            {
-                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
-                dst_color[0] = 254;
-                dst_color[1] = dst_color[1] + 100;
-                enlargePixel (i, j, src_mat, dst_mat, dst_color);
-            }
-            else
-            {
-                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
-                dst_color[0] = 254;
-                dst_color[1] = dst_color[1] + 5;
-                if (dst_color[1]>230) dst_color[1] = 230;
-                enlargePixel (i, j, src_mat, dst_mat, dst_color);
+                if      (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                {
+                    enlargePixel (i, j, src_mat, dst_mat, red);
+                }
+                if      (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+                {
+                    enlargePixel (i, j, src_mat, dst_mat, red);
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 254 && src_mat.at<cv::Vec3b>(i,j)[1] == 254 && src_mat.at<cv::Vec3b>(i,j)[2] == 254)
+                {
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 205 && src_mat.at<cv::Vec3b>(i,j)[1] == 205 && src_mat.at<cv::Vec3b>(i,j)[2] == 205)
+                {
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                {
+                    cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                    dst_color[0] = 254;
+                    dst_color[1] = dst_color[1] + 100;
+                    enlargePixel (i, j, src_mat, dst_mat, dst_color);
+                }
+                else
+                {
+                    cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                    dst_color[0] = 254;
+                    dst_color[1] = dst_color[1] + 5;
+                    if (dst_color[1]>230) dst_color[1] = 230;
+                    enlargePixel (i, j, src_mat, dst_mat, dst_color);
+                }
             }
         }
     }
+    double t2 = yarp::os::Time::now();
+    printf("Map skeletonization performed in %fs\n", t2-t1);
     return true;
 }
 
-bool map_class::enlargeObstacles(IplImage* src, IplImage* dst)
+bool map_class::enlargeObstacles(const IplImage* src, IplImage*& dst, unsigned int times)
 {
-    cv::Mat src_mat = src;
-    cv::Mat dst_mat = dst;
-    //cvErode(loaded_map,processed_map,0,6);
+    double t1 = yarp::os::Time::now();
+    IplImage* src_cpy = 0;
     cv::Vec3b red    (255,0,0);
     cv::Vec3b orange (255,100,0);
-    for(int i=0; i<src_mat.rows; i++)
+    
+    if (dst!=0) cvReleaseImage (&dst);
+    dst     = cvCloneImage(src);
+    src_cpy = cvCloneImage(src);
+
+    cv::Mat src_mat;
+    cv::Mat dst_mat;
+
+    for (unsigned int i=0; i<times; i++)
     {
-        for(int j=0; j<src_mat.cols; j++) 
+        IplImage* swap = src_cpy;
+        src_cpy = dst;
+        dst = swap;
+        src_mat = src_cpy;
+        dst_mat = dst;
+
+        for(int i=0; i<src_mat.rows; i++)
         {
-            if      (src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            for(int j=0; j<src_mat.cols; j++) 
             {
-                enlargePixel (i, j, src_mat, dst_mat, red);
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-            {
-                enlargePixel (i, j, src_mat, dst_mat, red);
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
-            {
-                dst_mat.at<cv::Vec3b>(i,j) = orange;
-                //enlargePixel (i, j, src_mat, dst_mat, orange);
-            }
-            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-            {
-                //enlargePixel (i, j, src_mat, dst_mat, orange);
+                if      (src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                {
+                    enlargePixel (i, j, src_mat, dst_mat, red);
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                {
+                    enlargePixel (i, j, src_mat, dst_mat, red);
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+                {
+                    dst_mat.at<cv::Vec3b>(i,j) = orange;
+                    //enlargePixel (i, j, src_mat, dst_mat, orange);
+                }
+                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                {
+                    //enlargePixel (i, j, src_mat, dst_mat, orange);
+                }
             }
         }
     }
-
+    double t2 = yarp::os::Time::now();
+    printf("Obtacles enlargment performed in %fs\n", t2-t1);
     return true;
 }
 
@@ -243,25 +280,12 @@ bool map_class::loadMap(string filename)
     loaded_map = cropped_map;
 
     IplImage*  tmp1 = cvCloneImage(loaded_map);
-    IplImage*  tmp2 = cvCloneImage(loaded_map);
     processed_map   = cvCloneImage(loaded_map);
 
-    enlargeObstacles(loaded_map, tmp1);
-    for (int i=0; i<3; i++)
-    {
-        enlargeObstacles(tmp1, tmp2);
-        enlargeObstacles(tmp2, tmp1);
-    }
-    for (int i=0; i<6; i++)
-    {
-       skeletonize(tmp1, tmp2);
-       skeletonize(tmp2, tmp1);
-    }
-    skeletonize(tmp1, processed_map);
-    enlargeObstacles(tmp1, processed_map);
+    enlargeObstacles(loaded_map, tmp1, 6);
+    skeletonize     (tmp1, processed_map);
 
     cvReleaseImage (&tmp1);
-    cvReleaseImage (&tmp2);
     return true;
 }
 

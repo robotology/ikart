@@ -94,6 +94,7 @@ public:
             command[1]=17;
             command[2]=25;
             command[3]=84;
+            command[4]=90;
         }
         if (l_pos) l_pos->positionMove(command.data());
         if (r_pos) r_pos->positionMove(command.data());

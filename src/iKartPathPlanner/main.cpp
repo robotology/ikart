@@ -109,7 +109,7 @@ public:
             err= true;
         }
         
-        if (err=false)
+        if (err==false)
         printf ("module running, ALL ok\n");
 
         return true; 

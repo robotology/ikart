@@ -44,7 +44,7 @@ public:
         ConstString configFile = rf.findFile("from");
         if (configFile!="") p.fromConfigFile(configFile.c_str());
 
-        plannerThread = new PlannerThread(10,rf,p);
+        plannerThread = new PlannerThread(20,rf,p);
 
         rpcPort.open("/ikartPathPlanner/rpc:i");
         attach(rpcPort);

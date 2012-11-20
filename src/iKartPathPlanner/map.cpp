@@ -70,9 +70,28 @@ bool map_class::sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>
     return false;
 }
 
-void map_class::enlargePixel (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat, cv::Vec3b& color)
+inline bool pixel_is_free(const cv::Vec3b& pix)
 {
-    static cv::Vec3b white (254,254,254);
+    //static cv::Vec3b white (254,254,254);
+    //if (pix[0] == 0   && pix[1] == 0   && pix[2] == 0)   return false;
+    //if (pix[0] == 36  && pix[1] == 36  && pix[2] == 36)  return false;
+    //if (pix[0] == 205 && pix[1] == 205 && pix[2] == 205) return false;
+    //if (pix[0] == 255 && pix[1] == 0   && pix[2] ==0)    return false;
+    if (pix[0] == 0   )   return false;
+    if (pix[0] == 36  )  return false;
+    if (pix[0] == 205 ) return false;
+    if (pix[0] == 255 )    return false;
+    return true;
+}
+
+inline bool pixel_is_white(const cv::Vec3b& pix)
+{
+    if (pix[0] == 254 && pix[1] == 254 && pix[2] == 254) return true;
+    return false;
+}
+
+void map_class::enlargePixelSkeleton (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat, cv::Vec3b& color, std::vector<cv::Vec2d>& next_list)
+{
     //dst_mat.at<cv::Vec3b>(i,j)[0]=       0; dst_mat.at<cv::Vec3b>(i,j)[1]=     0; dst_mat.at<cv::Vec3b>(i,j)[2]=     0;
     dst_mat.at<cv::Vec3b>(i,j)[0]= src_mat.at<cv::Vec3b>(i,j)[0];
     dst_mat.at<cv::Vec3b>(i,j)[1]= src_mat.at<cv::Vec3b>(i,j)[1];
@@ -84,81 +103,128 @@ void map_class::enlargePixel (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat
     int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
     //printf ("-- %d %d %d %d\n", il, ir, ju, jd);
     b = &dst_mat.at<cv::Vec3b>(il,j);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,j)); }
     b = &dst_mat.at<cv::Vec3b>(ir,j);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,j)); }
     b = &dst_mat.at<cv::Vec3b>(i,ju);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(i,ju)); }
     b = &dst_mat.at<cv::Vec3b>(i,jd);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(i,jd)); }
     b = &dst_mat.at<cv::Vec3b>(il,ju);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,ju)); }
     b = &dst_mat.at<cv::Vec3b>(il,jd);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,jd)); }
     b = &dst_mat.at<cv::Vec3b>(ir,jd);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,jd)); }
     b = &dst_mat.at<cv::Vec3b>(ir,ju);
-    if ((*b) == white) (*b) = color;
+    if (pixel_is_white(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,ju)); }
+}
+
+void map_class::enlargePixelObstacle (int& i, int& j, cv::Mat& src_mat, cv::Mat& dst_mat, cv::Vec3b& color, std::vector<cv::Vec2d>& next_list)
+{
+    //dst_mat.at<cv::Vec3b>(i,j)[0]=       0; dst_mat.at<cv::Vec3b>(i,j)[1]=     0; dst_mat.at<cv::Vec3b>(i,j)[2]=     0;
+    dst_mat.at<cv::Vec3b>(i,j)[0]= src_mat.at<cv::Vec3b>(i,j)[0];
+    dst_mat.at<cv::Vec3b>(i,j)[1]= src_mat.at<cv::Vec3b>(i,j)[1];
+    dst_mat.at<cv::Vec3b>(i,j)[2]= src_mat.at<cv::Vec3b>(i,j)[2];
+    cv::Vec3b* b;
+    int il = i-1>0?i-1:0;
+    int ir = i+1<src_mat.rows-1?i+1:src_mat.rows-1;
+    int ju = j-1>0?j-1:0;
+    int jd = j+1<src_mat.cols-1?j+1:src_mat.cols-1;
+    //printf ("-- %d %d %d %d\n", il, ir, ju, jd);
+    b = &dst_mat.at<cv::Vec3b>(il,j);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,j)); }
+    b = &dst_mat.at<cv::Vec3b>(ir,j);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,j)); }
+    b = &dst_mat.at<cv::Vec3b>(i,ju);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(i,ju)); }
+    b = &dst_mat.at<cv::Vec3b>(i,jd);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(i,jd)); }
+    b = &dst_mat.at<cv::Vec3b>(il,ju);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,ju)); }
+    b = &dst_mat.at<cv::Vec3b>(il,jd);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(il,jd)); }
+    b = &dst_mat.at<cv::Vec3b>(ir,jd);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,jd)); }
+    b = &dst_mat.at<cv::Vec3b>(ir,ju);
+    if (pixel_is_free(*b)) {(*b) = color; next_list.push_back(cv::Vec2d(ir,ju)); }
 }
 
 bool map_class::skeletonize(const IplImage* src, IplImage*& dst)
 {
     double t1 = yarp::os::Time::now();
     IplImage* src_cpy = 0;
-    cv::Vec3b red    (255,0,0);
-    cv::Vec3b orange (255,100,0);
+    cv::Vec3b red    (254,0,0);
+    cv::Vec3b orange (254,100,0);
     
     if (dst!=0) cvReleaseImage (&dst);
     dst     = cvCloneImage(src);
     src_cpy = cvCloneImage(src);
 
-    cv::Mat src_mat;
-    cv::Mat dst_mat;
+    cv::Mat src_mat = src;
+    cv::Mat dst_mat = src;
 
-    const unsigned int skeletonization_factor = 12;
-    for (unsigned int i=0; i<skeletonization_factor; i++)
+    const unsigned int skeletonization_factor = 14;
+
+    std::vector<cv::Vec2d> list1;
+    std::vector<cv::Vec2d> list2;
+    list1.reserve(300000);
+    list2.reserve(300000);
+    std::vector<cv::Vec2d>* src_list = &list1;
+    std::vector<cv::Vec2d>* dst_list = &list2;
+
+    //list initialization (using black walls)
+    for(int i=0; i<src_mat.rows; i++)
+    {
+        for(int j=0; j<src_mat.cols; j++) 
+        {
+            if  (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                dst_list->push_back(cv::Vec2d(i,j));
+        }
+    }
+
+    for (unsigned int repeat_i=0; repeat_i<skeletonization_factor; repeat_i++)
     {
         IplImage* swap = src_cpy;
         src_cpy = dst;
         dst = swap;
+        
         src_mat = src_cpy;
         dst_mat = dst;
+        
+        std::vector<cv::Vec2d>* swap_list = src_list;
+        src_list = dst_list;
+        dst_list = swap_list;
 
-        for(int i=0; i<src_mat.rows; i++)
+        for(unsigned int ls=0; ls<src_list->size(); ls++)
         {
-            for(int j=0; j<src_mat.cols; j++) 
+            int i = int((*src_list)[ls][0]);
+            int j = int((*src_list)[ls][1]);
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
             {
-                if      (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-                {
-                    enlargePixel (i, j, src_mat, dst_mat, red);
-                }
-                if      (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
-                {
-                    enlargePixel (i, j, src_mat, dst_mat, red);
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 254 && src_mat.at<cv::Vec3b>(i,j)[1] == 254 && src_mat.at<cv::Vec3b>(i,j)[2] == 254)
-                {
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 205 && src_mat.at<cv::Vec3b>(i,j)[1] == 205 && src_mat.at<cv::Vec3b>(i,j)[2] == 205)
-                {
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-                {
-                    cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
-                    dst_color[0] = 254;
-                    dst_color[1] = dst_color[1] + 100;
-                    enlargePixel (i, j, src_mat, dst_mat, dst_color);
-                }
-                else
-                {
-                    cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
-                    dst_color[0] = 254;
-                    dst_color[1] = dst_color[1] + 5;
-                    if (dst_color[1]>230) dst_color[1] = 230;
-                    enlargePixel (i, j, src_mat, dst_mat, dst_color);
-                }
+                enlargePixelSkeleton (i, j, src_mat, dst_mat, red, (*dst_list));
+            }
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+            {
+                enlargePixelSkeleton (i, j, src_mat, dst_mat, red, (*dst_list));
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 254 && src_mat.at<cv::Vec3b>(i,j)[1] == 0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[0] = 254;
+                dst_color[1] = dst_color[1] + 100;
+                enlargePixelSkeleton (i, j, src_mat, dst_mat, dst_color, (*dst_list));
+            }
+            else
+            {
+                cv::Vec3b dst_color = src_mat.at<cv::Vec3b>(i,j);
+                dst_color[0] = 254;
+                dst_color[1] = dst_color[1] + 5;
+                if (dst_color[1]>230) dst_color[1] = 230;
+                enlargePixelSkeleton (i, j, src_mat, dst_mat, dst_color, (*dst_list));
             }
         }
+        src_list->clear();
     }
     double t2 = yarp::os::Time::now();
     printf("Map skeletonization performed in %fs\n", t2-t1);
@@ -176,40 +242,62 @@ bool map_class::enlargeObstacles(const IplImage* src, IplImage*& dst, unsigned i
     dst     = cvCloneImage(src);
     src_cpy = cvCloneImage(src);
 
-    cv::Mat src_mat;
-    cv::Mat dst_mat;
+    cv::Mat src_mat = src;
+    cv::Mat dst_mat = src;
+    
+    std::vector<cv::Vec2d> list1;
+    std::vector<cv::Vec2d> list2;
+    list1.reserve(300000);
+    list2.reserve(300000);
+    std::vector<cv::Vec2d>* src_list = &list1;
+    std::vector<cv::Vec2d>* dst_list = &list2;
 
-    for (unsigned int i=0; i<times; i++)
+    //list initialization (using black walls)
+    for(int i=0; i<src_mat.rows; i++)
+    {
+        for(int j=0; j<src_mat.cols; j++) 
+        {
+            if  (src_mat.at<cv::Vec3b>(i,j)[0] == 0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+                dst_list->push_back(cv::Vec2d(i,j));
+        }
+    }
+
+    for (unsigned int repeat_i=0; repeat_i<times; repeat_i++)
     {
         IplImage* swap = src_cpy;
         src_cpy = dst;
         dst = swap;
+        
         src_mat = src_cpy;
         dst_mat = dst;
+        
+        std::vector<cv::Vec2d>* swap_list = src_list;
+        src_list = dst_list;
+        dst_list = swap_list;
 
-        for(int i=0; i<src_mat.rows; i++)
+        for(unsigned int ls=0; ls<src_list->size(); ls++)
         {
-            for(int j=0; j<src_mat.cols; j++) 
+            int i = int((*src_list)[ls][0]);
+            int j = int((*src_list)[ls][1]);
+            if      (src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
             {
-                if      (src_mat.at<cv::Vec3b>(i,j)[0] ==  0 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-                {
-                    enlargePixel (i, j, src_mat, dst_mat, red);
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-                {
-                    enlargePixel (i, j, src_mat, dst_mat, red);
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
-                {
-                    dst_mat.at<cv::Vec3b>(i,j) = orange;
-                    //enlargePixel (i, j, src_mat, dst_mat, orange);
-                }
-                else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
-                {
-                    //enlargePixel (i, j, src_mat, dst_mat, orange);
-                }
+                enlargePixelObstacle (i, j, src_mat, dst_mat, red, (*dst_list));
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] ==255 && src_mat.at<cv::Vec3b>(i,j)[1] ==0 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                enlargePixelObstacle (i, j, src_mat, dst_mat, red, (*dst_list));
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 36 && src_mat.at<cv::Vec3b>(i,j)[1] ==36 && src_mat.at<cv::Vec3b>(i,j)[2] == 36)
+            {
+                dst_mat.at<cv::Vec3b>(i,j) = orange;
+                //enlargePixel (i, j, src_mat, dst_mat, orange);
+            }
+            else if (src_mat.at<cv::Vec3b>(i,j)[0] == 255 && src_mat.at<cv::Vec3b>(i,j)[1] ==100 && src_mat.at<cv::Vec3b>(i,j)[2] == 0)
+            {
+                //enlargePixel (i, j, src_mat, dst_mat, orange);
             }
         }
+        src_list->clear();
     }
     double t2 = yarp::os::Time::now();
     printf("Obtacles enlargment performed in %fs\n", t2-t1);
@@ -282,8 +370,11 @@ bool map_class::loadMap(string filename)
     IplImage*  tmp1 = cvCloneImage(loaded_map);
     processed_map   = cvCloneImage(loaded_map);
 
-    enlargeObstacles(loaded_map, tmp1, 6);
-    skeletonize     (tmp1, processed_map);
+    //enlargeObstacles(loaded_map, tmp1, 6);
+    //skeletonize     (tmp1, processed_map);
+
+    skeletonize     (loaded_map, tmp1);
+    enlargeObstacles(tmp1, processed_map, 6);
 
     cvReleaseImage (&tmp1);
     return true;

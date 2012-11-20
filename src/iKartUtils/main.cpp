@@ -32,7 +32,7 @@ using namespace yarp::os;
 
 class iKartUtilsModule: public RFModule
 {
-    enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1};
+    enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1, BRING =2};
     PolyDriver       *left_arm_device;
     PolyDriver       *right_arm_device;
     IPositionControl *l_pos ;
@@ -87,6 +87,13 @@ public:
             command[1]=15;
             command[2]=0;
             command[3]=25;
+        }
+        else if (tuck_cmd==BRING)
+        {
+            command[0]=-15;
+            command[1]=17;
+            command[2]=25;
+            command[3]=84;
         }
         if (l_pos) l_pos->positionMove(command.data());
         if (r_pos) r_pos->positionMove(command.data());
@@ -183,6 +190,7 @@ public:
             reply.addString("Available commands are:");
             reply.addString("open <delay>");
             reply.addString("close <delay>");
+            reply.addString("bring <delay>");
             reply.addString("approach <distance> <delay>");
             reply.addString("retreat <distance> <delay>");
         }
@@ -207,6 +215,17 @@ public:
             tuck(CLOSE);
             yarp::os::Time::delay(delay_time);
             reply.addString("arms closed");
+        }
+        else if (command.get(0).asString()=="bring")
+        {
+            double delay_time = 3.0;
+            if (command.size()>1)
+            {
+                delay_time = command.get(1).asDouble();
+            }
+            tuck(BRING);
+            yarp::os::Time::delay(delay_time);
+            reply.addString("arms in position");
         }
         else if (command.get(0).asString()=="approach")
         {

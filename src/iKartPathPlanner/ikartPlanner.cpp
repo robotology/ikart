@@ -110,11 +110,12 @@ void PlannerThread::run()
             laser_data[i].x = b->get(0).asDouble();
             laser_data[i].y = b->get(1).asDouble();
             yarp::sig::Vector v(2);
-            double cs = cos (localization_data[2]/180.0*M_PI);
-            double ss = sin (localization_data[2]/180.0*M_PI);
+            double cs = cos ((localization_data[2]-90.0)/180.0*M_PI);
+            double ss = sin ((localization_data[2]-90.0)/180.0*M_PI);
             v[0] = laser_data[i].x*cs - laser_data[i].y*ss + localization_data[0] ;
             v[1] = laser_data[i].x*ss + laser_data[i].y*cs + localization_data[1] ;
-            laser_map_cell.push_back(map.world2cell(v));
+            cell tmp_cell = map.world2cell(v);
+            laser_map_cell.push_back(tmp_cell);
         }
         laser_timeout_counter=0;
     }
@@ -282,13 +283,19 @@ void PlannerThread::run()
     }
     
     //draw the map
+    static CvScalar blue_color = cvScalar(0,0,200);
     cell start = map.world2cell(localization_data);
-    //start.x = 150;//&&&&& 150
-    //start.y = 150;//&&&&&
 
+    cvCopyImage(map.processed_map, map.processed_map_with_scan);
+    if (laser_timeout_counter<TIMEOUT_MAX)
+    {
+        map.drawLaserScan(map.processed_map_with_scan,laser_map_cell,blue_color);
+    }
+
+    map.drawCurrentPosition(map.processed_map_with_scan,start,blue_color);
     static IplImage* map_with_path = 0;
-    if (map_with_path==0) map_with_path = cvCloneImage(map.processed_map);
-    else cvCopyImage(map.processed_map,map_with_path);
+    if (map_with_path==0) map_with_path = cvCloneImage(map.processed_map_with_scan);
+    else cvCopyImage(map.processed_map_with_scan,map_with_path);
 
     CvScalar color = cvScalar(0,200,0);
     CvScalar color2 = cvScalar(0,200,100);
@@ -304,15 +311,10 @@ void PlannerThread::run()
     }
 
     static IplImage* map_with_location = 0;
-    static CvScalar blue_color = cvScalar(0,0,200);
     if (map_with_location == 0) map_with_location = cvCloneImage(map_with_path);
     else cvCopyImage(map_with_path, map_with_location);
 
-    map.drawCurrentPosition(map_with_location,start,blue_color);
-    if (laser_timeout_counter<TIMEOUT_MAX)
-    {
-        map.drawLaserScan(map_with_location,laser_map_cell,blue_color);
-    }
+
 
     map.sendToPort(&port_map_output,map_with_location);
     mutex.post();

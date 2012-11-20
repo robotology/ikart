@@ -367,8 +367,9 @@ bool map_class::loadMap(string filename)
     cvReleaseImage (&loaded_map);
     loaded_map = cropped_map;
 
-    IplImage*  tmp1 = cvCloneImage(loaded_map);
-    processed_map   = cvCloneImage(loaded_map);
+    IplImage*  tmp1           = cvCloneImage(loaded_map);
+    processed_map             = cvCloneImage(loaded_map);
+    processed_map_with_scan   = cvCloneImage(loaded_map);
 
     //enlargeObstacles(loaded_map, tmp1, 6);
     //skeletonize     (tmp1, processed_map);
@@ -458,7 +459,7 @@ void map_class::drawLaserScan(IplImage *map, std::vector <cell>& laser_scan, con
 {
     if (map==0) return;
     for (unsigned int i=0; i<laser_scan.size(); i++)
-    cvCircle(map, cvPoint(laser_scan[i].x, laser_scan[i].y), 1, color);
+    cvCircle(map, cvPoint(laser_scan[i].x, laser_scan[i].y), 0, color);
 }
 
 bool map_class::checkStraightLine(IplImage* map, cell src, cell dst)

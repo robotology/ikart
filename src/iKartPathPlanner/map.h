@@ -67,6 +67,7 @@ class map_class
     yarp::sig::Vector                       origin;
     IplImage*                               loaded_map;
     IplImage*                               processed_map;
+    IplImage*                               processed_map_with_scan;
     
     public:
     map_class();

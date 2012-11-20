@@ -87,6 +87,7 @@ void LaserThread::run()
         if (port_laser_cartesian_map_output.getOutputCount()>0)
         {
             yarp::os::Bottle &plaser_data=port_laser_cartesian_map_output.prepare();
+			plaser_data.clear();
             for (unsigned int i=0; i<laser_data.size(); i++)
             {
                 yarp::os::Bottle b;
@@ -99,7 +100,6 @@ void LaserThread::run()
             }
             port_laser_cartesian_map_output.setEnvelope(laserStamp);
             port_laser_cartesian_map_output.write();
-            plaser_data.clear();
         }
     }
     else

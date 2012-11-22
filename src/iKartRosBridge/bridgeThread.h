@@ -165,8 +165,9 @@ class BridgeThread: public yarp::os::RateThread
         timeout_odometry_tot = 0;
         timeout_odometer_tot = 0;
         
+        //printf("rf options: %s",rf.toString().c_str());
         laser_step = rf.check("laser_resample",Value(1)).asInt();
-        enable_odom_tf = (rf.check("no_odom_tf",Value(1)).asInt()==1);
+        enable_odom_tf = !(rf.check("no_odom_tf"));
         if (enable_odom_tf)
             printf ("publishing odom tf \n");
         else
@@ -218,9 +219,9 @@ class BridgeThread: public yarp::os::RateThread
         int argc = 0;
         char** argv = 0;
         ros::init (argc, argv, "ikart_ros_bridge");
-                    printf("Starting1\n");
+        printf("Starting1\n");
         nh = new ros::NodeHandle();
-          printf("Starting2\n");
+        printf("Starting2\n");
         ros::Time::init();
         pcloud_pub      = nh->advertise<tPointCloud>                    ("/ikart_ros_bridge/pcloud_out",      1);
         footprint_pub   = nh->advertise<geometry_msgs::PolygonStamped>  ("/ikart_ros_bridge/footprint",       1);
@@ -232,7 +233,7 @@ class BridgeThread: public yarp::os::RateThread
         tf_broadcaster  = new tf::TransformBroadcaster;
         tf_listener     = new tf::TransformListener;
         ac              = new actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> ("move_base", true);
-  printf("Starting3\n");
+        printf("Starting3\n");
         //wait for the action server to come up  
         /*while(!ac->waitForServer(ros::Duration(5.0)))
         {

@@ -59,7 +59,7 @@ class BridgeModule: public RFModule
         }
 
         // set the thread rate
-        int rate = rf.check("rate",Value(50)).asInt();
+        int rate = rf.check("rate",Value(30)).asInt();
         printf("bridge thread rate: %d ms.\n",rate);
 
         // create the bridge thread

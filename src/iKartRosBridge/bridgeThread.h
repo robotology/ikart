@@ -32,6 +32,7 @@
 #include <yarp/os/RateThread.h>
 #include <yarp/os/Semaphore.h>
 #include <yarp/sig/Image.h>
+#include <yarp/os/Stamp.h>
 
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
@@ -131,6 +132,8 @@ class BridgeThread: public yarp::os::RateThread
     int                      timeout_odometry_tot;
     int                      timeout_odometer_tot;
     int                      command_wdt;
+    yarp::os::Stamp          timestamp_localization;
+    yarp::os::Stamp          timestamp_command;
 
     geometry_msgs::PolygonStamped footprint;
     sensor_msgs::LaserScan        scan;
@@ -163,8 +166,13 @@ class BridgeThread: public yarp::os::RateThread
         timeout_odometer_tot = 0;
         
         laser_step = rf.check("laser_resample",Value(1)).asInt();
-        enable_odom_tf = !(rf.check("no_odom_tf",Value(1)).asInt());
-        if (laser_step<=0) laser_step = 1;
+        enable_odom_tf = (rf.check("no_odom_tf",Value(1)).asInt()==1);
+        if (enable_odom_tf)
+            printf ("publishing odom tf \n");
+        else
+            printf ("not publishing odom tf\n");
+        if (laser_step<=0)
+            laser_step = 1;
         printf ("Using %d laser measurments each scan (max: 1080).\n", 1080/laser_step);
 
 	laser_step2 = laser_step;
@@ -446,7 +454,8 @@ class BridgeThread: public yarp::os::RateThread
         //********************************************* READ TF      **********************************************
         tf::StampedTransform stamp_loc_trans;
         bool loc_running = tf_listener->canTransform ("/home", "/base_link", ros::Time(0), NULL); 
-      
+        timestamp_localization.update();
+                
         if (loc_running)
         {       
             // The following try-catch has been added just for teaching purposues, since the block is
@@ -469,18 +478,27 @@ class BridgeThread: public yarp::os::RateThread
             ikart_current_position.t = tf::getYaw(loc_trans.transform.rotation)*180/M_PI;
             mutex_localiz.post();
             
-            Bottle &m = output_localization_port.prepare();
-            m.clear();
-            m.addDouble(ikart_current_position.x);
-            m.addDouble(ikart_current_position.y);
-            m.addDouble(ikart_current_position.t);
-            m.addDouble(ikart_current_position.vx);
-            m.addDouble(ikart_current_position.vy);
-            m.addDouble(ikart_current_position.w);
-            output_localization_port.write();
+            if (output_localization_port.getOutputCount()>0)
+            {
+                output_localization_port.setEnvelope(timestamp_localization);
+                Bottle &m = output_localization_port.prepare();
+                m.clear();
+                m.addDouble(ikart_current_position.x);
+                m.addDouble(ikart_current_position.y);
+                m.addDouble(ikart_current_position.t);
+                m.addDouble(ikart_current_position.vx);
+                m.addDouble(ikart_current_position.vy);
+                m.addDouble(ikart_current_position.w);
+                output_localization_port.write();
+            }
+        }
+        else
+        {
+            printf("ERROR: tf_listener->canTransform\n");
         }
          
         //********************************************* COMMAND PART  *********************************************
+        timestamp_command.update();
         mutex_command.wait();        
         command_wdt--;
         if (command_wdt<0)
@@ -491,13 +509,17 @@ class BridgeThread: public yarp::os::RateThread
             command_t = 0;
             command_wdt = 0;
         }
-        Bottle &b=output_command_port.prepare();
-        b.clear();
-        b.addInt(3);
-        b.addDouble(command_x);
-        b.addDouble(command_y);
-        b.addDouble(command_t);
-        output_command_port.write();
+        if (output_command_port.getOutputCount()>0)
+        {
+            output_command_port.setEnvelope(timestamp_command);
+            Bottle &b=output_command_port.prepare();
+            b.clear();
+            b.addInt(3);
+            b.addDouble(command_x);
+            b.addDouble(command_y);
+            b.addDouble(command_t);
+            output_command_port.write();
+        }
         mutex_command.post();
 
         //********************************************* MAKER PART *********************************************

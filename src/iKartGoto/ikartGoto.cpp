@@ -153,7 +153,7 @@ void GotoThread::run()
     //printf ("%f %f \n", control_out[2], control_out[1]);
     
     //check for large rotations: inhibit linear movement, to allow a rotation on place
-    if (fabs(gamma)>45.0)
+    if (fabs(gamma)>25.0)
     {
         control_out[1] = 0;
     }

@@ -12,6 +12,12 @@ ikart
    <tag>iKartNavigation</tag>
 </module>
 
+<module>
+   <name>iKartUtils</name>
+   <node>icub14</node>
+   <tag>iKartUtils</tag>
+</module>
+
 <connection>
   <from>/ikart/laser:o</from>
   <to>/ikartnav/laser:i</to>

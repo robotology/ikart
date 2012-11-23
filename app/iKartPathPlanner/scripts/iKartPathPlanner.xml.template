@@ -25,6 +25,12 @@
    <tag>PlannerViewer</tag>
 </module>
 
+<module>
+   <name>iKartUtils</name>
+   <node>icub14</node>
+   <tag>iKartUtils</tag>
+</module>
+
 <connection>
   <from>/ikartGoto/control:o</from>
   <to>/ikart/control:i</to>

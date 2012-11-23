@@ -44,6 +44,9 @@ using namespace yarp::dev;
 #define M_PI 3.14159265
 #endif
 
+const double RAD2DEG  = 180.0/M_PI;
+const double DEG2RAD  = M_PI/180.0;
+
 struct target_type
 {
     yarp::sig::Vector target;
@@ -104,6 +107,7 @@ class GotoThread: public yarp::os::RateThread
     int                 las_timeout_counter;
     int                 retreat_counter;
     double              obstacle_time;
+    double              free_distance[1080];
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -166,6 +170,14 @@ class GotoThread: public yarp::os::RateThread
         if (!b) {fprintf (stderr,"Unable to connect the output command port!"); return false;}
         b = Network::connect("/ikart/laser:o",(localName+"/laser:i").c_str(), "udp", false);
         if (!b) {fprintf (stderr,"Unable to connect the laser port!"); }*/
+
+        //compute the free distance
+        for (int i=0; i<1080; i++)
+        {
+            free_distance[i] = fabs(robot_radius / sin(((double(i)/1080.0)*270.0-135.0)*DEG2RAD));
+            if (free_distance[i]>2.0) free_distance[i] = 2.0;
+        }
+
         return true;
     }
 

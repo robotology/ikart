@@ -32,7 +32,7 @@ using namespace yarp::os;
 
 class iKartUtilsModule: public RFModule
 {
-    enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1, BRING =2};
+    enum command_type {NO_CMD=0, CLOSE = 0, OPEN =1, BRING =2, GIVE=3};
     PolyDriver       *left_arm_device;
     PolyDriver       *right_arm_device;
     IPositionControl *l_pos ;
@@ -80,13 +80,19 @@ public:
             command[1]=30;
             command[2]=-0;
             command[3]=45;
+            command[4]=0;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());
         }
         else if (tuck_cmd==CLOSE)
         {
             command[0]=10;
             command[1]=15;
             command[2]=0;
-            command[3]=25;
+            command[3]=55;
+            command[4]=0;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());
         }
         else if (tuck_cmd==BRING)
         {
@@ -95,9 +101,39 @@ public:
             command[2]=25;
             command[3]=84;
             command[4]=-90;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());
+            yarp::os::Time::delay(5.0);
+            command[0]=-15;
+            command[1]=17;
+            command[2]=25;
+            command[3]=84;
+            command[4]=-90;
+            command[8]=85;
+            command[9]=82;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());            
         }
-        if (l_pos) l_pos->positionMove(command.data());
-        if (r_pos) r_pos->positionMove(command.data());
+        else if (tuck_cmd==GIVE)
+        {
+            command[0]=-15;
+            command[1]=17;
+            command[2]=25;
+            command[3]=84;
+            command[4]=-90;
+            command[8]=0;
+            command[9]=0;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());
+            yarp::os::Time::delay(5.0);
+            command[0]=-30;
+            command[1]=30;
+            command[2]=-0;
+            command[3]=45;
+            command[4]=0;
+            if (l_pos) l_pos->positionMove(command.data());
+            if (r_pos) r_pos->positionMove(command.data());            
+        }        
     }
 
     virtual bool configure(ResourceFinder &rf)
@@ -228,6 +264,17 @@ public:
             yarp::os::Time::delay(delay_time);
             reply.addString("arms in position");
         }
+        else if (command.get(0).asString()=="give")
+        {
+            double delay_time = 3.0;
+            if (command.size()>1)
+            {
+                delay_time = command.get(1).asDouble();
+            }
+            tuck(GIVE);
+            yarp::os::Time::delay(delay_time);
+            reply.addString("arms in position");
+        }        
         else if (command.get(0).asString()=="approach")
         {
             double delay_time = 8.0;

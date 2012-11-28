@@ -33,6 +33,7 @@
 #include <yarp/os/Semaphore.h>
 #include <yarp/dev/IAnalogSensor.h>
 #include <string>
+#include <math.h>
 
 #include "status.h"
 

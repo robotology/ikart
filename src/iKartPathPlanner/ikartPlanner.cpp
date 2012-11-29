@@ -183,6 +183,10 @@ void PlannerThread::run()
         {
             //do nothing, just wait
         }
+        else if (inner_status == WAITING_OBSTACLE)
+        {
+            //do nothing, just wait
+        }
         else if (inner_status == ABORTED)
         {
             //terminate navigation
@@ -283,13 +287,16 @@ void PlannerThread::run()
     }
     
     //draw the map
-    static CvScalar blue_color = cvScalar(0,0,200);
+    static CvScalar blue_color  = cvScalar(0,0,200);
+    static CvScalar blue_color2 = cvScalar(80,80,200);
     cell start = map.world2cell(localization_data);
 
     cvCopyImage(map.processed_map, map.processed_map_with_scan);
     if (laser_timeout_counter<TIMEOUT_MAX)
     {
         map.drawLaserScan(map.processed_map_with_scan,laser_map_cell,blue_color);
+        //map.enlargeScan(laser_map_cell,6);
+        //map.drawLaserScan(map.processed_map_with_scan,laser_map_cell,blue_color2);
     }
 
     map.drawCurrentPosition(map.processed_map_with_scan,start,blue_color);

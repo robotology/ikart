@@ -98,6 +98,10 @@ int rate=50; //ms
 CvFont font;
 CvFont fontBig;
 
+#ifndef DEG2RAD
+#define DEG2RAD M_PI/180.0
+#endif
+
 const CvScalar color_bwhite = cvScalar(200,200,255);
 const CvScalar color_white = cvScalar(255,255,255);
 const CvScalar color_red   = cvScalar(0,0,255);
@@ -181,6 +185,44 @@ void drawCompass(const Vector *comp, IplImage *img)
     }
 }
 
+void drawNav(const yarp::os::Bottle *display, IplImage *img)
+{
+    if (display->size()==7)
+    {
+        printf ("wrong format!\n");
+        return;
+    }
+    double c0 = display->get(0).asDouble();
+    double c1 = display->get(1).asDouble();
+    double c2 = display->get(2).asDouble();
+    double angle_f = display->get(3).asDouble();
+    double angle_t = display->get(4).asDouble();
+    double w_f = display->get(5).asDouble();
+    double w_t = display->get(6).asDouble();
+    double max_obs_dist = display->get(7).asDouble();
+
+    CvPoint center;
+    center.x = (int)(img->width/2  );
+    center.y = (int)(img->height/2 );
+
+    CvPoint ray;
+    ray.x=int(200*sin(DEG2RAD*angle_f));
+    ray.y=-int(200*cos(DEG2RAD*angle_f));
+    ray.x += center.x;
+    ray.y += center.y;
+
+    int thickness = 3;
+    cvLine(img,center,ray,color_bwhite,thickness);
+
+    ray.x=int(100*sin(DEG2RAD*c0));
+    ray.y=-int(100*cos(DEG2RAD*c0));
+    ray.x += center.x;
+    ray.y += center.y;
+    cvLine(img,center,ray,color_red,thickness);
+
+    cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(max_obs_dist*scale-1),color_black);
+}
+
 void drawLaser(const Vector *comp, const Vector *las, const lasermap_type *lmap, IplImage *img)
 {
     cvZero(img);
@@ -255,6 +297,8 @@ int main(int argc, char *argv[])
     laser_map_port_name = "/laserScannerGui/laser_map:i";
     string compass_port_name;
     compass_port_name = "/laserScannerGui/compass:i";
+    string nav_display;
+    nav_display = "/laserScannerGui/nav_display:i";
 
     int width = 600;
     int height = 600;
@@ -265,6 +309,8 @@ int main(int argc, char *argv[])
     laserMapInPort.open(laser_map_port_name.c_str());
     BufferedPort<yarp::sig::Vector> compassInPort;
     compassInPort.open(compass_port_name.c_str());
+    BufferedPort<yarp::os::Bottle> navDisplayInPort;
+    navDisplayInPort.open(nav_display.c_str());
 
     IplImage *img  = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
     IplImage *img2 = cvCreateImage(cvSize(width,height),IPL_DEPTH_8U,3);
@@ -311,6 +357,13 @@ int main(int argc, char *argv[])
             drawRobot(img2);
             drawGrid(img);
             if (compass) drawCompass(&compass_data,img);
+
+            yarp::os::Bottle *nav_display = navDisplayInPort.read(false);
+            if (nav_display)
+            {
+                drawNav(nav_display,img);
+            }
+
             cvAddWeighted(img, 0.7, img2, 0.3, 0.0, img);
             cvShowImage("Laser Scanner GUI",img);
         }
@@ -377,6 +430,7 @@ int main(int argc, char *argv[])
     laserInPort.close();
     compassInPort.close();
     laserMapInPort.close();
+    navDisplayInPort.close();
     cvDestroyAllWindows();
     cvReleaseImage(&img);
 }

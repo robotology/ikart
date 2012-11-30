@@ -68,6 +68,12 @@
 </connection>
 
 <connection>
+  <from>/ikartGoto/speak:o</from>
+  <to>/iSpeak</to>
+  <protocol>tcp</protocol>
+</connection>
+
+<connection>
   <from>/ikart/odometry:o</from>
   <to>/ikartGoto/odometry:i</to>
   <protocol>udp</protocol>

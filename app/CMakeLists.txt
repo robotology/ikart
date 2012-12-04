@@ -20,6 +20,7 @@ add_subdirectory(iKartNav)
 add_subdirectory(iKartPathPlanner)
 add_subdirectory(laserScannerGui)
 add_subdirectory(forceGuidance)
+add_subdirectory(iKartWirelessDisplay)
 
 ## make all applications show up as single target
 icub_app_all()

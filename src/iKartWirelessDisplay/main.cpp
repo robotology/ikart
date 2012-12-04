@@ -97,14 +97,12 @@ public:
     sigc::connection                            m_timer;
 
     std::string                                 moduleName;
-    std::string                                 handlerPortName;
-    yarp::os::Port                              handlerPort;
 
     yarp::os::ConstString                       picBackground;
     yarp::os::ConstString                       picBlocks;
     yarp::os::ConstString                       picNumbers;
 
-    yarp::os::ConstString                       systemCmd;
+    //yarp::os::ConstString                       systemCmd;
 
 public:
     CtrlModule() 
@@ -131,10 +129,12 @@ public:
 
         sscanf(result.c_str(),"%*s %*s %d %*s %s",&signal,tmp );
         strenght = atof (tmp+1);
-    
-        static double voltage =0;
-        static double current =0;
-        static double charge  =0;
+   
+        Bottle& outBot = monitorOutput.prepare();
+        outBot.clear();
+        outBot.addInt(signal);    
+        outBot.addDouble(strenght);
+        monitorOutput.write();
 
         graphics->update_graphics(signal,strenght);
 
@@ -162,7 +162,7 @@ public:
         picNumbers = rf.findFile(rf.check("pic_numbers", Value(1), "module name (string)").asString());
 
         graphics = new GraphicsManager(picBackground.c_str(),picBlocks.c_str(),picNumbers.c_str());
-        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 11000);
+        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 5000);
         on_timeout();
 
         //start GTK loop

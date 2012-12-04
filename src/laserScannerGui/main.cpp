@@ -103,10 +103,11 @@ CvFont fontBig;
 #endif
 
 const CvScalar color_bwhite = cvScalar(200,200,255);
-const CvScalar color_white = cvScalar(255,255,255);
-const CvScalar color_red   = cvScalar(0,0,255);
-const CvScalar color_black = cvScalar(0,0,0);
-const CvScalar color_gray = cvScalar(100,100,100);
+const CvScalar color_white  = cvScalar(255,255,255);
+const CvScalar color_red    = cvScalar(0,0,255);
+const CvScalar color_yellow = cvScalar(0,255,255);
+const CvScalar color_black  = cvScalar(0,0,0);
+const CvScalar color_gray   = cvScalar(100,100,100);
 
 struct lasermap_type
 {
@@ -187,7 +188,7 @@ void drawCompass(const Vector *comp, IplImage *img)
 
 void drawNav(const yarp::os::Bottle *display, IplImage *img)
 {
-    if (display->size()==7)
+    if (display->size()==8)
     {
         printf ("wrong format!\n");
         return;
@@ -200,6 +201,7 @@ void drawNav(const yarp::os::Bottle *display, IplImage *img)
     double w_f = display->get(5).asDouble();
     double w_t = display->get(6).asDouble();
     double max_obs_dist = display->get(7).asDouble();
+    double angle_g = display->get(8).asDouble();
 
     CvPoint center;
     center.x = (int)(img->width/2  );
@@ -219,6 +221,12 @@ void drawNav(const yarp::os::Bottle *display, IplImage *img)
     ray.x += center.x;
     ray.y += center.y;
     cvLine(img,center,ray,color_red,thickness);
+
+    ray.x=int(150*sin(DEG2RAD*angle_g));
+    ray.y=-int(150*cos(DEG2RAD*angle_g));
+    ray.x += center.x;
+    ray.y += center.y;
+    cvLine(img,center,ray,color_yellow,thickness);
 
     cvCircle(img,cvPoint(img->width/2,img->height/2),(int)(max_obs_dist*scale-1),color_black);
 }

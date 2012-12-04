@@ -200,16 +200,16 @@ void GraphicsManager::update_graphics(double signal, double strenght)
     for (int i=0;i<n_blocks;i++)
     {
         int xoff=0;
-        int yoff=0;
+        int yoff=15;
         int xpos=0;
         int ypos=0;
         GdkRectangle dest;
 
-        dest.x=72-xoff;
+        dest.x=65-xoff;
         dest.y=75-i*6;
         dest.width=14;
         dest.height=7;
-        xpos=72-xoff;
+        xpos=65-xoff;
         ypos=75-i*6-yoff;
       
         m_refPixbuf_Blocks->composite(m_refPixbuf,

@@ -133,7 +133,7 @@ void GraphicsManager::update_graphics(double signal, double strenght)
 {
     m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
   
-    signal = 25;
+    //signal = 100; //for debugging
     //draw numbers
     char buff[10];
     sprintf(buff,"%4.0f",signal);

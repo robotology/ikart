@@ -152,11 +152,11 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         {
             off=(buff[i]-'0')*29+point_off;    
             dest.x=80+i*29-point_off;
-            dest.y=32;
+            dest.y=26;
             dest.width=29;
             dest.height=52;
             xpos=80+i*29-off;
-            ypos=32;
+            ypos=26;
             m_refPixbuf_Numbers->composite(m_refPixbuf,
                                         dest.x, dest.y,
                                         dest.width, dest.height,
@@ -182,11 +182,11 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         {
             xoff=(buff[i]-'0')*29+point_off;    
             dest.x=63+i*29-point_off;
-            dest.y=105-yoff;
+            dest.y=86-yoff;
             dest.width=29;
             dest.height=52;
             xpos=63+i*29-xoff;
-            ypos=105-yoff;
+            ypos=86-yoff;
             m_refPixbuf_Numbers->composite(m_refPixbuf,
                                         dest.x, dest.y,
                                         dest.width, dest.height,
@@ -206,11 +206,11 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         GdkRectangle dest;
 
         dest.x=72-xoff;
-        dest.y=84-i*6;
+        dest.y=75-i*6;
         dest.width=14;
         dest.height=7;
         xpos=72-xoff;
-        ypos=84-i*6-yoff;
+        ypos=75-i*6-yoff;
       
         m_refPixbuf_Blocks->composite(m_refPixbuf,
                                         dest.x, dest.y,

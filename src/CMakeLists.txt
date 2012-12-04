@@ -9,6 +9,7 @@ add_subdirectory(iKartGoto)
 add_subdirectory(iKartPathPlanner)
 add_subdirectory(laserScannerGui)
 add_subdirectory(laserUtils)
+add_subdirectory(iKartWirelessDisplay)
 
 
 

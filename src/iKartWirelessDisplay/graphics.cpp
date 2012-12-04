@@ -133,6 +133,7 @@ void GraphicsManager::update_graphics(double signal, double strenght)
 {
     m_refPixbuf_Background->copy_area( 0, 0, m_back_width, m_back_height, m_refPixbuf, 0, 0);
   
+    signal = 25;
     //draw numbers
     char buff[10];
     sprintf(buff,"%4.0f",signal);
@@ -150,11 +151,11 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         if (buff[i]>='0' && buff[i]<='9')
         {
             off=(buff[i]-'0')*29+point_off;    
-            dest.x=30+i*29-point_off;
+            dest.x=80+i*29-point_off;
             dest.y=32;
             dest.width=29;
             dest.height=52;
-            xpos=30+i*29-off;
+            xpos=80+i*29-off;
             ypos=32;
             m_refPixbuf_Numbers->composite(m_refPixbuf,
                                         dest.x, dest.y,
@@ -180,11 +181,11 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         if (buff[i]>='0' && buff[i]<='9')
         {
             xoff=(buff[i]-'0')*29+point_off;    
-            dest.x=15+i*29-point_off;
+            dest.x=63+i*29-point_off;
             dest.y=105-yoff;
             dest.width=29;
             dest.height=52;
-            xpos=15+i*29-xoff;
+            xpos=63+i*29-xoff;
             ypos=105-yoff;
             m_refPixbuf_Numbers->composite(m_refPixbuf,
                                         dest.x, dest.y,
@@ -204,12 +205,12 @@ void GraphicsManager::update_graphics(double signal, double strenght)
         int ypos=0;
         GdkRectangle dest;
 
-        dest.x=52-xoff;
-        dest.y=81-i*6;
+        dest.x=72-xoff;
+        dest.y=84-i*6;
         dest.width=14;
         dest.height=7;
-        xpos=52-xoff;
-        ypos=81-i*6-yoff;
+        xpos=72-xoff;
+        ypos=84-i*6-yoff;
       
         m_refPixbuf_Blocks->composite(m_refPixbuf,
                                         dest.x, dest.y,

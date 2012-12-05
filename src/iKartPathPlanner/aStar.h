@@ -51,6 +51,7 @@ class node_type
     int y;
     double g_score;
     double f_score;
+    double s_score;
     cell came_from;
 
     node_type()
@@ -58,6 +59,7 @@ class node_type
         empty=true;
         x=0; 
         y=0;
+        s_score=0;
         g_score=0;
         f_score=0;
         came_from.x=-1;
@@ -104,6 +106,14 @@ class node_map_type
                         nodes [x][y].empty = false;
                     nodes [x][y].x = x;
                     nodes [x][y].y = y;
+                    //--- ---
+                    //s_score is disabled by default.
+                    //it is can be associated to a particular color code, to generate
+                    //smooth trajectories,i.e.: keep the robot away from walls, using
+                    //map skeletonization. The algorithm performances are still to be checked.
+                    //nodes [x][y].s_score = 230-imgMat.at<cv::Vec3b>(y,x)[1];
+                    //--- ---
+                    nodes [x][y].s_score = 0;
                 }
     }
 
@@ -281,12 +291,12 @@ bool find_astar_path(IplImage *img, cell start, cell goal, std::queue<cell>& pat
                 if ( (nx==curr.x+1 && ny==curr.y   ) ||
                      (nx==curr.x-1 && ny==curr.y   ) ||
                      (nx==curr.x   && ny==curr.y+1 ) ||
-                     (nx==curr.x   && ny==curr.y-1 ) ) tentative_g_score = curr.g_score + 10;
+                     (nx==curr.x   && ny==curr.y-1 ) ) tentative_g_score = curr.g_score + 10 + curr.s_score;
                 else 
-                    tentative_g_score = curr.g_score + 14;     
+                    tentative_g_score = curr.g_score + 14 + curr.s_score;     
             }
             else
-                tentative_g_score = curr.g_score + 1e10;
+                tentative_g_score = curr.g_score + 1e10 + curr.s_score;
             
             bool b = open_set.find(neighbor);
             if (!b || tentative_g_score < map.nodes[nx][ny].g_score)

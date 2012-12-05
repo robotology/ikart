@@ -231,6 +231,28 @@ bool map_class::skeletonize(const IplImage* src, IplImage*& dst)
     return true;
 }
 
+bool enlargeScan(std::vector <cell>& laser_scan, unsigned int times, double max_dist)
+{   
+    //@@@ THIS FUNCTION IS STILL TO BE COMPLETED
+    std::vector <cell> laser_scan2;
+    if (max_dist>0)
+    {
+        for (unsigned int i=0; i<laser_scan.size(); i++)
+        {
+            int dx = (laser_scan[i].x-laser_scan[i].x);
+            int dy = (laser_scan[i].x-laser_scan[i].x);
+            if (dx*dx + dy*dy < max_dist)
+                laser_scan2.push_back(laser_scan[i]);
+        }
+    }
+
+    for (unsigned int i=0; i< times; i++)
+    {
+
+    }
+    return true;
+}
+
 bool map_class::enlargeObstacles(const IplImage* src, IplImage*& dst, unsigned int times)
 {
     double t1 = yarp::os::Time::now();
@@ -371,11 +393,14 @@ bool map_class::loadMap(string filename)
     processed_map             = cvCloneImage(loaded_map);
     processed_map_with_scan   = cvCloneImage(loaded_map);
 
-    //enlargeObstacles(loaded_map, tmp1, 6);
-    //skeletonize     (tmp1, processed_map);
-
+    /*
+    //use this block to perform skeletonziation and wall enlargement
     skeletonize     (loaded_map, tmp1);
     enlargeObstacles(tmp1, processed_map, 6);
+    */
+    
+    //use this block to perform wall enlargment only
+    enlargeObstacles(loaded_map, processed_map, 6);
 
     cvReleaseImage (&tmp1);
     return true;

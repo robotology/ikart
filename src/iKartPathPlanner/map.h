@@ -75,6 +75,7 @@ class map_class
     bool loadMap(string filename);
     bool crop(IplImage* img, IplImage* &imgOrig);
     bool enlargeObstacles(const IplImage* src, IplImage*& dst, unsigned int times);
+    bool enlargeScan(std::vector <cell>& laser_scan, unsigned int times, double max_dist);
     bool skeletonize(const IplImage* src, IplImage*& dst);
     bool sendToPort (BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> >* port, IplImage* image_to_send); 
     

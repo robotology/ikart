@@ -81,7 +81,7 @@ public:
 
     virtual double getPeriod()
     { 
-        return 1.0; 
+        return 3.0; 
     }
     
     virtual bool updateModule()

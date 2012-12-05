@@ -38,15 +38,107 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
 
+//checks if a point is inside a polygon
+int GotoThread::pnpoly(int nvert, double *vertx, double *verty, double testx, double testy)
+{
+  int i, j, c = 0;
+  for (i = 0, j = nvert-1; i < nvert; j = i++) {
+    if ( ((verty[i]>testy) != (verty[j]>testy)) &&
+     (testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) )
+       c = !c;
+  }
+  return c;
+}
+
+
+bool GotoThread::compute_obstacle_avoidance()
+{
+    double min_distance = max_obstacle_distance;
+    double min_angle    = 0.0;
+
+    for (size_t i=0; i<1080; i++)
+    {
+        double curr_d     = laser_data.get_distance(i);
+        double curr_angle = laser_data.get_angle(i);
+        
+        if (i>=540-100 && i<=540+100) continue; //skip frontalobstacles
+
+        if (curr_d < min_distance)
+        {
+            min_distance = curr_d;
+            min_angle = curr_angle;
+        }
+    }
+
+    angle_f = min_angle;
+    angle_t = angle_f+90.0;
+    w_f     = (1-(min_distance/max_obstacle_distance))/2;
+    w_t     = 0;
+    return true;
+}
+
 bool GotoThread::check_obstacles_in_path()
 {
     int laser_obstacles = 0;
+    double goal_distance = 1000; //TO BE COMPLETED
+
+    //compute the polygon
+    double vertx[4];
+    double verty[4];
+    double theta = 0.0;
+    double ctheta = cos(theta);
+    double stheta = sin(theta);
+    const double max_detection_distance = 1.5;
+    const double min_detection_distace = 0.4;
+    double detection_distance = max_detection_distance * safety_coeff;
+    if (detection_distance<min_detection_distace) detection_distance=min_detection_distace;
+    vertx[0]=(-robot_radius) * ctheta + detection_distance * (-stheta);
+    verty[0]=(-robot_radius) * stheta + detection_distance * ctheta;
+    vertx[1]=(+robot_radius) * ctheta + detection_distance * (-stheta);
+    verty[1]=(+robot_radius) * stheta + detection_distance * ctheta;
+    vertx[2]= +robot_radius * ctheta;
+    verty[2]= +robot_radius * stheta;
+    vertx[3]= -robot_radius * ctheta;
+    verty[3]= -robot_radius * stheta;
+
     for (size_t i=0; i<1080; i++)
     {
-        if (laser_data[i] < robot_radius) laser_obstacles++;
+        double d = laser_data.get_distance(i);
+        if (d < robot_radius) 
+        {
+            laser_obstacles++;
+            printf("obstacles on the platform\n");
+            continue;
+        }
+
+        double px= laser_data.get_x(i);
+        double py= laser_data.get_y(i);
+        if (pnpoly(4,vertx,verty,px,py)>0)
+        {
+            double d = laser_data.get_distance(i);
+            if (d < goal_distance)
+            //if (laser_data.get_distance(i) < goal_distance)
+            {
+                laser_obstacles++;
+                //printf("obstacles on the path\n");
+                continue;
+            }
+            else
+            {
+                //printf("obstacles on the path, but goal is near\n");
+                continue;
+            }
+        }
     }
 
-    if (laser_obstacles>=1) return true;
+    //prevent noise to be detected as an obtacle;
+    if (laser_obstacles>=2)
+    {
+        printf("obstacles detected\n");
+        return true;
+    }
+
+    //no obstacles found
     return false;
 }
 
@@ -57,8 +149,8 @@ void GotoThread::run()
     //data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) {localization_data = *loc; loc_timeout_counter=0;}
-    else loc_timeout_counter++;
-    if (loc_timeout_counter>300)
+    else {loc_timeout_counter++; if (loc_timeout_counter>TIMEOUT_MAX) loc_timeout_counter=TIMEOUT_MAX;}
+    if (loc_timeout_counter>=TIMEOUT_MAX)
     {
         if (status == MOVING)
         {
@@ -69,8 +161,8 @@ void GotoThread::run()
 
     yarp::sig::Vector *odm = port_odometry_input.read(false);
     if (odm) {odometry_data = *odm; odm_timeout_counter=0;}
-    else odm_timeout_counter++;
-    if (odm_timeout_counter>300)
+    else {odm_timeout_counter++; if (odm_timeout_counter>TIMEOUT_MAX) odm_timeout_counter=TIMEOUT_MAX;}
+    if (odm_timeout_counter>=TIMEOUT_MAX)
     {
         if (status == MOVING)
         {
@@ -79,15 +171,9 @@ void GotoThread::run()
         }
     }
 
-    yarp::sig::Vector *las = port_laser_input.read(false);
-    if (las) {laser_data = *las; las_timeout_counter=0;}
-    else las_timeout_counter++;
-    if (las_timeout_counter>300)
-    {
-        if (status == MOVING)
-        {
-        }
-    }
+    yarp::os::Bottle *scan = port_laser_input.read(false);
+    if (scan) {laser_data.set_cartesian_laser_data(scan); las_timeout_counter=0;}
+    else {las_timeout_counter++; if (las_timeout_counter>TIMEOUT_MAX) las_timeout_counter=TIMEOUT_MAX;}
 
     //computes the control action
     control_out.zero();
@@ -122,10 +208,15 @@ void GotoThread::run()
 //    control_out[0] = +beta-localization_data[2]+90; //CHECKME -90
 //    control_out[0] = -beta+localization_data[2]; //CHECKME -90
 //    control_out[0] =  beta-localization_data[2]; //CHECKME -90
-    control_out[0] =  180-(old_beta-localization_data[2]);
+    double tmp1=  180-(old_beta-localization_data[2]);
+    if (tmp1>360) 
+        tmp1-=360;
+    if (tmp1>180 && tmp1<360)
+        tmp1 = tmp1-360;//ADDED LATER
     //printf ("%f \n", control[0]);
     control_out[1] =  k_lin_gain * distance;
     control_out[2] =  k_ang_gain * gamma;
+    control_out[0] = tmp1;
 
     //control saturation
     //printf ("%f %f ", control_out[2], control_out[1]);
@@ -158,64 +249,120 @@ void GotoThread::run()
         control_out[1] = 0;
     }
 
-    //check for obstacles
-    if (enable_stop_on_obstacles)
+    //check for obstacles, always performed
+    bool obstacles_in_path = false;
+    if (las_timeout_counter < 300) 
     {
-        bool obstacles_in_path = check_obstacles_in_path();
-        if (status==MOVING && obstacles_in_path)
+        obstacles_in_path = check_obstacles_in_path();
+        compute_obstacle_avoidance();
+        double correction = angle_f;
+        if (correction<0) correction+=180;
+        else correction-=180;
+        double w_f_sat = w_f;
+        if (w_f_sat>0.3) w_f_sat=0.3;
+        double goal = control_out[0];
+        double goal_corrected = goal * (1-w_f_sat) + correction * (w_f_sat);
+        if (enable_obstacles_avoidance)
         {
-            fprintf (stdout, "Obstacles detected, stopping \n");
-            status=WAITING_OBSTACLE;
-            yarp::os::Time::now();
-        }
-        else
-        if (status==WAITING_OBSTACLE && !obstacles_in_path)
-        {
-            fprintf (stdout, "Obstacles removed, thank you \n");
-            status=MOVING;
-        }
-    }
-
-    //printf ("%f %f %f \n", gamma, beta, distance);
-    if (status == MOVING)
-    {
-        if (target_data.weak_angle)
-        {
-             if (fabs(distance) < goal_tolerance_lin)
-            {
-                status=REACHED;
-                fprintf (stdout, "Goal reached!\n");
-            }
+            //direction is modified in proximity of the obstacles
+            control_out[0] = goal_corrected;
+            //speed is reduced in proximity of the obstacles
+            double w_f_sat2 = w_f*2.2;
+            if (w_f_sat2>0.85) w_f_sat2= 0.70;
+            control_out[1] = control_out[1] * (1.0-w_f_sat2);
         }
         else
         {
-            if (fabs(distance) < goal_tolerance_lin && fabs(gamma) < goal_tolerance_ang) 
+            control_out[0] = goal;
+        }
+        angle_g = goal_corrected;
+    }
+    else
+    {
+        if (status == MOVING)
+        {
+        }
+    }
+
+    double current_time = yarp::os::Time::now();
+
+    switch (status.getStatusAsInt())
+    {
+        case MOVING:
+            //Update the safety coefficient only if your are MOVING.
+            //If you are WAITING_OBSTACLE, use the last valid safety_coeff until the 
+            //obstacle has been removed.
+            safety_coeff = control_out[1]/max_lin_speed;
+
+            if (target_data.weak_angle)
             {
-                status=REACHED;
-                fprintf (stdout, "Goal reached!\n");
+                //check if the goal has been reached in position but not in orientation
+                if (fabs(distance) < goal_tolerance_lin)
+                {
+                    status=REACHED;
+                    fprintf (stdout, "Goal reached!\n");
+                }
             }
-        }
-    }
+            else
+            {
+                 //check if the goal has been reached in both position and orientation
+                if (fabs(distance) < goal_tolerance_lin && fabs(gamma) < goal_tolerance_ang) 
+                {
+                    status=REACHED;
+                    fprintf (stdout, "Goal reached!\n");
+                }
 
-    if (status==WAITING_OBSTACLE)
-    {
-        double current_time = yarp::os::Time::now();
-        if (fabs(current_time-obstacle_time)>30.0)
-        {
-            fprintf (stdout, "failed to recover from obstacle, goal aborted \n");
-            status=ABORTED;
-        }
-    }
+            }
 
-    if (status==PAUSED)
-    {
-        //check if apuse is expired
-        double current_time = yarp::os::Time::now();
-        if (current_time - pause_start > pause_duration)
-        {
-            fprintf(stdout, "pause expired! resuming \n");
-            status=MOVING;
-        }
+            // check if you have to stop beacuse of an obstacle
+            if  (enable_obstacles_emergency_stop && obstacles_in_path)
+            {
+                fprintf (stdout, "Obstacles detected, stopping \n");
+                status=WAITING_OBSTACLE;
+                obstacle_time = current_time;
+                Bottle b;
+                b.addString("Obstacles detected");
+                Bottle tmp = port_speak_output.prepare();
+                tmp.clear();
+                tmp=b;
+                port_speak_output.write();
+            }
+        break;
+
+        case WAITING_OBSTACLE:
+            if (!obstacles_in_path)
+            {   
+                if (fabs(current_time-obstacle_time)>1.0)
+                {
+                    fprintf (stdout, "Obstacles removed, thank you \n");
+                    status=MOVING;
+                    Bottle b;
+                    b.addString("Obstacles removed, thank you");
+                    Bottle tmp = port_speak_output.prepare();
+                    tmp.clear();
+                    tmp=b;
+                    port_speak_output.write();
+                }
+            }
+            else
+            {
+                if (fabs(current_time-obstacle_time)>max_obstacle_wating_time)
+                {
+                    fprintf (stdout, "failed to recover from obstacle, goal aborted \n");
+                    status=ABORTED;
+                }
+            }
+        break;
+
+        case PAUSED:
+            //check if pause is expired
+            double current_time = yarp::os::Time::now();
+            if (current_time - pause_start > pause_duration)
+            {
+                fprintf(stdout, "pause expired! resuming \n");
+                status=MOVING;
+            }
+        break;
     }
 
     if (status != MOVING)
@@ -257,6 +404,22 @@ void GotoThread::sendOutput()
         b.clear();
         b.addString(string_out.c_str());
         port_status_output.write();
+    }
+
+    if(port_gui_output.getOutputCount()>0)
+    {
+        Bottle &b=port_gui_output.prepare();
+        b.clear();
+        b.addDouble(control_out[0]);
+        b.addDouble(control_out[1]);
+        b.addDouble(control_out[2]);
+        b.addDouble(angle_f);
+        b.addDouble(angle_t);
+        b.addDouble(w_f);
+        b.addDouble(w_t);
+        b.addDouble(max_obstacle_distance);
+        b.addDouble(angle_g);
+        port_gui_output.write();
     }
 }
 

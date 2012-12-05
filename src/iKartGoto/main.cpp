@@ -45,7 +45,6 @@ public:
         if (configFile!="") p.fromConfigFile(configFile.c_str());
 
         gotoThread = new GotoThread(10,rf,p);
-        if (rf.check("no_stop_on_obstacles")) gotoThread->enable_stop_on_obstacles=false;
 
         if (!gotoThread->start())
         {
@@ -90,10 +89,30 @@ public:
     { 
         if (isStopping())
         {
-            gotoThread->stop();   
+            gotoThread->stop();
             return false;
         }
         
+        bool err = false;
+        if (gotoThread->las_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no laser data received!\n");
+            err= true;
+        }
+        if (gotoThread->loc_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no localization data received!\n");
+            err= true;
+        }
+        if (gotoThread->odm_timeout_counter>TIMEOUT_MAX)
+        {
+            printf ("ERROR: timeout, no odometry data received!\n");
+            err= true;
+        }
+        
+        if (err==false)
+        printf ("module running, ALL ok\n");
+
         return true; 
     }
 
@@ -175,6 +194,32 @@ public:
             {
                 gotoThread->min_ang_speed=command.get(2).asDouble();
                 reply.addString("min_ang_speed set.");
+            }
+            else if (command.get(1).asString()=="obstacle_avoidance")
+            {
+                if (gotoThread->enable_obstacles_avoidance)
+                    {
+                        reply.addString("enable_obstacles_avoidance=false");
+                        gotoThread->enable_obstacles_avoidance=false;
+                    }
+                else
+                    {
+                        gotoThread->enable_obstacles_avoidance=true;
+                        reply.addString("enable_obstacles_avoidance=true");
+                    }
+            }
+            else if (command.get(1).asString()=="obstacle_stop")
+            {
+                if (gotoThread->enable_obstacles_avoidance)
+                    {
+                        reply.addString("enable_obstacle_stop=false");
+                        gotoThread->enable_obstacles_emergency_stop=false;
+                    }
+                else
+                    {
+                        gotoThread->enable_obstacles_emergency_stop=true;
+                        reply.addString("enable_obstacle_stop=true");
+                    }
             }
             else
             {

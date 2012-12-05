@@ -45,6 +45,7 @@ using namespace yarp::dev;
 #define M_PI 3.14159265
 #endif
 
+#define TIMEOUT_MAX 300
 const double RAD2DEG  = 180.0/M_PI;
 const double DEG2RAD  = M_PI/180.0;
 
@@ -57,13 +58,49 @@ struct target_type
     double& operator[] (const int& i) { return target[i]; }
 };
 
+class laser_type
+{
+    double laser_x   [1080];
+    double laser_y   [1080];
+    double distances [1080];
+    double angles    [1080];
+    
+    public:
+    laser_type ()
+    {
+        unsigned int i = 0;
+        for (i=0;i<1080; i++) laser_x[i]=0.0;
+        for (i=0;i<1080; i++) laser_y[i]=0.0;
+        for (i=0;i<1080; i++) distances[i]=0.0;
+        for (i=0;i<1080; i++) angles[i]=0.0;
+    }
+
+    void set_cartesian_laser_data (const yarp::os::Bottle* laser_map)
+    {
+        if (laser_map==0) return;
+        for (unsigned int i=0; i<1080; i++)
+        {
+            Bottle* elem = laser_map->get(i).asList();
+            if (elem ==0) printf ("ERROR\n");
+            laser_x[i] = elem->get(0).asDouble();
+            laser_y[i] = elem->get(1).asDouble();
+            distances[i]=sqrt(laser_x[i]*laser_x[i]+laser_y[i]*laser_y[i]);
+            angles[i] = atan2(double(laser_x[i]),double(laser_y[i]))*RAD2DEG;
+        }
+    }
+
+    inline const double& get_distance(int i) { return distances[i]; }
+    inline const double& get_angle (int i) { return angles[i]; }
+    inline const double& get_x (int i) { return laser_x[i]; }
+    inline const double& get_y (int i) { return laser_y[i]; }
+};
+
 class GotoThread: public yarp::os::RateThread
 {
     private:
     void sendOutput();
 
     public:
-    bool   enable_stop_on_obstacles;
     bool   enable_retreat;
     double goal_tolerance_lin;  //m 
     double goal_tolerance_ang;  //deg
@@ -79,6 +116,10 @@ class GotoThread: public yarp::os::RateThread
     double robot_radius;        //m
     int    retreat_duration; 
 
+    int    loc_timeout_counter;
+    int    odm_timeout_counter;
+    int    las_timeout_counter;
+
     //semaphore
     Semaphore mutex;
 
@@ -91,24 +132,40 @@ class GotoThread: public yarp::os::RateThread
     BufferedPort<yarp::sig::Vector> port_odometry_input;
     BufferedPort<yarp::sig::Vector> port_localization_input;
     BufferedPort<yarp::sig::Vector> port_target_input;
-    BufferedPort<yarp::sig::Vector> port_laser_input;
+    BufferedPort<yarp::os::Bottle>  port_laser_input;
     BufferedPort<yarp::os::Bottle>  port_commands_output;
     BufferedPort<yarp::os::Bottle>  port_status_output;
+    BufferedPort<yarp::os::Bottle>  port_speak_output;
+    BufferedPort<yarp::os::Bottle>  port_gui_output;
 
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
     yarp::sig::Vector   odometry_data;
     target_type         target_data;
-    yarp::sig::Vector   laser_data;
+    laser_type          laser_data;
     yarp::sig::Vector   control_out;
     status_type         status;
-    int                 loc_timeout_counter;
-    int                 odm_timeout_counter;
-    int                 las_timeout_counter;
     int                 retreat_counter;
-    double              obstacle_time;
+
+    //obstacles_emergency_stop block
+    public:
+    bool                enable_obstacles_emergency_stop;
     double              free_distance[1080];
+    double              obstacle_time;
+    double              max_obstacle_wating_time;
+    double              safety_coeff;
+
+    //obstacle avoidance block
+    public:
+    bool                enable_obstacles_avoidance;
+    double              max_obstacle_distance;
+    double              angle_f;
+    double              angle_t;
+    double              angle_g;
+    double              w_f;
+    double              w_t;
+    double              w_g;
 
     public:
     GotoThread(unsigned int _period, ResourceFinder &_rf, Property options) :
@@ -116,18 +173,21 @@ class GotoThread: public yarp::os::RateThread
                iKartCtrl_options (options)
     {
         status = IDLE;
-        loc_timeout_counter = 0;
-        odm_timeout_counter = 0;
-        las_timeout_counter = 0;
+        loc_timeout_counter = TIMEOUT_MAX;
+        odm_timeout_counter = TIMEOUT_MAX;
+        las_timeout_counter = TIMEOUT_MAX;
         localization_data.resize(3,0.0);
-        laser_data.resize(1080,1000.0);
         retreat_counter = 0;
-        enable_stop_on_obstacles = true;
+        safety_coeff = 1.0;
+        enable_obstacles_emergency_stop = false;
+        enable_obstacles_avoidance      = false;
         control_out.resize(3,0.0);
         pause_start = 0;
         pause_duration = 0;
         goal_tolerance_lin = 0.05;
         goal_tolerance_ang = 0.6;
+        max_obstacle_wating_time = 60.0;
+        max_obstacle_distance = 0.8;
     }
 
     virtual bool threadInit()
@@ -151,6 +211,16 @@ class GotoThread: public yarp::os::RateThread
         if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
         if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
 
+        Bottle btmp;
+        btmp = rf.findGroup("OBSTACLES_EMERGENCY_STOP");
+        if (btmp.check("enable_obstacles_emergency_stop",Value(0)).asInt()==1)
+            enable_obstacles_emergency_stop = true;
+        max_obstacle_wating_time = btmp.check("max_wating_time",Value(60.0)).asDouble();
+
+        btmp = rf.findGroup("OBSTACLES_AVOIDANCE");
+        if (btmp.check("enable_obstacles_avoidance",Value(0)).asInt()==1)
+            enable_obstacles_avoidance = true;
+
         enable_retreat = false;
         retreat_duration = 300;
 
@@ -158,10 +228,16 @@ class GotoThread: public yarp::os::RateThread
         string localName = "/ikartGoto";
         port_localization_input.open((localName+"/localization:i").c_str());
         port_target_input.open((localName+"/target:i").c_str());
-        port_laser_input.open((localName+"/laser:i").c_str());
+        port_laser_input.open((localName+"/laser_map:i").c_str());
         port_commands_output.open((localName+"/control:o").c_str());
         port_status_output.open((localName+"/status:o").c_str());
         port_odometry_input.open((localName+"/odometry:i").c_str());
+        port_speak_output.open((localName+"/speak:o").c_str());
+        port_gui_output.open((localName+"/gui:o").c_str());
+
+        //automatic connections for debug
+        yarp::os::Network::connect("/ikart/laser:o","/laserScannerGui/laser:i");
+        yarp::os::Network::connect("/ikartGoto/gui:o","/laserScannerGui/nav_display:i");
 
         //automatic port connections
         /*bool b = false;
@@ -205,10 +281,18 @@ class GotoThread: public yarp::os::RateThread
         port_status_output.close();
         port_odometry_input.interrupt();
         port_odometry_input.close();
+        port_speak_output.interrupt();
+        port_speak_output.close();
+        port_gui_output.interrupt();
+        port_gui_output.close();
     }
 
     void printStats();
     bool check_obstacles_in_path();
+    bool compute_obstacle_avoidance();
+    
+    private:
+    int pnpoly(int nvert, double *vertx, double *verty, double testx, double testy);
 
 };
 

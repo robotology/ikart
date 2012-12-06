@@ -142,6 +142,7 @@ public:
 
             else if (command.get(0).asString()=="help")
             {
+                reply.addVocab(Vocab::encode("many"));
                 reply.addString("Available commands are:");
                 reply.addString("gotoAbs <x> <y> <angle>");
                 reply.addString("gotoRel <x> <y> <angle>");

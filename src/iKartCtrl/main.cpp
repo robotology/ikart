@@ -241,6 +241,7 @@ public:
         reply.clear(); 
         if (command.get(0).asString()=="help")
         {
+            reply.addVocab(Vocab::encode("many"));
             reply.addString("Available commands are:");
             reply.addString("run");
             reply.addString("idle");

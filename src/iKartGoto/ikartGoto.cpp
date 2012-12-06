@@ -23,6 +23,7 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Os.h>
+#include <yarp/os/Stamp.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/dev/Drivers.h>
@@ -384,10 +385,13 @@ void GotoThread::run()
 
 void GotoThread::sendOutput()
 {
+    static yarp::os::Stamp stamp;
+    stamp.update();
     //send the motors commands and the status to the yarp ports
     if (port_commands_output.getOutputCount()>0)
     {
         Bottle &b=port_commands_output.prepare();
+        port_commands_output.setEnvelope(stamp);
         b.clear();
         b.addInt(2);                    // polar commands
         b.addDouble(control_out[0]);    // angle in deg
@@ -401,6 +405,7 @@ void GotoThread::sendOutput()
         string string_out;
         string_out = status.getStatusAsString();
         Bottle &b=port_status_output.prepare();
+        port_status_output.setEnvelope(stamp);
         b.clear();
         b.addString(string_out.c_str());
         port_status_output.write();
@@ -409,6 +414,7 @@ void GotoThread::sendOutput()
     if(port_gui_output.getOutputCount()>0)
     {
         Bottle &b=port_gui_output.prepare();
+        port_gui_output.setEnvelope(stamp);
         b.clear();
         b.addDouble(control_out[0]);
         b.addDouble(control_out[1]);

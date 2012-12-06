@@ -129,6 +129,7 @@ public:
 
         else if (command.get(0).asString()=="help")
         {
+            reply.addVocab(Vocab::encode("many"));
             reply.addString("Available commands are:");
             reply.addString("gotoAbs <x> <y> <angle>");
             reply.addString("gotoRel <x> <y> <angle>");
@@ -142,6 +143,8 @@ public:
             reply.addString("set max_ang_speed <deg/s>");
             reply.addString("set min_lin_speed <m/s>");
             reply.addString("set min_ang_speed <deg/s>");
+            reply.addString("set obstacle_stop");
+            reply.addString("set obstacle_avoidance");
         }
 
         else if (command.get(0).asString()=="gotoAbs")

@@ -97,6 +97,7 @@ public:
     sigc::connection                            m_timer;
 
     std::string                                 moduleName;
+    int                                         period;
 
     yarp::os::ConstString                       picBackground;
     yarp::os::ConstString                       picBlocks;
@@ -153,6 +154,8 @@ public:
 
         moduleName = rf.check("name", Value(1), "module name (string)").asString();
         setName(moduleName.c_str());
+        
+        period = rf.check("period", Value(5000), "update period (int)").asInt();
 
         string pname  = "/" + moduleName + ":o";
         monitorOutput.open(pname.c_str());
@@ -162,7 +165,7 @@ public:
         picNumbers = rf.findFile(rf.check("pic_numbers", Value(1), "module name (string)").asString());
 
         graphics = new GraphicsManager(picBackground.c_str(),picBlocks.c_str(),picNumbers.c_str());
-        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 5000);
+        m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), period);
         on_timeout();
 
         //start GTK loop

@@ -103,7 +103,7 @@ public:
             command[4]=-90;
             if (l_pos) l_pos->positionMove(command.data());
             if (r_pos) r_pos->positionMove(command.data());
-            yarp::os::Time::delay(5.0);
+            yarp::os::Time::delay(7.0);
             command[0]=-15;
             command[1]=17;
             command[2]=25;
@@ -125,7 +125,7 @@ public:
             command[9]=0;
             if (l_pos) l_pos->positionMove(command.data());
             if (r_pos) r_pos->positionMove(command.data());
-            yarp::os::Time::delay(5.0);
+            yarp::os::Time::delay(4.0);
             command[0]=-30;
             command[1]=30;
             command[2]=-0;

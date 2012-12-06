@@ -170,6 +170,13 @@ void PlannerThread::run()
                 cmd2.addDouble(goal_tolerance_ang);
                 port_commands_output.write(cmd2,ans2);
 
+                //last waypoint ha minimum linear speed = 0
+                Bottle cmd3, ans3;
+                cmd3.addString("set"); 
+                cmd3.addString("min_lin_speed");
+                cmd3.addDouble(0.0);
+                port_commands_output.write(cmd3,ans3);
+
                 sendWaypoint();
             }
             else
@@ -177,6 +184,21 @@ void PlannerThread::run()
                 //send the next waypoint
                  printf ("sending the next waypoint\n");
                 sendWaypoint();
+                {
+                    //here I send min_lin_speed = max_lin_speed to have constant velocity
+                    Bottle cmd, ans;
+                    cmd.addString("set"); 
+                    cmd.addString("min_lin_speed");
+                    cmd.addDouble(max_lin_speed);
+                    port_commands_output.write(cmd,ans);
+                }
+                {
+                    Bottle cmd, ans;
+                    cmd.addString("set"); 
+                    cmd.addString("max_lin_speed");
+                    cmd.addDouble(max_lin_speed);
+                    port_commands_output.write(cmd,ans);
+                }
             }
         }
         else if (inner_status == MOVING)
@@ -233,10 +255,11 @@ void PlannerThread::run()
             }
 
             {
+                //here I send min_lin_speed = max_lin_speed to have constant velocity
                 Bottle cmd, ans;
                 cmd.addString("set"); 
                 cmd.addString("min_lin_speed");
-                cmd.addDouble(min_lin_speed);
+                cmd.addDouble(max_lin_speed);
                 port_commands_output.write(cmd,ans);
             }
 

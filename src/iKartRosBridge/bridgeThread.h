@@ -121,6 +121,7 @@ class BridgeThread: public yarp::os::RateThread
     BufferedPort<ImageOf<PixelRgbFloat> >  input_pcloud_port; 
     BufferedPort<Bottle>     output_command_port; 
     BufferedPort<Bottle>     output_localization_port;
+    BufferedPort<Bottle>     output_3d_localization_port;
     int                      timeout_thread;
     int                      timeout_thread_tot;
     int                      timeout_laser;
@@ -250,6 +251,7 @@ class BridgeThread: public yarp::os::RateThread
         input_odometer_port.open("/ikart_ros_bridge/odometer:i");
         output_command_port.open("/ikart_ros_bridge/command:o");
         output_localization_port.open("/ikart_ros_bridge/localization:o");
+        output_3d_localization_port.open("/ikart_ros_bridge/localization3D:o");
 
         bool conn_lsr = Network::connect ("/ikart/laser:o","/ikart_ros_bridge/laser:i","udp");
         bool conn_odm = Network::connect ("/ikart/odometry:o","/ikart_ros_bridge/odometry:i","udp");
@@ -492,6 +494,20 @@ class BridgeThread: public yarp::os::RateThread
                 m.addDouble(ikart_current_position.w);
                 output_localization_port.write();
             }
+
+            if (output_3d_localization_port.getOutputCount()>0)
+            {
+                output_3d_localization_port.setEnvelope(timestamp_localization);
+                Bottle &m = output_3d_localization_port.prepare();
+                m.clear();
+                m.addDouble(ikart_current_position.x);
+                m.addDouble(ikart_current_position.y);
+                m.addDouble(0.0);
+                m.addDouble(0.0);
+                m.addDouble(0.0);
+                m.addDouble(ikart_current_position.t);
+                output_3d_localization_port.write();
+            }
         }
         else
         {
@@ -618,7 +634,9 @@ class BridgeThread: public yarp::os::RateThread
         output_command_port.interrupt();
         output_command_port.close();
         output_localization_port.interrupt();
-        output_localization_port.close();        
+        output_localization_port.close();    
+        output_3d_localization_port.interrupt();
+        output_3d_localization_port.close();        
     }
 
 };

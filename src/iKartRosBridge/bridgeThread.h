@@ -436,7 +436,7 @@ class BridgeThread: public yarp::os::RateThread
         tf::StampedTransform laser_trans(tf::Transform(tf::createQuaternionFromYaw(+90/180.0*M_PI), tf::Vector3(0.000,0.245,0.2)),now, "ikart_root", "base_laser");
         tf_broadcaster->sendTransform(laser_trans);
 
-        tf::StampedTransform robot_trans(tf::Transform(tf::createQuaternionFromYaw(-90/180.0*M_PI), tf::Vector3(0.000,0.0,0.9)),now, "ikart_root", "robot_root");
+        tf::StampedTransform robot_trans(tf::Transform(tf::createQuaternionFromYaw(-90/180.0*M_PI), tf::Vector3(0.000,0.111,0.9)),now, "ikart_root", "robot_root");
         tf_broadcaster->sendTransform(robot_trans);
 
         mutex_home.wait();

@@ -61,8 +61,8 @@ bool GotoThread::compute_obstacle_avoidance()
     {
         double curr_d     = laser_data.get_distance(i);
         double curr_angle = laser_data.get_angle(i);
-        
-        if (i>=540-100 && i<=540+100) continue; //skip frontalobstacles
+        size_t angle_t = (size_t)(4.0 * frontal_blind_angle);
+        if (i>=540-angle_t && i<=540+angle_t) continue; //skip frontalobstacles
 
         if (curr_d < min_distance)
         {
@@ -269,7 +269,7 @@ void GotoThread::run()
             control_out[0] = goal_corrected;
             //speed is reduced in proximity of the obstacles
             double w_f_sat2 = w_f*2.2;
-            if (w_f_sat2>0.85) w_f_sat2= 0.70;
+            if (w_f_sat2>0.85) w_f_sat2= speed_reduction_factor; //CHECK 0.85, put it config file
             control_out[1] = control_out[1] * (1.0-w_f_sat2);
         }
         else

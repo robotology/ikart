@@ -160,6 +160,8 @@ class GotoThread: public yarp::os::RateThread
     public:
     bool                enable_obstacles_avoidance;
     double              max_obstacle_distance;
+    double              frontal_blind_angle;
+    double              speed_reduction_factor;
     double              angle_f;
     double              angle_t;
     double              angle_g;
@@ -188,6 +190,8 @@ class GotoThread: public yarp::os::RateThread
         goal_tolerance_ang = 0.6;
         max_obstacle_wating_time = 60.0;
         max_obstacle_distance = 0.8;
+        frontal_blind_angle = 25.0;
+        speed_reduction_factor = 0.70;
     }
 
     virtual bool threadInit()
@@ -220,6 +224,10 @@ class GotoThread: public yarp::os::RateThread
         btmp = rf.findGroup("OBSTACLES_AVOIDANCE");
         if (btmp.check("enable_obstacles_avoidance",Value(0)).asInt()==1)
             enable_obstacles_avoidance = true;
+        if (btmp.check("frontal_blind_angle"))
+            frontal_blind_angle = btmp.check("frontal_blind_angle",Value(25.0)).asDouble();
+        if (btmp.check("speed_reduction_factor"))
+            speed_reduction_factor = btmp.check("speed_reduction_factor",Value(0.70)).asDouble();
 
         enable_retreat = false;
         retreat_duration = 300;

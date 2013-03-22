@@ -77,6 +77,7 @@ class PlannerThread: public yarp::os::RateThread
     BufferedPort<yarp::os::Bottle>                         port_status_input;
     BufferedPort<yarp::os::Bottle>                         port_laser_map_input;
     BufferedPort<yarp::os::Bottle>                         port_yarpview_target_input;
+    BufferedPort<yarp::os::Bottle>                         port_yarpview_target_output;
 
     BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb> > port_map_output;
     BufferedPort<yarp::os::Bottle>                         port_status_output;
@@ -171,6 +172,7 @@ class PlannerThread: public yarp::os::RateThread
         port_commands_output.open((localName+"/commands:o").c_str());
         port_map_output.open((localName+"/map:o").c_str());
         port_yarpview_target_input.open((localName+"/yarpviewTarget:i").c_str());
+        port_yarpview_target_output.open((localName+"/yarpviewTarget:o").c_str());
 
         //automatic port connections
         bool b = false;
@@ -209,6 +211,8 @@ class PlannerThread: public yarp::os::RateThread
         port_commands_output.close();
         port_yarpview_target_input.interrupt();
         port_yarpview_target_input.close();
+        port_yarpview_target_output.interrupt();
+        port_yarpview_target_output.close();
     }
 
     void printStats();

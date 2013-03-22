@@ -88,6 +88,11 @@ void PlannerThread::run()
         c.y=(*gui_targ).get(1).asInt();
         yarp::sig::Vector v = map.cell2world(c);
         printf ("selected point is located at (%6.3f, %6.3f)\n", v[0], v[1]);
+        yarp::os::Bottle& out = port_yarpview_target_output.prepare();
+        out.clear();
+        out.addDouble(v[0]);
+        out.addDouble(v[1]);
+        port_yarpview_target_output.write();
     }
 
     //read the localization data

@@ -297,6 +297,12 @@ void GotoThread::run()
             //obstacle has been removed.
             safety_coeff = control_out[1]/max_lin_speed;
 
+            //compute the speed ramp after the removal of an obstacle
+            double speed_ramp = (current_time-obstacle_removal_time)/2.0;
+            speed_ramp = (speed_ramp > 1.0) ? 1.0 : speed_ramp;
+            control_out[1] *= speed_ramp;
+            control_out[2] *= speed_ramp;
+
             if (target_data.weak_angle)
             {
                 //check if the goal has been reached in position but not in orientation
@@ -345,6 +351,7 @@ void GotoThread::run()
                     tmp.clear();
                     tmp=b;
                     port_speak_output.write();
+                    obstacle_removal_time = yarp::os::Time::now();
                 }
             }
             else

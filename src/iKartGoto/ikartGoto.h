@@ -158,6 +158,7 @@ class GotoThread: public yarp::os::RateThread
     double              safety_coeff;
     double              max_detection_distance;
     double              min_detection_distance;
+    double              obstacle_removal_time;
 
     //obstacle avoidance block
     public:
@@ -200,6 +201,7 @@ class GotoThread: public yarp::os::RateThread
         speed_reduction_factor = 0.70;
         max_detection_distance = 1.5;
         min_detection_distance = 0.4;
+        obstacle_removal_time = 0.0;
     }
 
     virtual bool threadInit()

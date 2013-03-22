@@ -288,6 +288,7 @@ void GotoThread::run()
     }
 
     double current_time = yarp::os::Time::now();
+    double speed_ramp = (current_time-obstacle_removal_time)/2.0;
 
     switch (status.getStatusAsInt())
     {
@@ -298,7 +299,6 @@ void GotoThread::run()
             safety_coeff = control_out[1]/max_lin_speed;
 
             //compute the speed ramp after the removal of an obstacle
-            double speed_ramp = (current_time-obstacle_removal_time)/2.0;
             speed_ramp = (speed_ramp > 1.0) ? 1.0 : speed_ramp;
             control_out[1] *= speed_ramp;
             control_out[2] *= speed_ramp;

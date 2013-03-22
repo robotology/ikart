@@ -187,6 +187,8 @@ class GotoThread: public yarp::os::RateThread
         enable_obstacles_emergency_stop = false;
         enable_obstacles_avoidance      = false;
         enable_dynamic_max_distance     = false;
+        enable_retreat                  = false;
+        retreat_duration                = 300;
         control_out.resize(3,0.0);
         pause_start = 0;
         pause_duration = 0;
@@ -222,6 +224,11 @@ class GotoThread: public yarp::os::RateThread
         if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
 
         Bottle btmp;
+        btmp = rf.findGroup("RETREAT_OPTION");
+        if (btmp.check("enable_retreat",Value(0)).asInt()==1)
+            enable_retreat = true;
+        retreat_duration = btmp.check("retreat_duration",Value(300)).asInt();
+
         btmp = rf.findGroup("OBSTACLES_EMERGENCY_STOP");
         if (btmp.check("enable_obstacles_emergency_stop",Value(0)).asInt()==1)
             enable_obstacles_emergency_stop = true;

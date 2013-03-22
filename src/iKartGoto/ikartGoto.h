@@ -151,10 +151,13 @@ class GotoThread: public yarp::os::RateThread
     //obstacles_emergency_stop block
     public:
     bool                enable_obstacles_emergency_stop;
+    bool                enable_dynamic_max_distance;
     double              free_distance[1080];
     double              obstacle_time;
     double              max_obstacle_wating_time;
     double              safety_coeff;
+    double              max_detection_distance;
+    double              min_detection_distance;
 
     //obstacle avoidance block
     public:
@@ -183,6 +186,7 @@ class GotoThread: public yarp::os::RateThread
         safety_coeff = 1.0;
         enable_obstacles_emergency_stop = false;
         enable_obstacles_avoidance      = false;
+        enable_dynamic_max_distance     = false;
         control_out.resize(3,0.0);
         pause_start = 0;
         pause_duration = 0;
@@ -192,6 +196,8 @@ class GotoThread: public yarp::os::RateThread
         max_obstacle_distance = 0.8;
         frontal_blind_angle = 25.0;
         speed_reduction_factor = 0.70;
+        max_detection_distance = 1.5;
+        min_detection_distance = 0.4;
     }
 
     virtual bool threadInit()
@@ -219,8 +225,12 @@ class GotoThread: public yarp::os::RateThread
         btmp = rf.findGroup("OBSTACLES_EMERGENCY_STOP");
         if (btmp.check("enable_obstacles_emergency_stop",Value(0)).asInt()==1)
             enable_obstacles_emergency_stop = true;
+        if (btmp.check("enable_dynamic_max_distance",Value(0)).asInt()==1)
+            enable_dynamic_max_distance = true;
         max_obstacle_wating_time = btmp.check("max_wating_time",Value(60.0)).asDouble();
-
+        max_detection_distance   = btmp.check("max_detection_distance",Value(1.5)).asDouble();
+        min_detection_distance   = btmp.check("min_detection_distance",Value(0.4)).asDouble();
+        
         btmp = rf.findGroup("OBSTACLES_AVOIDANCE");
         if (btmp.check("enable_obstacles_avoidance",Value(0)).asInt()==1)
             enable_obstacles_avoidance = true;

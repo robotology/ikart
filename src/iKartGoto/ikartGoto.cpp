@@ -89,10 +89,12 @@ bool GotoThread::check_obstacles_in_path()
     double theta = 0.0;
     double ctheta = cos(theta);
     double stheta = sin(theta);
-    const double max_detection_distance = 1.5;
-    const double min_detection_distace = 0.4;
-    double detection_distance = max_detection_distance * safety_coeff;
-    if (detection_distance<min_detection_distace) detection_distance=min_detection_distace;
+    double detection_distance = 1.5;
+    if(enable_dynamic_max_distance)
+        detection_distance = max_detection_distance * safety_coeff;
+    else
+        detection_distance = max_detection_distance;
+    if (detection_distance<min_detection_distance) detection_distance=min_detection_distance;
     vertx[0]=(-robot_radius) * ctheta + detection_distance * (-stheta);
     verty[0]=(-robot_radius) * stheta + detection_distance * ctheta;
     vertx[1]=(+robot_radius) * ctheta + detection_distance * (-stheta);

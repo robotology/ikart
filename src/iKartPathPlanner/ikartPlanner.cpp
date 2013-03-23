@@ -90,6 +90,7 @@ void PlannerThread::run()
         printf ("selected point is located at (%6.3f, %6.3f)\n", v[0], v[1]);
         yarp::os::Bottle& out = port_yarpview_target_output.prepare();
         out.clear();
+        out.addString("gotoAbs");
         out.addDouble(v[0]);
         out.addDouble(v[1]);
         port_yarpview_target_output.write();

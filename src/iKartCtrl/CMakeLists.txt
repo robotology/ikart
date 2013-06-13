@@ -17,7 +17,7 @@ INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS}
 
 ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
 
-TARGET_LINK_LIBRARIES(${PROJECTNAME} ${ICUB_LIBRARIES} 
+TARGET_LINK_LIBRARIES(${PROJECTNAME} ctrlLib icubmod
                                      ${GSL_LIBRARIES}
                                      ${YARP_LIBRARIES})
 

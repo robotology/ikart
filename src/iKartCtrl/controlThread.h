@@ -51,8 +51,8 @@ enum
     IKART_CONTROL_NONE = 0,
     IKART_CONTROL_OPENLOOP_NO_PID = 1,
     IKART_CONTROL_OPENLOOP_PID = 2,
-    IKART_CONTROL_SPEED_NO_PID = 3,
-    IKART_CONTROL_SPEED_PID = 4
+    IKART_CONTROL_VELOCITY_NO_PID = 3,
+    IKART_CONTROL_VELOCITY_PID = 4
 };
 
 class ControlThread : public yarp::os::RateThread
@@ -200,17 +200,17 @@ public:
 
         printf ("%s",iKartCtrl_options.toString().c_str());
         //create the pid controllers
-        if (!iKartCtrl_options.check("HEADING_SPEED_PID"))
+        if (!iKartCtrl_options.check("HEADING_VELOCITY_PID"))
         {
             fprintf(stderr,"\nError reading from .ini file, section PID\n");
             return false;
         }
-        if (!iKartCtrl_options.check("LINEAR_SPEED_PID"))
+        if (!iKartCtrl_options.check("LINEAR_VELOCITY_PID"))
         {
             fprintf(stderr,"\nError reading from .ini file, section PID\n");
             return false;
         }
-        if (!iKartCtrl_options.check("ANGULAR_SPEED_PID"))
+        if (!iKartCtrl_options.check("ANGULAR_VELOCITY_PID"))
         {
             fprintf(stderr,"\nError reading from .ini file, section PID\n");
             return false;
@@ -231,23 +231,23 @@ public:
             Tt[i]=1;
         }
 
-        kp[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
-        kd[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
-        ki[0]=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
-        sat[0](0,0)=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("min",Value(0),"min").asDouble();
-        sat[0](0,1)=iKartCtrl_options.findGroup("LINEAR_SPEED_PID").check("max",Value(0),"max").asDouble();
+        kp[0]=iKartCtrl_options.findGroup("LINEAR_VELOCITY_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[0]=iKartCtrl_options.findGroup("LINEAR_VELOCITY_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[0]=iKartCtrl_options.findGroup("LINEAR_VELOCITY_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[0](0,0)=iKartCtrl_options.findGroup("LINEAR_VELOCITY_PID").check("min",Value(0),"min").asDouble();
+        sat[0](0,1)=iKartCtrl_options.findGroup("LINEAR_VELOCITY_PID").check("max",Value(0),"max").asDouble();
 
-        kp[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
-        kd[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
-        ki[1]=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
-        sat[1](0,0)=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("min",Value(0),"min").asDouble();
-        sat[1](0,1)=iKartCtrl_options.findGroup("ANGULAR_SPEED_PID").check("max",Value(0),"max").asDouble();
+        kp[1]=iKartCtrl_options.findGroup("ANGULAR_VELOCITY_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[1]=iKartCtrl_options.findGroup("ANGULAR_VELOCITY_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[1]=iKartCtrl_options.findGroup("ANGULAR_VELOCITY_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[1](0,0)=iKartCtrl_options.findGroup("ANGULAR_VELOCITY_PID").check("min",Value(0),"min").asDouble();
+        sat[1](0,1)=iKartCtrl_options.findGroup("ANGULAR_VELOCITY_PID").check("max",Value(0),"max").asDouble();
 
-        kp[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("kp",Value(0),"kp gain").asDouble();
-        kd[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("kd",Value(0),"kd gain").asDouble();
-        ki[2]=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("ki",Value(0),"ki gain").asDouble();
-        sat[2](0,0)=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("min",Value(0),"min").asDouble();
-        sat[2](0,1)=iKartCtrl_options.findGroup("HEADING_SPEED_PID").check("max",Value(0),"max").asDouble();
+        kp[2]=iKartCtrl_options.findGroup("HEADING_VELOCITY_PID").check("kp",Value(0),"kp gain").asDouble();
+        kd[2]=iKartCtrl_options.findGroup("HEADING_VELOCITY_PID").check("kd",Value(0),"kd gain").asDouble();
+        ki[2]=iKartCtrl_options.findGroup("HEADING_VELOCITY_PID").check("ki",Value(0),"ki gain").asDouble();
+        sat[2](0,0)=iKartCtrl_options.findGroup("HEADING_VELOCITY_PID").check("min",Value(0),"min").asDouble();
+        sat[2](0,1)=iKartCtrl_options.findGroup("HEADING_VELOCITY_PID").check("max",Value(0),"max").asDouble();
 
         linear_speed_pid    = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[0],ki[0],kd[0],wp[0],wi[0],wd[0],N[0],Tt[0],sat[0]);
         angular_speed_pid   = new iCub::ctrl::parallelPID(thread_period/1000.0,kp[1],ki[1],kd[1],wp[1],wi[1],wd[1],N[1],Tt[1],sat[1]);

@@ -288,7 +288,7 @@ void ControlThread::run()
         apply_control_openloop_pid(pidout_linear_speed,pidout_angular_speed,pidout_direction,exec_linear_speed,exec_angular_speed,exec_desired_direction);
         this->motor_handler->execute_speed(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
-    else if (ikart_control_type == IKART_CONTROL_SPEED_PID)
+    else if (ikart_control_type == IKART_CONTROL_VELOCITY_PID)
     {
         MAX_VALUE = 200; // Maximum joint speed (deg/s)
         exec_linear_speed = input_linear_speed / 100.0 * MAX_VALUE * exec_pwm_gain;
@@ -320,9 +320,9 @@ void ControlThread::printStats()
 bool ControlThread::set_control_type (string s)
 {
     if      (s == "none")            ikart_control_type = IKART_CONTROL_NONE;
-    else if (s == "speed_no_pid")    ikart_control_type = IKART_CONTROL_SPEED_NO_PID;
+    else if (s == "velocity_no_pid")    ikart_control_type = IKART_CONTROL_VELOCITY_NO_PID;
     else if (s == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
-    else if (s == "speed_pid")       ikart_control_type = IKART_CONTROL_SPEED_PID;
+    else if (s == "velocity_pid")       ikart_control_type = IKART_CONTROL_VELOCITY_PID;
     else if (s == "openloop_pid")    ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
     else
     {

@@ -262,7 +262,7 @@ void ControlThread::run()
         pidout_direction     = exec_desired_direction;
         this->motor_handler->execute_openloop(pidout_linear_speed,pidout_direction,pidout_angular_speed);
     }
-    else if (ikart_control_type == IKART_CONTROL_SPEED_NO_PID)
+    else if (ikart_control_type == IKART_CONTROL_VELOCITY_NO_PID)
     {
         MAX_VALUE = 200; // Maximum joint speed (deg/s)
         exec_linear_speed = input_linear_speed / 100.0 * MAX_VALUE * exec_pwm_gain;

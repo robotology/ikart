@@ -18,9 +18,9 @@ code=/usr/local/src/robot
 
 export ACE_ROOT=$code/ACE_wrappers
 
-export YARP_DIR=$code/yarp2
+export YARP_DIR=$code/yarp
 export YARP_ROOT=$YARP_DIR
-export YARP_CONF=~/.yarp
+
 export YARP_BIN=$YARP_DIR/bin
 export YARP_MCAST_SIZE=65000
 export YARP_DGRAM_SIZE=65000
@@ -36,9 +36,8 @@ export IKART_ROOT=$code/iCub/contrib/src/iKart
 export IKART_DIR=$code/iCub/contrib/src/iKart/build
 
 export ICUB_DIR=$code/iCub/main/build
-export ICUB_CONF=$code/iCub/conf
 export ICUB_BIN=$ICUB_DIR/bin
-export ICUB_ROBOTNAME=iCubGenova03
+export YARP_ROBOT_NAME=iCubGenova03
 export DEVEL_ROOT=$code/devel
 
 export CHRIS_ROOT=$code/chris

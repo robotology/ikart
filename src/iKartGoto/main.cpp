@@ -281,8 +281,8 @@ int main(int argc, char *argv[])
     yarp::os::ResourceFinder rf;
     rf.setVerbose(true);
     rf.setDefaultConfigFile("iKartGoto.ini");           //overridden by --from parameter
-    rf.setDefaultContext("iKartGoto/conf");                //overridden by --context parameter
-    rf.configure("ICUB_ROOT",argc,argv);
+    rf.setDefaultContext("iKartGoto");                  //overridden by --context parameter
+    rf.configure(argc,argv);
     
     iKartGotoModule iKartGoto;
 

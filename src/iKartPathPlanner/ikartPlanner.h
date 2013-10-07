@@ -137,10 +137,8 @@ class PlannerThread: public yarp::os::RateThread
     {
         //read configuration parametes
         yarp::os::ResourceFinder mapFinder;
-        string default_map_path = "iKart/maps";
-
-        mapFinder.setDefaultContext(default_map_path.c_str());
-        mapFinder.configure("ICUB_ROOT",0,0);
+        mapFinder.setDefaultContext("iKart/maps");
+        mapFinder.configure(0,0);
 
         string map_filename;
         map_filename = mapFinder.getContextPath().c_str() + string("/");

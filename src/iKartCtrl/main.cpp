@@ -414,8 +414,8 @@ int main(int argc, char *argv[])
 {
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.configure("ICUB_ROOT",argc,argv);
-    rf.setDefaultContext("iKart/conf");
+    rf.configure(argc,argv);
+    rf.setDefaultContext("iKart");
     rf.setDefaultConfigFile("iKartCtrl.ini");
 
     if (rf.check("help"))

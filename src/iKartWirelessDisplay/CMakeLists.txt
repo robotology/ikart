@@ -1,26 +1,27 @@
-cmake_minimum_required(VERSION 2.6)
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Marco Randazzo marco.randazzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
 
-SET(PROJECTNAME iKartWirelessDisplay)
+set(PROJECTNAME iKartWirelessDisplay)
+project(${PROJECTNAME})
 
-PROJECT(${PROJECTNAME})
+file(GLOB folder_source *.cpp)
+file(GLOB folder_header *.h)
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
-FILE(GLOB folder_source *.cpp)
-FILE(GLOB folder_header *.h)
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
+link_libraries(${GtkMM_LIBRARIES})
+link_directories(${GtkMM_LIBRARY_DIR})
+include_directories(${GtkMM_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS})
 
-LINK_LIBRARIES(${GtkMM_LIBRARIES})
-LINK_DIRECTORIES(${GtkMM_LIBRARY_DIR})
-INCLUDE_DIRECTORIES(${GtkMM_INCLUDE_DIRS})
+add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 
-
-INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS})
-
-ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
-
-TARGET_LINK_LIBRARIES(${PROJECTNAME} 
+target_link_libraries(${PROJECTNAME} 
                       ${GtkMM_LINK_FLAGS}
                       ${GtkMM_LIBRARIES}
                       ${YARP_LIBRARIES})
 
-INSTALL(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECTNAME} DESTINATION bin)
+

@@ -1,18 +1,19 @@
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Marco Randazzo marco.randazzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
 
 set(MODULENAME laserScannerGui)
 project(${MODULENAME})
 
-include_directories(${YARP_INCLUDE_DIRS})
-include_directories(${ICUB_INCLUDE_DIRS})
-include_directories(${OpenCV_INCLUDE_DIRS})
+file(GLOB folder_source *.cpp)
+source_group("Source Files" FILES ${folder_source})
 
-FILE(GLOB folder_header *.h)
-FILE(GLOB folder_source *.cpp)
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
+include_directories(${YARP_INCLUDE_DIRS}
+                    ${ICUB_INCLUDE_DIRS}
+                    ${OpenCV_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(${MODULENAME} ${folder_source} ${folder_header})
-
-TARGET_LINK_LIBRARIES(${MODULENAME} ${OpenCV_LIBRARIES} icubmod ${YARP_LIBRARIES})
-
-INSTALL(TARGETS ${MODULENAME} DESTINATION bin)
+add_executable(${MODULENAME} ${folder_source})
+target_link_libraries(${MODULENAME} ${OpenCV_LIBRARIES} icubmod ${YARP_LIBRARIES})
+install(TARGETS ${MODULENAME} DESTINATION bin)

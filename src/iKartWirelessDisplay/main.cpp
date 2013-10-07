@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     rf.setVerbose(true);
     rf.setDefaultConfigFile( "conf/config.ini" ); //overridden by --from parameter
     rf.setDefaultContext( "iKartWirelessDisplay" );   //overridden by --context parameter
-    rf.configure("ICUB_ROOT",argc,argv);
+    rf.configure(argc,argv);
 
     if (rf.check("help"))
     {

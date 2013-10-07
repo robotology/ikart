@@ -1,21 +1,37 @@
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Marco Randazzo marco.randazzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
+
 cmake_minimum_required(VERSION 2.6)
 
-PROJECT(iKart)
-IF(WIN32)
+project(iKart)
+if(WIN32)
     #disable annoying warnings about use of deprecated c functions
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
-    ADD_DEFINITIONS(/wd4250)
-ENDIF(WIN32)
+    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+    add_definitions(/wd4250)
+endif()
 
-FIND_PACKAGE(YARP)
-FIND_PACKAGE(ICUB)
+find_package(YARP)
+find_package(ICUB)
 
-SET (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ICUB_MODULE_PATH} ${YARP_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
+include(iCubOptions)
+include(iCubHelpers)
+include(YarpInstallationHelpers)
 
-FIND_PACKAGE(GtkMM)
-FIND_PACKAGE(OpenCV)
+find_package(ICUBcontrib)
+list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
+include(ICUBcontribHelpers)
+set_contrib_default_prefix()
+
+find_package(GtkMM)
+find_package(OpenCV)
 find_package(GSL)
 find_package(SDL)
 
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(app)
+add_subdirectory(src)
+add_subdirectory(app)
+

@@ -1,21 +1,21 @@
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Marco Randazzo marco.randazzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
 
-SET(PROJECTNAME forceGuidance)
+set(PROJECTNAME forceGuidance)
+project(${PROJECTNAME})
 
-PROJECT(${PROJECTNAME})
+file(GLOB folder_source *.cpp)
+source_group("Source Files" FILES ${folder_source})
 
-SET(folder_source main.cpp)
+include_directories(${GSL_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS})
 
-FILE(GLOB folder_source *.cpp)
-FILE(GLOB folder_header *.h)
-SOURCE_GROUP("Source Files" FILES ${folder_source})
+add_executable(${PROJECTNAME} ${folder_source})
 
-INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS}
-                    ${YARP_INCLUDE_DIRS})
-
-ADD_EXECUTABLE(${PROJECTNAME} ${folder_source})
-
-TARGET_LINK_LIBRARIES(${PROJECTNAME} icubmod
+target_link_libraries(${PROJECTNAME} icubmod
                                      ${GSL_LIBRARIES}
                                      ${YARP_LIBRARIES})
 
-INSTALL(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECTNAME} DESTINATION bin)

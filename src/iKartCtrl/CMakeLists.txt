@@ -1,24 +1,27 @@
+#
+# Copyright (C) 2010 RobotCub Consortium
+# Author: Marco Randazzo marco.randazzo@iit.it
+# CopyPolicy: Released under the terms of the GNU GPL v2.0.
+#
 
-SET(PROJECTNAME iKartCtrl)
+set(PROJECTNAME iKartCtrl)
+project(${PROJECTNAME})
 
-PROJECT(${PROJECTNAME})
+file(GLOB folder_source *.cpp)
+file(GLOB folder_header *.h)
 
-#SET(folder_source main.cpp)
+source_group("Source Files" FILES ${folder_source})
+source_group("Header Files" FILES ${folder_header})
 
-FILE(GLOB folder_source *.cpp)
-FILE(GLOB folder_header *.h)
-
-SOURCE_GROUP("Source Files" FILES ${folder_source})
-SOURCE_GROUP("Header Files" FILES ${folder_header})
-
-INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIRS}
+include_directories(${GSL_INCLUDE_DIRS}
                     ${YARP_INCLUDE_DIRS}
                     ${ICUB_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(${PROJECTNAME} ${folder_source} ${folder_header})
+add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 
-TARGET_LINK_LIBRARIES(${PROJECTNAME} ctrlLib icubmod
+target_link_libraries(${PROJECTNAME} ctrlLib icubmod
                                      ${GSL_LIBRARIES}
                                      ${YARP_LIBRARIES})
 
-INSTALL(TARGETS ${PROJECTNAME} DESTINATION bin)
+install(TARGETS ${PROJECTNAME} DESTINATION bin)
+

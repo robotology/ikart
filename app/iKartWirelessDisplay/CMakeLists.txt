@@ -4,19 +4,9 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
 
-set(appname iKartWirelessDisplay)
-
-icub_app(${appname})
-
-file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
-
+file(GLOB conf     ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
 file(GLOB pictures ${CMAKE_CURRENT_SOURCE_DIR}/pictures/*.bmp)
 
-icub_app_install(${appname}
-        FILES ${conf}
-        DESTINATION conf)
-
-icub_app_install(${appname} 
-                 FILES ${pictures}
-                 DESTINATION pictures)
+yarp_install(FILES ${conf}     DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/iKartWirelessDisplay)
+yarp_install(FILES ${pictures} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/iKartWirelessDisplay/pictures)
 

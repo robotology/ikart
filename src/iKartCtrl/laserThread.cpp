@@ -19,6 +19,7 @@
 #include "laserThread.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <string>
 
 const double laser_tf = 0.245; //m
 const double RAD2DEG  = 180.0/M_PI;
@@ -27,7 +28,10 @@ const double DEG2RAD  = M_PI/180.0;
 bool LaserThread::threadInit()
 {
     ConstString laser_filename = iKartCtrl_options.findGroup("GENERAL").find("laser").asString();
-    ConstString laser_config_filename =rf.findFile(laser_filename);        
+    ConstString laser_config_filename = rf.findFile(laser_filename);
+    string path=laser_config_filename.c_str();
+    path=path.substr(0,laser_config_filename.size()-laser_filename.size());
+
     if (laser_config_filename=="") 
     {
         printf("\nError! Unable to locate .ini laser configuration file. \nLooking for %s\n",laser_config_filename.c_str());
@@ -38,7 +42,7 @@ bool LaserThread::threadInit()
         printf("\nOpening the laser interface...\n");
         Property laser_options;
         laser_options.fromConfigFile(laser_config_filename.c_str());
-        laser_options.put("CONFIG_PATH",rf.getContextPath().c_str());
+        laser_options.put("CONFIG_PATH",path.c_str());
 
         // open the laser scanner driver
         laser_driver=new PolyDriver;

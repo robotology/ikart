@@ -141,7 +141,7 @@ class PlannerThread: public yarp::os::RateThread
         mapFinder.configure(0,0);
 
         string map_filename;
-        map_filename = mapFinder.getContextPath().c_str() + string("/");
+        map_filename = mapFinder.getHomeContextPath().c_str() + string("/");
         map_filename = map_filename + rf.find("map_file").asString().c_str();
         //map_filename = rf.find("map_file").asString().c_str();
         if (!map.loadMap(map_filename))

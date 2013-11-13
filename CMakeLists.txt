@@ -18,13 +18,12 @@ find_package(ICUB)
 
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
-include(iCubOptions)
-include(iCubHelpers)
 include(YarpInstallationHelpers)
 
 find_package(ICUBcontrib)
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 include(ICUBcontribHelpers)
+include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
 find_package(GtkMM)
@@ -34,4 +33,6 @@ find_package(SDL)
 
 add_subdirectory(src)
 add_subdirectory(app)
+
+icubcontrib_add_uninstall_target()
 

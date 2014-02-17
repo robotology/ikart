@@ -147,6 +147,8 @@ class GotoThread: public yarp::os::RateThread
     yarp::sig::Vector   control_out;
     status_type         status;
     int                 retreat_counter;
+    bool                use_odometry;
+    bool                use_localization;
 
     //obstacles_emergency_stop block
     public:
@@ -214,6 +216,8 @@ class GotoThread: public yarp::os::RateThread
         min_lin_speed = 0.0;  //m/s
         min_ang_speed = 0.0; //deg/s
         robot_radius = 0.30;  //m
+        use_odometry = true;
+        use_localization = true;
         printf ("Using following paramters:\n %s\n", rf.toString().c_str());
         if (rf.check("ang_speed_gain"))     {k_ang_gain = rf.find("ang_speed_gain").asDouble();}
         if (rf.check("lin_speed_gain"))     {k_lin_gain = rf.find("lin_speed_gain").asDouble();}
@@ -224,6 +228,8 @@ class GotoThread: public yarp::os::RateThread
         if (rf.check("robot_radius"))       {robot_radius = rf.find("robot_radius").asDouble();}
         if (rf.check("goal_tolerance_lin")) {goal_tolerance_lin = rf.find("goal_tolerance_lin").asDouble();}
         if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
+        if (rf.check("use_odometry"))       {use_odometry       = (rf.find("use_odometry").asInt()==1);}
+        if (rf.check("use_localization"))   {use_localization   = (rf.find("use_localization").asInt()==1);}
 
         Bottle btmp;
         btmp = rf.findGroup("RETREAT_OPTION");

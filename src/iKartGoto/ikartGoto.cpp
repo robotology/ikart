@@ -152,7 +152,11 @@ void GotoThread::run()
     //data is formatted as follows: x, y, angle
     yarp::sig::Vector *loc = port_localization_input.read(false);
     if (loc) {localization_data = *loc; loc_timeout_counter=0;}
-    else {loc_timeout_counter++; if (loc_timeout_counter>TIMEOUT_MAX) loc_timeout_counter=TIMEOUT_MAX;}
+    else 
+    {  
+       if (use_localization) loc_timeout_counter++;
+       if (loc_timeout_counter>TIMEOUT_MAX) loc_timeout_counter=TIMEOUT_MAX;
+    }
     if (loc_timeout_counter>=TIMEOUT_MAX)
     {
         if (status == MOVING)
@@ -164,7 +168,11 @@ void GotoThread::run()
 
     yarp::sig::Vector *odm = port_odometry_input.read(false);
     if (odm) {odometry_data = *odm; odm_timeout_counter=0;}
-    else {odm_timeout_counter++; if (odm_timeout_counter>TIMEOUT_MAX) odm_timeout_counter=TIMEOUT_MAX;}
+    else
+    {
+        if (use_odometry) odm_timeout_counter++;
+        if (odm_timeout_counter>TIMEOUT_MAX) odm_timeout_counter=TIMEOUT_MAX;
+    }
     if (odm_timeout_counter>=TIMEOUT_MAX)
     {
         if (status == MOVING)

@@ -200,6 +200,13 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     if (tmp>0 && tmp < DEFAULT_MAX_ANGULAR_VEL) max_angular_vel = tmp;
     tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_linear_vel",Value(0),"maximum linear velocity of the platform [m/s]")).asDouble();
     if (tmp>0 && tmp < DEFAULT_MAX_LINEAR_VEL) max_linear_vel = tmp;
+    tmp = (iKartCtrl_options.findGroup("GENERAL").check("wheels_type",Value(1),"1=omnidirectional, 2=mechanum")).asInt();
+    if (tmp==1 || tmp==2) wheels_type = static_cast<wheels_type_enum>(tmp);
+    else
+    {
+        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n"); 
+        wheels_type = static_cast<wheels_type_enum>(1);
+    }
 
     thread_period = _period;
     localName = iKartCtrl_options.find("local").asString();
@@ -397,10 +404,13 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
 
 void MotorControl::decouple(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
 {
+    static double off = 0;
+    if (wheels_type==WHEEL_TYPE_MECHANUM) off = 30.0; //degrees
+
     //wheel contribution calculation
-    FA = appl_linear_speed * cos ((150.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
-    FB = appl_linear_speed * cos ((030.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
-    FC = appl_linear_speed * cos ((270.0-appl_desired_direction)/ 180.0 * 3.14159265) + appl_angular_speed;
+    FA = appl_linear_speed * cos ((150.0-appl_desired_direction+off)/ 180.0 * 3.14159265) + appl_angular_speed;
+    FB = appl_linear_speed * cos ((030.0-appl_desired_direction+off)/ 180.0 * 3.14159265) + appl_angular_speed;
+    FC = appl_linear_speed * cos ((270.0-appl_desired_direction+off)/ 180.0 * 3.14159265) + appl_angular_speed;
 }
 
 void MotorControl::execute_speed(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)

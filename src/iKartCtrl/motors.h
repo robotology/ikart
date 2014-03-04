@@ -61,6 +61,8 @@ private:
     int                 aux_timeout_counter;
     int                 joy_timeout_counter;
 
+    enum                wheels_type_enum {WHEEL_TYPE_OMNI=1, WHEEL_TYPE_MECHANUM=2} wheels_type;
+
     //movement control variables (input from external)
     double              joy_linear_speed;
     double              joy_angular_speed;

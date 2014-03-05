@@ -405,7 +405,7 @@ void MotorControl::read_inputs(double *linear_speed,double *angular_speed,double
 void MotorControl::decouple(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed)
 {
     static double off = 0;
-    if (wheels_type==WHEEL_TYPE_MECHANUM) off = 30.0; //degrees
+    if (wheels_type==WHEEL_TYPE_MECHANUM) off = 45.0; //degrees
 
     //wheel contribution calculation
     FA = appl_linear_speed * cos ((150.0-appl_desired_direction+off)/ 180.0 * 3.14159265) + appl_angular_speed;

@@ -200,9 +200,9 @@ void Odometry::compute()
     m_gangle(1,0) = sin (g_angle);
     m_gangle(1,1) = cos (g_angle);
     m_gangle(2,2) = 1;
-    kin=m_gangle*kin;
 
     yarp::sig::Matrix ikin = luinv(kin);
+    ikin=m_gangle*ikin;
 
     //build the rotation matrix
     yarp::sig::Matrix m1;

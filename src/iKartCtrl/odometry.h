@@ -77,6 +77,7 @@ private:
     //robot geometry
     double              geom_r;
     double              geom_L;
+    enum                wheels_type_enum {WHEEL_TYPE_OMNI=1, WHEEL_TYPE_MECHANUM=2} wheels_type;
 
     //thread period
     double              period;

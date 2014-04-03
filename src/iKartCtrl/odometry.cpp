@@ -18,6 +18,9 @@
 
 #include "odometry.h"
 
+#define RAD2DEG 180.0/3.14159
+#define DEG2RAD 3.14159/180.0
+
 bool Odometry::reset_odometry()
 {
     ienc->getEncoder(0,&encA_offset);
@@ -77,12 +80,29 @@ Odometry::Odometry(unsigned int _period, ResourceFinder &_rf, Property options, 
     ikart_vel_heading=0;
     traveled_distance=0;
     traveled_angle=0;
-    geom_r = 62.5/1000.0;     //m
+    geom_r = 0;
     geom_L = 297.16/1000.0;   //m
     encvel_estimator =new iCub::ctrl::AWLinEstimator(3,1.0);
     enc.resize(3);
     encv.resize(3);
     localName = iKartCtrl_options.find("local").asString();
+
+    int tmp = (iKartCtrl_options.findGroup("GENERAL").check("wheels_type",Value(1),"1=omnidirectional, 2=mechanum")).asInt();
+    if (tmp==1 || tmp==2) wheels_type = static_cast<wheels_type_enum>(tmp);
+    else
+    {
+        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n"); 
+        wheels_type = static_cast<wheels_type_enum>(1);
+    }
+
+    if (wheels_type==WHEEL_TYPE_OMNI)
+    {
+        geom_r = 62.5/1000.0;     //m
+    }
+    else if (wheels_type==WHEEL_TYPE_MECHANUM)
+    {
+        geom_r = 76.15/1000.0;     //m
+    }
 }
 
 bool Odometry::open()
@@ -162,6 +182,26 @@ void Odometry::compute()
     kin(2,1) = -1.0;
     kin(2,2) = geom_L;
     kin      = kin/geom_r;
+
+    double g_angle=0.0;
+    if (wheels_type==WHEEL_TYPE_OMNI)
+    {
+        g_angle = 0;
+    }
+    else if (wheels_type==WHEEL_TYPE_MECHANUM)
+    {
+        g_angle = 45*DEG2RAD;
+    }
+    yarp::sig::Matrix m_gangle;
+    m_gangle.resize(3,3);
+    m_gangle.zero();
+    m_gangle(0,0) = cos (g_angle);
+    m_gangle(0,1) = -sin (g_angle);
+    m_gangle(1,0) = sin (g_angle);
+    m_gangle(1,1) = cos (g_angle);
+    m_gangle(2,2) = 1;
+    kin=m_gangle*kin;
+
     yarp::sig::Matrix ikin = luinv(kin);
 
     //build the rotation matrix
@@ -205,8 +245,8 @@ void Odometry::compute()
     }
     else
     {
-        odom_vel_heading  = atan2(odom_vel_x,odom_vel_y)*57.2957795;
-        ikart_vel_heading = atan2(ikart_vel_x,ikart_vel_y)*57.2957795;
+        odom_vel_heading  = atan2(odom_vel_x,odom_vel_y)*RAD2DEG;
+        ikart_vel_heading = atan2(ikart_vel_x,ikart_vel_y)*RAD2DEG;
     }
 
     //the integration step
@@ -240,10 +280,10 @@ void Odometry::compute()
     */
 
     //convert from radians back to degrees
-    odom_theta       *= 57.2957795;
-    ikart_vel_theta  *= 57.2957795;
-    odom_vel_theta   *= 57.2957795;
-    traveled_angle   *= 57.2957795;
+    odom_theta       *= RAD2DEG;
+    ikart_vel_theta  *= RAD2DEG;
+    odom_vel_theta   *= RAD2DEG;
+    traveled_angle   *= RAD2DEG;
 
     mutex.post();
 

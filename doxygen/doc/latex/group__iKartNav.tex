@@ -1,0 +1,38 @@
+\section{i\+Kart\+Nav}
+\label{group__iKartNav}\index{i\+Kart\+Nav@{i\+Kart\+Nav}}
+
+
+A reactive navigation module based on laser range finder.  
+
+
+A reactive navigation module based on laser range finder. 
+
+Copyright (C) 2011 Robot\+Cub Consortium
+
+Author\+: Alessandro Scalzo
+
+Copy\+Policy\+: Released under the terms of the G\+N\+U G\+P\+L v2.\+0.\hypertarget{group__laserScannerGui_intro_sec}{}\subsection{Description}\label{group__laserScannerGui_intro_sec}
+This module implements a real case of Lumelsky\textquotesingle{}s Bug 1 algorithm, where obstacles are detected by a laser range finder.\hypertarget{group__laserScannerGui_lib_sec}{}\subsection{Libraries}\label{group__laserScannerGui_lib_sec}
+
+\begin{DoxyItemize}
+\item Y\+A\+R\+P libraries.
+\end{DoxyItemize}\hypertarget{group__laserScannerGui_parameters_sec}{}\subsection{Parameters}\label{group__laserScannerGui_parameters_sec}
+The only used parameter is the name of the configuration file. The configuration file name can be specified using --from {\itshape file} You can also use the {\itshape --context} option to change the current context (e.\+g. the directory where to search the configuration file).\hypertarget{group__laserScannerGui_portsa_sec}{}\subsection{Ports Accessed}\label{group__laserScannerGui_portsa_sec}
+
+\begin{DoxyItemize}
+\item /ikart/laser\+:o laser range finder data as yarp\+::os\+::\+Vector
+\item /ikart/control\+:i heading, linear and angular speed command to i\+Kart\+Ctrl module as yarp\+::os\+::\+Bottle, with the format\+: $<$heading \mbox{[}deg\mbox{]}$>$ $<$speed \mbox{[}m/s\mbox{]}$>$ $<$angular speed \mbox{[}deg/s\mbox{]}$>$ $<$pwm gain \mbox{[}0.\+0-\/1.\+0\mbox{]}$>$
+\end{DoxyItemize}\hypertarget{group__laserScannerGui_portsc_sec}{}\subsection{Ports Created}\label{group__laserScannerGui_portsc_sec}
+
+\begin{DoxyItemize}
+\item /ikartnav/target\+:i accepts target command as yarp\+::os\+::\+Bottle with the format\+: set\+\_\+target $<$heading \mbox{[}deg\mbox{]}$>$ $<$distance \mbox{[}m\mbox{]}$>$
+\item /ikartnav/control\+:o heading, linear and angular speed command to i\+Kart\+Ctrl module as yarp\+::os\+::\+Bottle, with the format\+: $<$heading \mbox{[}deg\mbox{]}$>$ $<$speed \mbox{[}m/s\mbox{]}$>$ $<$angular speed \mbox{[}deg/s\mbox{]}$>$ $<$pwm gain \mbox{[}0.\+0-\/1.\+0\mbox{]}$>$
+\end{DoxyItemize}\hypertarget{group__laserScannerGui_in_files_sec}{}\subsection{Input Data Files}\label{group__laserScannerGui_in_files_sec}
+None.\hypertarget{group__laserScannerGui_out_data_sec}{}\subsection{Output Data Files}\label{group__laserScannerGui_out_data_sec}
+None.\hypertarget{group__laserScannerGui_conf_file_sec}{}\subsection{Configuration Files}\label{group__laserScannerGui_conf_file_sec}
+A description of the available configuration options can be found in the example files located under /app/i\+Kart/conf/i\+Kart\+Nav.ini\hypertarget{group__laserScannerGui_tested_os_sec}{}\subsection{Tested O\+S}\label{group__laserScannerGui_tested_os_sec}
+Windows, Linux
+
+\begin{DoxyAuthor}{Author}
+Alessandro Scalzo 
+\end{DoxyAuthor}

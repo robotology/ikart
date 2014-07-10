@@ -19,8 +19,6 @@
 /** 
 \defgroup iKartWireless iKartWireless
  
-@ingroup icub_module  
- 
 iKart wireless display.
  
 Copyright (C) 2010 RobotCub Consortium

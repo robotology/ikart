@@ -19,8 +19,6 @@
 /** 
 \defgroup iKartBattery iKartBattery
  
-@ingroup icub_module  
- 
 iKart battery manager.
  
 Copyright (C) 2010 RobotCub Consortium

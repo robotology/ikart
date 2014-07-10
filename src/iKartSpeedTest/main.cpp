@@ -19,8 +19,6 @@
 /** 
 \defgroup commandGenerator commandGenerator
  
-@ingroup icub_tools  
- 
 @@@TODO
  
 Copyright (C) 2010 RobotCub Consortium

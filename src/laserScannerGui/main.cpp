@@ -19,9 +19,6 @@
 /** 
 \defgroup laserScannerGui laserScannerGui
  
-@ingroup icub_tools
-@ingroup icub_guis
- 
 A simple GUI to display the distance mesaurements of iKart's laser scanner.
  
 Copyright (C) 2010 RobotCub Consortium

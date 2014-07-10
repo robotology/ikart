@@ -19,8 +19,6 @@
 /** 
 \defgroup foceGuidance forceGuidance
  
-@ingroup icub_module  
- 
 Force control for iKart platform.
  
 Copyright (C) 2010 RobotCub Consortium

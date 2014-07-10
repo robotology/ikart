@@ -19,8 +19,6 @@
 /** 
 \defgroup iKartNav iKartNav
  
-@ingroup icub_module
- 
 A reactive navigation module based on laser range finder.
  
 Copyright (C) 2011 RobotCub Consortium

@@ -19,8 +19,6 @@
 /** 
 \defgroup iKartCtrl iKartCtrl
  
-@ingroup icub_module  
- 
 IKart controller (wheels decoupling prototype).
  
 Copyright (C) 2010 RobotCub Consortium

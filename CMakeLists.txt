@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-project(iKart)
+project(ikart)
 if(WIN32)
     #disable annoying warnings about use of deprecated c functions
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)

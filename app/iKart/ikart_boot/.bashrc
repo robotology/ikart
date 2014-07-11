@@ -31,9 +31,9 @@ fi
 
 export SDL_LINUX_JOYSTICK="'Xbox Gamepad (userspace driver)' 8 0 0"
 
-export ICUB_ROOT=$code/iCub
-export IKART_ROOT=$code/iCub/contrib/src/iKart
-export IKART_DIR=$code/iCub/contrib/src/iKart/build
+export ICUB_ROOT=$code/icub-main
+export IKART_ROOT=$code/icub-contrib-iit/ikart
+export IKART_DIR=$IKART_ROOT/build
 
 export ICUB_DIR=$code/iCub/main/build
 export ICUB_BIN=$ICUB_DIR/bin

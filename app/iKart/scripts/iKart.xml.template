@@ -7,7 +7,7 @@ ikart
 
 <module>
    <name>iCubInterface</name>
-   <parameters>--context iKart --config conf/iKart.ini</parameters>
+   <parameters>--context ikart --config conf/iKart.ini</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>iKartInterface</tag>
@@ -46,7 +46,7 @@ ikart
 
 <module>
    <name>robotMotorGui</name>
-   <parameters>--context /iKart/conf</parameters>
+   <parameters>--context /ikart/conf</parameters>
    <node>ikart</node>
    <stdio>ikart</stdio>
    <tag>iKartMotorGui</tag>

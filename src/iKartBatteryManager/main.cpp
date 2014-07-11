@@ -204,7 +204,7 @@ public:
         shutdownEnable=(!rf.check("noShutdown"));
 
         //serial port configuration parameters
-        rf.setDefaultContext("iKart");
+        rf.setDefaultContext("ikart");
         rf.setDefaultConfigFile("batterySerialPort.ini");
         ConstString configFile=rf.findFile("from");
         Property prop;

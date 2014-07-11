@@ -137,7 +137,7 @@ class PlannerThread: public yarp::os::RateThread
     {
         //read configuration parametes
         yarp::os::ResourceFinder mapFinder;
-        mapFinder.setDefaultContext("iKart/maps");
+        mapFinder.setDefaultContext("ikart/maps");
         mapFinder.configure(0,0);
 
         string map_filename;

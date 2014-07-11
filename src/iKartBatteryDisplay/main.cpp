@@ -172,7 +172,7 @@ public:
             //return false;
         }
 
-        yarp::os::ConstString pics_path =rf.check("pics_path",Value("/usr/local/src/robot/iCub/contrib/src/iKart/src/iKartBatteryDisplay/pictures/")).asString();
+        yarp::os::ConstString pics_path =rf.check("pics_path",Value("/usr/local/src/robot/icub-contrib-iit/ikart/src/iKartBatteryDisplay/pictures/")).asString();
         graphics = new GraphicsManager(pics_path.c_str());
         m_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &CtrlModule::on_timeout), 11000);
         on_timeout();

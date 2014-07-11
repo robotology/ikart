@@ -7,7 +7,7 @@ ikart
 
 <module>
    <name>iKartNav</name>
-   <parameters>--context iKart --config conf/iKartNav.ini</parameters>
+   <parameters>--context ikart --config conf/iKartNav.ini</parameters>
    <node>ikart</node>
    <tag>iKartNavigation</tag>
 </module>

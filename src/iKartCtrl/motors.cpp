@@ -24,9 +24,9 @@ bool MotorControl::set_ikart_control_openloop()
     icmd->setOpenLoopMode(0);
     icmd->setOpenLoopMode(1);
     icmd->setOpenLoopMode(2);
-    iopl->setOutput(0,0);
-    iopl->setOutput(1,0);
-    iopl->setOutput(2,0);
+    iopl->setRefOutput(0,0);
+    iopl->setRefOutput(1,0);
+    iopl->setRefOutput(2,0);
     return true;
 }
 
@@ -195,16 +195,19 @@ MotorControl::MotorControl(unsigned int _period, ResourceFinder &_rf, Property o
     max_linear_vel = DEFAULT_MAX_LINEAR_VEL;
     max_angular_vel = DEFAULT_MAX_ANGULAR_VEL;
     motors_filter_enabled = iKartCtrl_options.findGroup("GENERAL").check("motors_filter_enabled",Value(4),"motors filter frequency (1/2/4/8Hz, 0 = disabled)").asInt();
+    
     double tmp =0;
     tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_angular_vel",Value(0),"maximum angular velocity of the platform [deg/s]")).asDouble();
     if (tmp>0 && tmp < DEFAULT_MAX_ANGULAR_VEL) max_angular_vel = tmp;
     tmp = (iKartCtrl_options.findGroup("GENERAL").check("max_linear_vel",Value(0),"maximum linear velocity of the platform [m/s]")).asDouble();
     if (tmp>0 && tmp < DEFAULT_MAX_LINEAR_VEL) max_linear_vel = tmp;
-    tmp = (iKartCtrl_options.findGroup("GENERAL").check("wheels_type",Value(1),"1=omnidirectional, 2=mechanum")).asInt();
-    if (tmp==1 || tmp==2) wheels_type = static_cast<wheels_type_enum>(tmp);
+    
+    int tmp2 = 0;
+    tmp2 = (iKartCtrl_options.findGroup("GENERAL").check("wheels_type",Value(1),"1=omnidirectional, 2=mechanum")).asInt();
+    if (tmp2==1 || tmp2==2) wheels_type = static_cast<wheels_type_enum>(tmp2);
     else
     {
-        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n"); 
+        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n", tmp2); 
         wheels_type = static_cast<wheels_type_enum>(1);
     }
 
@@ -468,14 +471,14 @@ void MotorControl::execute_openloop(double appl_linear_speed, double appl_desire
     }
 
     //Apply the commands
-    iopl->setOutput(0,-FA);
-    iopl->setOutput(1,-FB);
-    iopl->setOutput(2,-FC);
+    iopl->setRefOutput(0,-FA);
+    iopl->setRefOutput(1,-FB);
+    iopl->setRefOutput(2,-FC);
 }
 
 void MotorControl::execute_none()
 {
-    iopl->setOutput(0,0);
-    iopl->setOutput(1,0);
-    iopl->setOutput(2,0);
+    iopl->setRefOutput(0,0);
+    iopl->setRefOutput(1,0);
+    iopl->setRefOutput(2,0);
 }

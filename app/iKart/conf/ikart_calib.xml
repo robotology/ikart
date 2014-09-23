@@ -16,7 +16,7 @@
             <param name="positionZero">               0             0             0                </param>       
             <param name="velocityZero">               0             0             0                </param>       
             <param name="maxPwm">                     0             0             0                </param>       
-            <param name="posZeroThreshold">           0             0             0                </param>       
+            <param name="posZeroThreshold">         100           100           100                </param>       
         </group>                                                                               
                                                                                                
         <group name="HOME">                                                                    

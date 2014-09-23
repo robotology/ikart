@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<devices>
+  <device name="ikart_mc_wrapper" type="controlboardwrapper2">
+      <param name="threadrate">  10  </param>
+      <paramlist name="networks">
+      <elem name="wheels">  0 5 0 5 </elem>
+      </paramlist>
+
+      <param name="period"> 10           </param>
+      <param name="name">   ikart/wheels </param>
+      <param name="ports">  wheels       </param>
+      <param name="joints"> 6            </param>
+
+
+      <action phase="startup" level="5" type="attach">
+      <paramlist name="networks">
+         <elem name="wheels">  ikart_mc </elem>
+      </paramlist>
+      </action>
+
+      <action phase="shutdown" level="5" type="detach" />
+  </device>
+</devices>

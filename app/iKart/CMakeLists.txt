@@ -4,7 +4,8 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
 
-file(GLOB conf ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini)
+file(GLOB conf    ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.ini
+                  ${CMAKE_CURRENT_SOURCE_DIR}/conf/*.xml)
 file(GLOB maps    ${CMAKE_CURRENT_SOURCE_DIR}/maps/*.rar)
 file(GLOB scripts ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.template
                   ${CMAKE_CURRENT_SOURCE_DIR}/scripts/*.xml)

@@ -10,7 +10,7 @@ if [ $ret1 -eq 101 ]; then
     sleep 2
     sudo -u icub -i joystickCtrl --context joystickCtrl --from ikart.ini --silent --force_configuration &
     sudo -u icub -i robotInterface --context iKart &
-    sudo -u icub -i iKartCtrl --no_compass --joystick_connect &
+    sudo -u icub -i iKartCtrl --context iKart --no_compass --joystick_connect &
 elif [ $ret1 -eq 0 ]; then
     echo "No joystick boot requested" 
 else

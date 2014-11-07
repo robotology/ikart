@@ -412,9 +412,9 @@ int main(int argc, char *argv[])
 {
     ResourceFinder rf;
     rf.setVerbose(true);
-    rf.configure(argc,argv);
-    rf.setDefaultContext("ikart");
+    rf.setDefaultContext("iKart");
     rf.setDefaultConfigFile("iKartCtrl.ini");
+    rf.configure(argc,argv);
 
     if (rf.check("help"))
     {

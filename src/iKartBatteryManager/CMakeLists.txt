@@ -12,9 +12,6 @@ source_group("Source Files" FILES ${folder_source})
 
 include_directories(${GSL_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS})
 add_executable(${PROJECTNAME} ${folder_source})
-target_link_libraries(${PROJECTNAME} icubmod
-                                     ${GSL_LIBRARIES}
-                                     ${YARP_LIBRARIES})
-
+target_link_libraries(${PROJECTNAME} ${GSL_LIBRARIES} ${YARP_LIBRARIES})
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 

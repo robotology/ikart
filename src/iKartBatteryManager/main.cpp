@@ -80,8 +80,6 @@ Windows, Linux
 #include <cstring>
 
 
-YARP_DECLARE_DEVICES(icubmod)
-
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::dev;
@@ -486,8 +484,6 @@ int main(int argc, char *argv[])
         cout << "--noShutdown:  do not not shutdown even if the battery reaches the critical level"<< endl;
         return 0;
     }
-
-    YARP_REGISTER_DEVICES(icubmod)
 
     CtrlModule mod;
 

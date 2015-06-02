@@ -79,8 +79,6 @@ Windows, Linux
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Image.h>
 
-YARP_DECLARE_DEVICES(icubmod)
-
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -292,8 +290,6 @@ void drawLaser(const Vector *comp, const Vector *las, const lasermap_type *lmap,
 
 int main(int argc, char *argv[])
 {
-    YARP_REGISTER_DEVICES(icubmod)
-
     Network yarp;
 
     string laser_port_name;

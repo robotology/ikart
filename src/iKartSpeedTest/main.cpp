@@ -78,8 +78,6 @@ Windows, Linux
 #include <iomanip>
 #include <string>
 
-YARP_DECLARE_DEVICES(icubmod)
-
 #define PRINT_STATUS_PER    0.200     // [s]
 
 using namespace std;
@@ -516,8 +514,6 @@ public:
 
 int main(int argc, char *argv[])
 {
-    YARP_REGISTER_DEVICES(icubmod)
-
     ResourceFinder rf;
     rf.setVerbose(true);
     rf.configure(argc,argv);

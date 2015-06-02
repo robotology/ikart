@@ -15,5 +15,5 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${iCubDev_INCLUDE_DIRS})
 
 add_executable(${PROJECTNAME} ${folder_source})
-target_link_libraries(${PROJECTNAME} ${SDL_LIBRARY} icubmod ${YARP_LIBRARIES})
+target_link_libraries(${PROJECTNAME} ${SDL_LIBRARY} ${YARP_LIBRARIES})
 install(TARGETS ${PROJECTNAME} DESTINATION bin)

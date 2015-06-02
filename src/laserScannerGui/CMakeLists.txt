@@ -15,5 +15,5 @@ include_directories(${YARP_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS})
 
 add_executable(${MODULENAME} ${folder_source})
-target_link_libraries(${MODULENAME} ${OpenCV_LIBRARIES} icubmod ${YARP_LIBRARIES})
+target_link_libraries(${MODULENAME} ${OpenCV_LIBRARIES} ${YARP_LIBRARIES})
 install(TARGETS ${MODULENAME} DESTINATION bin)

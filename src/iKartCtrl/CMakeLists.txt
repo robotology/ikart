@@ -19,9 +19,7 @@ include_directories(${GSL_INCLUDE_DIRS}
 
 add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 
-target_link_libraries(${PROJECTNAME} ctrlLib icubmod
-                                     ${GSL_LIBRARIES}
-                                     ${YARP_LIBRARIES})
+target_link_libraries(${PROJECTNAME} ctrlLib ${GSL_LIBRARIES} ${YARP_LIBRARIES})
 
 install(TARGETS ${PROJECTNAME} DESTINATION bin)
 

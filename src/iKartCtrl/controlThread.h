@@ -25,6 +25,8 @@
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Os.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 #include <yarp/dev/Drivers.h>
@@ -146,7 +148,6 @@ public:
     virtual bool threadInit()
     {
         string control_type = iKartCtrl_options.findGroup("GENERAL").check("control_mode",Value("none"),"type of control for the wheels").asString().c_str();
-        set_control_type (control_type);
 
         // open the control board driver
         printf("\nOpening the motors interface...\n");
@@ -266,28 +267,32 @@ public:
         }
 
         //start the motors
-        if (!rf.check("no_start"))
+        if (rf.check("no_start"))
         {
-            motor_handler->turn_on_control();
+            yInfo("no_start option found");
+            return true;
         }
 
-        if (rf.check("speed_pid"))            this->set_control_type("speed_pid");
-        else if (rf.check("speed_no_pid"))    this->set_control_type("speed_no_pid");
-        else if (rf.check("openloop_pid"))    this->set_control_type("openloop_pid");
-        else if (rf.check("openloop_no_pid")) this->set_control_type("openloop_no_pid");
-        return true;
+	yInfo() << control_type.c_str();
+        if      (control_type==string("velocity_pid"))    {this->set_control_type("velocity_pid");    yInfo("setting control mode velocity");  this->get_motor_handler()->set_ikart_control_velocity(); return true;}
+        else if (control_type==string("velocity_no_pid")) {this->set_control_type("velocity_no_pid"); yInfo("setting control mode velocity");  this->get_motor_handler()->set_ikart_control_velocity(); return true;}
+        else if (control_type==string("openloop_pid"))    {this->set_control_type("openloop_pid");    yInfo("setting control mode openloop");  this->get_motor_handler()->set_ikart_control_openloop(); return true;}
+        else if (control_type==string("openloop_no_pid")) {this->set_control_type("openloop_no_pid"); yInfo("setting control mode openloop");  this->get_motor_handler()->set_ikart_control_openloop(); return true;}
+        else if (control_type==string("none"))            {this->set_control_type("none");            yInfo("setting control mode none");  return true;}
+	else                                              {yError ("Invalid control_mode");  return false;}
     }
 
     virtual void afterStart(bool s)
     {
         if (s)
-            printf("Control thread started successfully\n");
+            yInfo("Control thread started successfully");
         else
-            printf("Control thread did not start\n");
+            yError("Control thread did not start");
     }
 
     virtual void run();
     bool set_control_type (string s);
+    int get_control_type ();
     void printStats();
     void set_pid (string id, double kp, double ki, double kd);
     void apply_ratio_limiter (double max, double& linear_speed, double& angular_speed);

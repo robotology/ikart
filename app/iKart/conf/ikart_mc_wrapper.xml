@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <devices>
   <device name="ikart_mc_wrapper" type="controlboardwrapper2">
-      <param name="threadrate">  10  </param>
       <paramlist name="networks">
       <elem name="wheels">  0 2 0 2 </elem>
       </paramlist>
 
-      <param name="period"> 10           </param>
-      <param name="name">   ikart/wheels </param>
-      <param name="ports">  wheels       </param>
-      <param name="joints"> 3            </param>
+      <param name="period"> 10            </param>
+      <param name="name">   /ikart/wheels </param>
+      <param name="ports">  wheels        </param>
+      <param name="joints"> 3             </param>
 
 
       <action phase="startup" level="5" type="attach">

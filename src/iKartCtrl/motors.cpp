@@ -18,9 +18,12 @@
 
 #include "motors.h"
 #include "filters.h"
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 
 bool MotorControl::set_ikart_control_openloop()
 {
+    yInfo ("Setting openloop mode");
     icmd->setOpenLoopMode(0);
     icmd->setOpenLoopMode(1);
     icmd->setOpenLoopMode(2);
@@ -30,8 +33,9 @@ bool MotorControl::set_ikart_control_openloop()
     return true;
 }
 
-bool MotorControl::set_ikart_control_speed()
+bool MotorControl::set_ikart_control_velocity()
 {
+    yInfo ("Setting velocity mode");
     icmd->setVelocityMode(0);
     icmd->setVelocityMode(1);
     icmd->setVelocityMode(2);
@@ -41,23 +45,18 @@ bool MotorControl::set_ikart_control_speed()
     return true;
 }
 
-bool MotorControl::turn_off_control()
+bool MotorControl::set_ikart_control_idle()
 {
-    iamp->disableAmp(0);
-    iamp->disableAmp(1);
-    iamp->disableAmp(2);
-    fprintf(stderr,"Motors now off\n");
+    yInfo ("Setting ilde mode");
+    icmd->setControlMode(0,VOCAB_CM_IDLE);
+    icmd->setControlMode(1,VOCAB_CM_IDLE);
+    icmd->setControlMode(2,VOCAB_CM_IDLE);
+    yInfo("Motors now off");
     return true;
 }
 
-bool MotorControl::turn_on_control()
+bool MotorControl::check_motors_on()
 {
-    iamp->enableAmp(0);
-    iamp->enableAmp(1);
-    iamp->enableAmp(2);
-    ipid->enablePid(0);
-    ipid->enablePid(1);
-    ipid->enablePid(2);
     int c0(0),c1(0),c2(0);
     yarp::os::Time::delay(0.05);
     icmd->getControlMode(0,&c0);
@@ -65,12 +64,12 @@ bool MotorControl::turn_on_control()
     icmd->getControlMode(0,&c2);
     if (c0!=VOCAB_CM_IDLE && c1!=VOCAB_CM_IDLE && c2!=VOCAB_CM_IDLE)
     {
-        fprintf(stderr,"Motors now on\n");
+        yInfo("Motors now on\n");
         return true;
     }
     else
     {
-        fprintf(stderr,"Unable to turn motors on! fault pressed?\n");
+        yInfo("Unable to turn motors on! fault pressed?\n");
         return false;
     }
 }

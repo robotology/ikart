@@ -63,6 +63,8 @@ Windows, Linux
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Os.h>
+#include <yarp/os/Log.h>
+#include <yarp/os/LogStream.h>
 #include <yarp/os/Time.h>
 #include <yarp/sig/Vector.h>
 
@@ -119,7 +121,7 @@ public:
         ConstString configFile=rf.findFile("from");
         if (configFile=="") //--from iKartCtrl.ini
         {
-            printf("\nError! Cannot find .ini configuration file. \nBy default I'm searching for iKartCtrl.ini\n");
+            yError("Error! Cannot find .ini configuration file. \nBy default I'm searching for iKartCtrl.ini\n");
             return false;
         }
         else
@@ -132,13 +134,13 @@ public:
 
         //set the thread rate
         int rate = rf.check("rate",Value(20)).asInt();
-        printf("\niKartCtrl thread rate: %d ms.\n",rate);
+        yInfo("iKartCtrl thread rate: %d ms.",rate);
 
         // the motor control thread
         bool motors_enabled=true;
         if (rf.check("no_motors"))
         {
-            printf("\n'no_motors' option found. Skipping motor control part.\n");
+            yInfo("'no_motors' option found. Skipping motor control part.");
             motors_enabled=false;
         }
 
@@ -156,12 +158,12 @@ public:
         bool laser_enabled=true;
         if (iKartCtrl_options.findGroup("GENERAL").check("laser")==false)
         {
-            printf("\nLaser configuration not specified. Turning off laser.\n");
+            yInfo("Laser configuration not specified. Turning off laser.");
             laser_enabled=false;
         }
         if (rf.check("no_laser"))
         {
-            printf("\nLaser disabled.\n");
+            yInfo("Laser disabled.");
             laser_enabled=false;
         }
 
@@ -179,7 +181,7 @@ public:
         bool compass_enabled=true;
         if (rf.check("no_compass"))
         {
-            printf("\n'no_compass' option found. Skipping inertial/compass part.\n");
+            yInfo("'no_compass' option found. Skipping inertial/compass part.");
             compass_enabled=false;
         }
 
@@ -202,18 +204,18 @@ public:
                 yarp::os::Time::delay(1.0);
                 if (yarp::os::Network::connect("/joystickCtrl:o","/ikart/joystick:i"))
                     {
-                        printf("Joystick has been automaticallly connected\n");
+                        yInfo("Joystick has been automaticallly connected");
                         break;
                     }
                 else
                     {
-                        printf("Unable to find the joystick port, retrying (%d/5)...\n",joystick_trials);
+                        yWarning("Unable to find the joystick port, retrying (%d/5)...",joystick_trials);
                         joystick_trials++;
                     }
 
                 if (joystick_trials>=5)
                     {
-                        printf("Unable to find the joystick port, giving up\n");
+                        yError("Unable to find the joystick port, giving up");
                         break;
                     }
             }
@@ -286,7 +288,13 @@ public:
         {
             if (control_thr)
             {
-                if (control_thr->get_motor_handler()->turn_on_control())
+	        if      (control_thr->get_control_type() == IKART_CONTROL_NONE)            {control_thr->get_motor_handler()->set_ikart_control_idle();}
+  	        else if (control_thr->get_control_type() == IKART_CONTROL_VELOCITY_NO_PID) {control_thr->get_motor_handler()->set_ikart_control_velocity();}
+	        else if (control_thr->get_control_type() == IKART_CONTROL_OPENLOOP_NO_PID) {control_thr->get_motor_handler()->set_ikart_control_openloop();}
+	        else if (control_thr->get_control_type() == IKART_CONTROL_VELOCITY_PID)    {control_thr->get_motor_handler()->set_ikart_control_velocity();}
+	        else if (control_thr->get_control_type() == IKART_CONTROL_OPENLOOP_PID)    {control_thr->get_motor_handler()->set_ikart_control_openloop();}
+
+                if (control_thr->get_motor_handler()->check_motors_on())
                     {reply.addString("Motors now on");}
                 else
                     {reply.addString("Unable to turn motors on! fault pressed?");}
@@ -298,7 +306,7 @@ public:
         {
             if (control_thr)
             {
-                control_thr->get_motor_handler()->turn_off_control();
+                control_thr->get_motor_handler()->set_ikart_control_idle();
                 {reply.addString("Motors now off.");}
             }
             return true;
@@ -324,7 +332,7 @@ public:
                 double kd = command.get(4).asDouble();
                 control_thr->set_pid(identif,kp,ki,kd);
                 reply.addString("New pid parameters set.");
-                fprintf(stderr,"New pid parameters set.\n");
+                yInfo("New pid parameters set.");
             }
             return true;
         }
@@ -374,7 +382,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"* Laser thread:\nnot running\n");
+            yDebug("* Laser thread:not running");
         }
         if (control_thr)
         {
@@ -385,7 +393,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"* Motor thread:\nnot running\n");
+            yDebug("* Motor thread:not running");
         }
         if (compass_thr)
         {
@@ -393,7 +401,7 @@ public:
         }
         else
         {
-            fprintf(stdout,"* Compass thread:\nnot running\n");
+            yDebug("* Compass thread:not running");
         }
         static int life_counter=0;
         fprintf(stdout,"* Life: %d\n", life_counter);
@@ -435,7 +443,7 @@ int main(int argc, char *argv[])
 
     if (!yarp.checkNetwork())
     {
-        fprintf(stderr, "Sorry YARP network does not seem to be available, is the yarp server available?\n");
+        yError("Sorry YARP network does not seem to be available, is the yarp server available?\n");
         return -1;
     }
 

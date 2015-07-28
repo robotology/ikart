@@ -101,14 +101,15 @@ protected:
     IEncoders         *ienc;
     IAmplifierControl *iamp;
     IOpenLoopControl  *iopl;
-    IControlMode      *icmd;
+    IControlMode2     *icmd;
 
 public:
 
     MotorControl(unsigned int _period, ResourceFinder &_rf, Property options, PolyDriver* _driver);
     ~MotorControl();
-    bool set_ikart_control_speed();
+    bool set_ikart_control_velocity();
     bool set_ikart_control_openloop();
+    bool set_ikart_control_idle();
 
     bool   open();
     void read_inputs(double *linear_speed,double *angular_speed,double *desired_direction, double *pwm_gain);
@@ -117,8 +118,7 @@ public:
     void execute_speed(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
     void decouple(double appl_linear_speed, double appl_desired_direction, double appl_angular_speed);
     void close();
-    bool turn_off_control();
-    bool turn_on_control();
+    bool check_motors_on();
     void updateControlMode();
     void printStats();
     void set_motors_filter(int b) {motors_filter_enabled=b;}

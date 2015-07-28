@@ -301,7 +301,7 @@ void ControlThread::run()
     }
     else
     {
-        printf ("ERROR! unknown control mode \n");
+        yError ("Unknown control mode!");
         exec_linear_speed = 0;
         exec_angular_speed = 0;
         exec_pwm_gain = 0;
@@ -320,15 +320,21 @@ void ControlThread::printStats()
 bool ControlThread::set_control_type (string s)
 {
     if      (s == "none")            ikart_control_type = IKART_CONTROL_NONE;
-    else if (s == "velocity_no_pid")    ikart_control_type = IKART_CONTROL_VELOCITY_NO_PID;
+    else if (s == "velocity_no_pid") ikart_control_type = IKART_CONTROL_VELOCITY_NO_PID;
     else if (s == "openloop_no_pid") ikart_control_type = IKART_CONTROL_OPENLOOP_NO_PID;
-    else if (s == "velocity_pid")       ikart_control_type = IKART_CONTROL_VELOCITY_PID;
+    else if (s == "velocity_pid")    ikart_control_type = IKART_CONTROL_VELOCITY_PID;
     else if (s == "openloop_pid")    ikart_control_type = IKART_CONTROL_OPENLOOP_PID;
     else
     {
-        fprintf(stderr,"Error: unknown type of control required: %s. Closing...\n",s.c_str());
+        yError("Error: unknown type of control required: %s. Closing...\n",s.c_str());
         return false;
     }
-    fprintf(stderr,"Control type set to: %s\n",s.c_str());
+    yInfo("Control type set to: %s\n",s.c_str());
     return true;
 }
+
+int ControlThread::get_control_type ()
+{
+    return ikart_control_type;
+}
+

@@ -60,6 +60,7 @@ Windows, Linux
 #include <yarp/os/Network.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/os/Port.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/Os.h>
@@ -131,6 +132,71 @@ public:
 
         iKartCtrl_options.put("remote",remoteName.c_str());
         iKartCtrl_options.put("local",localName.c_str());
+
+        //check for robotInterface availablity
+        yInfo("Checking for robotInterface availability");
+        Port startport;
+        startport.open ("/iKartCtrl/robotInterfaceCheck:rpc");
+        
+
+        Bottle cmd; cmd.addString("is_ready");
+        Bottle response;
+        int rc_count =0;
+        int rp_count =0;
+        int rf_count =0;
+        double start_time=yarp::os::Time::now();
+        bool not_yet_connected=true;
+        do
+        {
+           if (not_yet_connected)
+           {
+              bool rc = yarp::os::Network::connect ("/iKartCtrl/robotInterfaceCheck:rpc","/ikart/robotInterface");
+              if (rc == false)
+              {
+                 yWarning ("Problems trying to connect to RobotInterface %d", rc_count ++);
+                 yarp::os::Time::delay (1.0);
+                 continue;
+              }
+              else 
+              {
+                 not_yet_connected = false;  
+                 yDebug ("Connection established with robotInterface");
+              }
+           }
+
+           bool rp = startport.write (cmd, response);
+           if (rp == false)
+           {
+              yWarning ("Problems trying to connect to RobotInterface %d", rp_count ++);
+              if (yarp::os::Time::now()-start_time>30)
+              {
+                 yError ("Timeout expired while trying to connect to robotInterface");
+                 return false;
+              }
+              yarp::os::Time::delay (1.0);
+              continue;
+           }
+           else 
+           {
+              if (response.get(0).asString() != "ok")
+              {
+                 yWarning ("RobotInterface is not ready yet, retrying... %d", rf_count++);
+                 if (yarp::os::Time::now()-start_time>30)
+                 {
+                    yError ("Timeout expired while waiting for robotInterface availability");
+                    return false;
+                 }
+                 yarp::os::Time::delay (1.0);
+                 continue;
+              }
+              else
+              {
+                 yInfo ("RobotInterface is ready");
+                 break;
+              }
+           }
+        }
+        while  (1);
 
         //set the thread rate
         int rate = rf.check("rate",Value(20)).asInt();

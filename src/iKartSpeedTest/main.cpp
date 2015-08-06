@@ -138,7 +138,7 @@ void CommandClass::stop()
 
 bool near(double a, double b)
 {
-    if (abs(a-b)<0.0001) return true;
+    if (fabs(a-b)<0.0001) return true;
     else return false;
 }
 

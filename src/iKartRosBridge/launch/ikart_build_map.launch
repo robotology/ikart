@@ -6,8 +6,5 @@
   <param name="temporalUpdate" value="0.5" />
   </node>
 
-  <!-- for visualization -->
-  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find iKartRosBridge)/display/rviz_build_map.vcg"/>
-
 </launch>
 

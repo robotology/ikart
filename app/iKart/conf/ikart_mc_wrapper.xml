@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<devices>
+<!DOCTYPE devices PUBLIC "-//YARP//DTD robotInterface 1.0//EN" "http://www.icub.org/DTD/robotInterfaceV1.0.dtd">
+<devices robot="ikart" build="1">
   <device name="ikart_mc_wrapper" type="controlboardwrapper2">
       <paramlist name="networks">
       <elem name="wheels">  0 2 0 2 </elem>
@@ -9,7 +10,6 @@
       <param name="name">   /ikart/wheels </param>
       <param name="ports">  wheels        </param>
       <param name="joints"> 3             </param>
-
 
       <action phase="startup" level="5" type="attach">
       <paramlist name="networks">

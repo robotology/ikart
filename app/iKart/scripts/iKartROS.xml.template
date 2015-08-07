@@ -1,0 +1,66 @@
+<application>
+<name>iKart ROS mapping</name>
+
+<module>
+   <name>roscore</name>
+   <parameters></parameters>
+   <node>ikart</node>
+   <tag>roscoreTag</tag>
+</module>
+
+<module>
+   <name>rosrun</name>
+   <parameters>iKartRosBridge iKartRosBridge</parameters>
+   <node>ikart</node>
+   <tag>rosBridgeTag</tag>
+</module>
+
+<module>
+   <name>roslaunch</name>
+   <parameters>iKartRosBridge ikart_build_map.launch</parameters>
+   <node>ikart</node>
+   <tag>rosBuildMapTag</tag>
+</module>
+
+<module>
+   <name>rosrun</name>
+   <parameters>map_server map_saver</parameters>
+   <node>ikart</node>
+   <tag>rosSaveMapTag</tag>
+</module>
+
+<module>
+   <name>rosrun</name>
+   <parameters>map_server map_server map.yaml</parameters>
+   <node>ikart</node>
+   <tag>rosLoadMapTag</tag>
+</module>
+
+<module>
+   <name>roslaunch</name>
+   <parameters>iKartRosBridge ikart_localize.launch</parameters>
+   <node>ikart</node>
+   <tag>rosLocalizeTag</tag>
+</module>
+
+<module>
+   <name>roslaunch</name>
+   <parameters>iKartRosBridge ikart_navigate2.launch</parameters>
+   <node>ikart</node>
+   <tag>rosNavigateTag</tag>
+</module>
+
+<module>
+   <name>rviz</name>
+   <parameters></parameters>
+   <node>icuboracle</node>
+   <tag>rvizTag</tag>
+</module>
+
+<connection>
+  <from>/ikart_ros_bridge/command:o</from>
+  <to>/ikart/control:i</to>
+  <protocol>tcp</protocol>
+</connection>
+
+</application>

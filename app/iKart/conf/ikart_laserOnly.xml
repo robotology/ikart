@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <robot name="ikart">
-    <devices file="./ikart_mc.xml" />
-    <devices file="./ikart_mc_wrapper.xml" />
-    <devices file="./ikart_calib.xml" /> 
-
     <devices file="./ikart_laser_hw.xml" />
     <devices file="./ikart_laser_wrapper.xml" />
 </robot> 

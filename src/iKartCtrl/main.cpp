@@ -74,7 +74,6 @@ Windows, Linux
 #include <string>
 
 #include "controlThread.h"
-#include "laserThread.h"
 #include "compassThread.h"
 
 using namespace std;
@@ -86,7 +85,6 @@ class CtrlModule: public RFModule
 {
 protected:
     ControlThread  *control_thr;
-    LaserThread    *laser_thr;
     CompassThread  *compass_thr;
     Port            rpcPort;
 
@@ -94,7 +92,6 @@ public:
     CtrlModule() 
     {
         control_thr=0;
-        laser_thr=0;
         compass_thr=0;
     }
 
@@ -231,16 +228,6 @@ public:
         {
             yInfo("Laser disabled.");
             laser_enabled=false;
-        }
-
-        if (laser_enabled==true)
-        {
-            laser_thr=new LaserThread(rate,rf,iKartCtrl_options,remoteName,localName);
-            if (!laser_thr->start())
-            {
-                delete laser_thr;
-                return false;
-            }
         }
 
         // the compass thread
@@ -422,11 +409,6 @@ public:
             control_thr->stop();
             delete control_thr;
         }
-        if (laser_thr)
-        {
-            laser_thr->stop();
-            delete laser_thr;
-        }
         if (compass_thr)
         {
             compass_thr->stop();
@@ -442,14 +424,6 @@ public:
     virtual double getPeriod()    { return 1.0;  }
     virtual bool   updateModule()
     { 
-        if (laser_thr)
-        {
-            laser_thr->printStats();
-        }
-        else
-        {
-            yDebug("* Laser thread:not running");
-        }
         if (control_thr)
         {
             control_thr->printStats();

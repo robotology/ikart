@@ -26,7 +26,6 @@ include(ICUBcontribHelpers)
 include(ICUBcontribOptions)
 icubcontrib_set_default_prefix()
 
-find_package(GtkMM)
 find_package(OpenCV)
 find_package(GSL)
 find_package(SDL)

@@ -208,11 +208,11 @@ public:
         Property prop;
         prop.fromConfigFile(configFile.c_str());
         prop.put("device","serialport");
-        printf("\nSerial port configuration:\n%s \n\n",prop.toString().c_str());
+        yInfo("Serial port configuration:\n%s \n\n",prop.toString().c_str());
 
         if (logEnable)
         {
-            fprintf(stderr, "writing to log file batteryLog.txt\n");
+            yError("writing to log file batteryLog.txt");
             logFile = fopen("batteryLog.txt","w");
         }
 
@@ -220,14 +220,14 @@ public:
         driver.open(prop);
         if (!driver.isValid())
         {
-            fprintf(stderr, "Error opening PolyDriver check parameters\n");
+            yError("Error opening PolyDriver check parameters");
             return false;
         }
         driver.view(pSerial);
             
         if (!pSerial)
         {
-            fprintf(stderr, "Error opening serial driver. Device not available\n");
+            yError("Error opening serial driver. Device not available");
             return false;
         }
         return true;
@@ -236,17 +236,17 @@ public:
     virtual void afterStart(bool s)
     {
         if (s)
-            fprintf(stderr, "Thread started successfully\n");
+            yInfo("Thread started successfully");
         else
-            fprintf(stderr, "Thread did not start\n");
+            yInfo("Thread did not start");
     }
 
     void notify_message(string msg)
     {
     #ifdef WIN32
-        fprintf(stderr,"%s", msg.c_str());
+        yInfo("%s", msg.c_str());
     #else
-        fprintf(stderr,"%s", msg.c_str());
+        yInfo("%s", msg.c_str());
         string cmd = "echo "+msg+" | wall";
         system(cmd.c_str());
     #endif
@@ -257,11 +257,11 @@ public:
     #ifdef WIN32
         string cmd;
         cmd = "shutdown /s /t 120 /c "+msg;
-        fprintf(stderr,"%s", msg.c_str());
+        yInfo("%s", msg.c_str());
         system(cmd.c_str());
     #else
         string cmd;
-        fprintf(stderr,"%s", msg.c_str());
+        yInfo("%s", msg.c_str());
         cmd = "echo "+msg+" | wall";
         system(cmd.c_str());
 
@@ -292,7 +292,7 @@ public:
 
     void print_battery_status()
     {
-        fprintf(stdout,"%s", log_buffer);
+        yInfo("%s", log_buffer);
     }
 
     bool verify_checksum(struct_battery_data& b)
@@ -322,18 +322,18 @@ public:
         do
         {
             rec = pSerial->receiveLine(serial_buff,250);
-            if (verboseEnable) fprintf(stderr,"%d ", rec);
-            if (debugEnable) fprintf(stderr,"<%s> ", serial_buff);
+            if (verboseEnable) yDebug("%d ", rec);
+            if (debugEnable) yDebug( "<%s> ", serial_buff);
         }
         while
             (rec>0);
-        if (verboseEnable) fprintf(stderr,"\n");
+        if (verboseEnable) yDebug("\n");
 
         int len = strlen(serial_buff);
         if (len>0)
         {
             if (verboseEnable)
-                fprintf(stderr,"%s", serial_buff);   
+                yDebug("%s", serial_buff);
         
             int pars = 0;
             pars = sscanf (serial_buff, "%*s %d %*s %d %*s %d %*s %d", &battery_data.raw_current, &battery_data.raw_voltage,&battery_data.raw_charge,&battery_data.raw_checksum);
@@ -356,12 +356,12 @@ public:
                 }
                 else
                 {
-                    fprintf(stderr,"checksum error while reading battery data\n");
+                    yError("checksum error while reading battery data\n");
                 }
             }
             else
             {
-                fprintf(stderr,"error reading battery data: %d\n", pars);
+                yError("error reading battery data: %d\n", pars);
             }
         }
         //send data to yarp output port (if available)
@@ -387,7 +387,7 @@ public:
         // print data to screen
         if (screenEnable)
         {
-            fprintf(stderr,"%s", log_buffer);
+            yDebug("%s", log_buffer);
         }
         // save data to file
         if (logEnable)
@@ -399,14 +399,14 @@ public:
 
     virtual void threadRelease()
     {    
-        fprintf(stdout,"closing ports...\n");
+        yInfo("closing ports...");
         port_battery_output.interrupt();
         port_battery_output.close();
 
         //close log file
         if (logEnable)
         {
-            fprintf(stdout,"closing logfile...\n");
+            yInfo("closing logfile...");
             fclose(logFile);
         }
     }

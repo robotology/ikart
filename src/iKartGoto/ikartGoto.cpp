@@ -182,6 +182,20 @@ void GotoThread::run()
         }
     }
 
+    //select the input data
+    if (use_odometry==true && use_localization==false)
+    {
+        position_data = odometry_data;
+    }
+    else if (use_odometry==false && use_localization==true)
+    {
+        position_data = localization_data;
+    }
+    else
+    {
+        position_data = localization_data;
+    }
+
     yarp::os::Bottle *scan = port_laser_input.read(false);
     if (scan) {laser_data.set_cartesian_laser_data(scan); las_timeout_counter=0;}
     else {las_timeout_counter++; if (las_timeout_counter>TIMEOUT_MAX) las_timeout_counter=TIMEOUT_MAX;}
@@ -190,36 +204,36 @@ void GotoThread::run()
     control_out.zero();
 
     //gamma is the angle between the current ikart heading and the target heading
-    double unwrapped_localization_angle = (localization_data[2]<0)?localization_data[2]+360:localization_data[2];
+    double unwrapped_localization_angle = (position_data[2]<0)?position_data[2]+360:position_data[2];
     double unwrapped_target_angle = (target_data[2]<0)?target_data[2]+360:target_data[2];      
-    //double gamma  = localization_data[2]-target_data[2];
+    //double gamma  = position_data[2]-target_data[2];
     double gamma  = unwrapped_localization_angle-unwrapped_target_angle;
     if      (gamma >  180) gamma -= 360;
     else if (gamma < -180) gamma += 360;
 
     //beta is the angle between the current ikart position and the target position
-    double old_beta = atan2 (localization_data[1]-target_data[1],localization_data[0]-target_data[0])*180.0/M_PI;
-    double beta = -atan2 (target_data[1]-localization_data[1],target_data[0]-localization_data[0])*180.0/M_PI;
+    double old_beta = atan2 (position_data[1]-target_data[1],position_data[0]-target_data[0])*180.0/M_PI;
+    double beta = -atan2 (target_data[1]-position_data[1],target_data[0]-position_data[0])*180.0/M_PI;
 
     //distance is the distance between the current ikart position and the target position
-    double distance = sqrt(pow(target_data[0]-localization_data[0],2) +  pow(target_data[1]-localization_data[1],2));
+    double distance = sqrt(pow(target_data[0]-position_data[0],2) +  pow(target_data[1]-position_data[1],2));
 
     //compute the control law
 //    control_out[0] = -beta;
-//    control_out[0] = -beta-localization_data[2]; //CHECKME
-//    control_out[0] = -(beta-localization_data[2]); //CHECKME -180
-//    control_out[0] = -(beta+localization_data[2]); //CHECKME -90
-//    control_out[0] = +beta+localization_data[2]-90; //CHECKME -90
-//    control_out[0] = +beta-localization_data[2]-90; //CHECKME -90
-//    control_out[0] = -beta+localization_data[2]-90; //CHECKME -90
-//    control_out[0] = -beta-localization_data[2]-90; //CHECKME -90
-//    control_out[0] = -beta-localization_data[2]+90; //CHECKME -90
-//    control_out[0] = -beta+localization_data[2]+90; //CHECKME -90
-//    control_out[0] = +beta+localization_data[2]+90; //CHECKME -90
-//    control_out[0] = +beta-localization_data[2]+90; //CHECKME -90
-//    control_out[0] = -beta+localization_data[2]; //CHECKME -90
-//    control_out[0] =  beta-localization_data[2]; //CHECKME -90
-    double tmp1=  180-(old_beta-localization_data[2]);
+//    control_out[0] = -beta-position_data[2]; //CHECKME
+//    control_out[0] = -(beta-position_data[2]); //CHECKME -180
+//    control_out[0] = -(beta+position_data[2]); //CHECKME -90
+//    control_out[0] = +beta+position_data[2]-90; //CHECKME -90
+//    control_out[0] = +beta-position_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta+position_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta-position_data[2]-90; //CHECKME -90
+//    control_out[0] = -beta-position_data[2]+90; //CHECKME -90
+//    control_out[0] = -beta+position_data[2]+90; //CHECKME -90
+//    control_out[0] = +beta+position_data[2]+90; //CHECKME -90
+//    control_out[0] = +beta-position_data[2]+90; //CHECKME -90
+//    control_out[0] = -beta+position_data[2]; //CHECKME -90
+//    control_out[0] =  beta-position_data[2]; //CHECKME -90
+    double tmp1=  180-(old_beta-position_data[2]);
     if (tmp1>360) 
         tmp1-=360;
     if (tmp1>180 && tmp1<360)
@@ -453,7 +467,7 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
     if (target.size()==2) 
     {
         //if the angle information is missing use as final orientation the direction in which the iKart has to move
-        double beta = atan2 (localization_data[1]-target[1],localization_data[0]-target[0])*180.0/M_PI;
+        double beta = atan2 (position_data[1]-target[1],position_data[0]-target[0])*180.0/M_PI;
         double beta2 = beta-180;
         if (beta2>+180) beta2=360-beta2;
         if (beta2<-180) beta2=360+beta2;
@@ -462,7 +476,7 @@ void GotoThread::setNewAbsTarget(yarp::sig::Vector target)
     }
     target_data.target=target;
     status=MOVING;
-    fprintf (stdout, "current pos: abs(%.3f %.3f %.2f)\n", localization_data[0], localization_data[1], localization_data[2]);
+    fprintf (stdout, "current pos: abs(%.3f %.3f %.2f)\n", position_data[0], position_data[1], position_data[2]);
     fprintf (stdout, "received new target: abs(%.3f %.3f %.2f)\n", target_data[0], target_data[1], target_data[2]);
     retreat_counter = retreat_duration;
 }
@@ -476,10 +490,10 @@ void GotoThread::setNewRelTarget(yarp::sig::Vector target)
         target.push_back(0.0);
         target_data.weak_angle=true;
     }
-    double a = localization_data[2]/180.0*M_PI;
-    target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + localization_data[0] ;
-    target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + localization_data[1] ;
-    target_data[2]=-target[2] + localization_data[2];
+    double a = position_data[2]/180.0*M_PI;
+    target_data[0]=target[1] * cos (a) - (-target[0]) * sin (a) + position_data[0] ;
+    target_data[1]=target[1] * sin (a) + (-target[0]) * cos (a) + position_data[1] ;
+    target_data[2]=-target[2] + position_data[2];
     status=MOVING;
     fprintf (stdout, "received new target: abs(%.3f %.3f %.2f)\n", target_data[0], target_data[1], target_data[2]);
     retreat_counter = retreat_duration;

@@ -141,6 +141,7 @@ class GotoThread: public yarp::os::RateThread
     Property            iKartCtrl_options;
     ResourceFinder      &rf;
     yarp::sig::Vector   localization_data;
+    yarp::sig::Vector   position_data;
     yarp::sig::Vector   odometry_data;
     target_type         target_data;
     laser_type          laser_data;
@@ -185,6 +186,7 @@ class GotoThread: public yarp::os::RateThread
         odm_timeout_counter = TIMEOUT_MAX;
         las_timeout_counter = TIMEOUT_MAX;
         localization_data.resize(3,0.0);
+        position_data.resize(3,0.0);
         retreat_counter = 0;
         safety_coeff = 1.0;
         enable_obstacles_emergency_stop = false;
@@ -230,6 +232,11 @@ class GotoThread: public yarp::os::RateThread
         if (rf.check("goal_tolerance_ang")) {goal_tolerance_ang = rf.find("goal_tolerance_ang").asDouble();}
         if (rf.check("use_odometry"))       {use_odometry       = (rf.find("use_odometry").asInt()==1);}
         if (rf.check("use_localization"))   {use_localization   = (rf.find("use_localization").asInt()==1);}
+        if (use_odometry==false && use_localization == false) 
+        {
+            printf ("ERROR: both 'used_odometry' and 'use_localization' parameters are off.\nPlease select one of them.\n");
+            return false;
+        }
 
         Bottle btmp;
         btmp = rf.findGroup("RETREAT_OPTION");

@@ -14,10 +14,10 @@
             <param name="calibration1">               0             0             0                </param>       
             <param name="calibration2">               0             0             0                </param>       
             <param name="calibration3">               0             0             0                </param>       
-            <param name="positionZero">               0             0             0                </param>       
-            <param name="velocityZero">               1             1             1                </param>       
-            <param name="maxPwm">                     0             0             0                </param>       
-            <param name="posZeroThreshold">         100           100           100                </param>       
+            <param name="startupPosition">            0             0             0                </param>       
+            <param name="startupVelocity">            1             1             1                </param>       
+            <param name="startupMaxPwm">              0             0             0                </param>       
+            <param name="startupPosThreshold">        100           100           100              </param>       
         </group>                                                                               
                                                                                                
         <group name="HOME">                                                                    

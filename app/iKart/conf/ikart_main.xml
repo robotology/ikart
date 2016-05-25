@@ -5,6 +5,6 @@
     <devices file="ikart_calib.xml" /> 
 
     <devices file="./ikart_laser_hw.xml" />
-    <devices file="./ikart_laser_wrapper.xml" />
+    <devices file="./ikart_laser_wrapper.xml" /> 
 </robot> 
 

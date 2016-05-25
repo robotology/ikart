@@ -1,6 +1,6 @@
 #!/bin/sh 
 
-killall robotInterface &
+killall yarprobotinterface &
 killall iKartCtrl &
 killall joystickCtrl &
 

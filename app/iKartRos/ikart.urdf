@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<robot name="ikart">
+  <link name = 'mobile_base_body'>
+      <pose> 0 0 0 0 0 0 </pose>
+  </link>
+  <link name = 'lidar'>
+      <pose> 0 0 0 0 0 0</pose>
+  </link>
+  <link name = 'base_link'>
+      <pose> 0 0 0 0 0 0</pose>
+  </link>
+  <joint name="laser_joint" type="fixed">
+    <origin xyz="0.245 0 0.33  " rpy="0 0 0"/>
+    <parent link="mobile_base_body"/>
+    <child link="lidar"/>
+  </joint>
+  <joint name="base_joint" type="fixed">
+    <origin xyz="0 0.0 0.0  " rpy="0 0 0"/>
+    <parent link="mobile_base_body"/>
+    <child link="base_link"/>
+  </joint>
+</robot>

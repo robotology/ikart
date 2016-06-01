@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- dynamic map generation -->
+  <node name="gmapping_node" pkg="gmapping" type="slam_gmapping" respawn="false" >
+  <remap to="/laser" from="scan" />
+  <param name="temporalUpdate" value="-1" />
+  <param name="angularUpdate"  value="0.04" />
+  <param name="transform_publish_period" value = "0.01" />
+  </node>
+
+</launch>
+

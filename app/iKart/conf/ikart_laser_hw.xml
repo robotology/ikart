@@ -14,6 +14,8 @@
         <param name="Start_Position">     0         </param>
         <param name="End_Position">    1079         </param>        
         <param name="Laser_Mode">       "GD"        </param>
+	    <param name="min_angle">       -135         </param>
+		<param name="max_angle">        135         </param>
         <param name="Convert_Error_Codes">        1         </param>
         <param name="Serial_Configuration">       laserSerialPortLinux.ini        </param>    
     </group>                     

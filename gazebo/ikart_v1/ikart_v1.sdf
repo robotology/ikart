@@ -241,7 +241,7 @@
     </link>	
 
 
-    <joint name='mobile_base_laser_back_wheel' type='revolute'>
+    <joint name='mobile_base_back_wheel_joint' type='revolute'>
       <child>laser_back_wheel</child>
       <parent>mobile_base_body</parent>
       <axis>
@@ -273,7 +273,7 @@
     </joint>
 
 
-    <joint name='mobile_base_laser_front_left_wheel' type='revolute'>
+    <joint name='mobile_base_left_wheel_joint' type='revolute'>
       <child>laser_front_left_wheel</child>
       <parent>mobile_base_body</parent>
       <axis>
@@ -304,7 +304,7 @@
       </physics>
     </joint>
 
-    <joint name='mobile_base_laser_front_right_wheel' type='revolute'>
+    <joint name='mobile_base_right_wheel_joint' type='revolute'>
       <child>laser_front_right_wheel</child>
       <parent>mobile_base_body</parent>
       <axis>
@@ -335,5 +335,9 @@
       </physics>
     </joint>
 
+    <plugin name='controlboard_mobile_base' filename='libgazebo_yarp_controlboard.so'>
+      <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>
+    </plugin>
+	
   </model>
 </sdf>

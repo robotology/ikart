@@ -91,7 +91,7 @@ Odometry::Odometry(unsigned int _period, ResourceFinder &_rf, Property options, 
     if (tmp==1 || tmp==2) wheels_type = static_cast<wheels_type_enum>(tmp);
     else
     {
-        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n"); 
+        fprintf (stderr, "Invalid wheels_type parameter %d, selecting default 1=omnidirectional\n", tmp);
         wheels_type = static_cast<wheels_type_enum>(1);
     }
 

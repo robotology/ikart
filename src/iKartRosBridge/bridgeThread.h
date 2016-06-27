@@ -627,6 +627,8 @@ class BridgeThread: public yarp::os::RateThread
         input_pcloud_port.close();
         input_laser_port.interrupt();
         input_laser_port.close();
+        input_laser_port2.interrupt();
+        input_laser_port2.close();
         input_odometry_port.interrupt();
         input_odometry_port.close();
         input_odometer_port.interrupt();
@@ -636,7 +638,11 @@ class BridgeThread: public yarp::os::RateThread
         output_localization_port.interrupt();
         output_localization_port.close();    
         output_3d_localization_port.interrupt();
-        output_3d_localization_port.close();        
+        output_3d_localization_port.close();
+        if(nh)
+            delete nh;
+        if(pcloud)
+            delete pcloud;
     }
 
 };

@@ -256,7 +256,7 @@ class BridgeThread: public yarp::os::RateThread
         bool conn_lsr = Network::connect ("/ikart/laser:o","/ikart_ros_bridge/laser:i","udp");
         bool conn_odm = Network::connect ("/ikart/odometry:o","/ikart_ros_bridge/odometry:i","udp");
         bool conn_odt = Network::connect ("/ikart/odometer:o","/ikart_ros_bridge/odometer:i","udp");
-        
+
         if (!conn_lsr || !conn_odm || !conn_odt)
         {
             printf("Connection to iKartCtrl failed\n");
@@ -352,7 +352,7 @@ class BridgeThread: public yarp::os::RateThread
         //********************************************* LASER PART *********************************************
         Bottle *laser_bottle = 0;
         laser_bottle = input_laser_port.read(false);
-        static ros::Time now;
+        static ros::Time now = ros::Time::now();
 
         if (laser_bottle)
         {

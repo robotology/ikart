@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    ros::init(argc, argv, "iKartRosBridge");
+
     BridgeModule mod;
 
     return mod.runModule(rf);

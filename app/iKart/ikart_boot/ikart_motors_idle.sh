@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo idle | yarp rpc /ikart/rpc
+echo idle | yarp rpc /baseControl/rpc

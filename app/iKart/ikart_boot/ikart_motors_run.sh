@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo run | yarp rpc /ikart/rpc
+echo run | yarp rpc /baseControl/rpc

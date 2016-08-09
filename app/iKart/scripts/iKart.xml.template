@@ -6,66 +6,44 @@ ikart
 </dependencies>
 
 <module>
-   <name>iCubInterface</name>
+   <name>yarprobotinterface</name>
    <parameters>--context ikart --config conf/iKart.ini</parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>iKartInterface</tag>
 </module>
 
 <module>
-   <name>iCubInterfaceGuiClient</name>
-   <parameters></parameters>
+   <name>baseControl</name>
+   <parameters>--context navigation --from baseCtrl_ikartV1.ini</parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>iKartInterfaceGui</tag>
-</module>
-
-<module>
-   <name>iKartCtrl</name>
-   <parameters></parameters>
-   <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>iKartCtrl</tag>
 </module>
 
 <module>
    <name>joystickCtrl</name>
    <parameters>--context joystickCtrl --from conf/ikart.ini</parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>joystickCtrl</tag>
 </module>
 
 <module>
    <name>iKartUtils</name>
    <node>ikart</node>
-   <stdio>icub14</stdio>
-   <tag>iKartUtils</tag>
 </module>
 
 <module>
-   <name>robotMotorGui</name>
+   <name>yarpmotorgui</name>
    <parameters>--context /ikart/conf</parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>iKartMotorGui</tag>
 </module>
 
 <module>
-   <name>laserScannerGui</name>
+   <name>yarplaserscannergui</name>
    <parameters></parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>laserScannerGui</tag>
 </module>
 
 <module>
-   <name>iKartBatteryDisplay</name>
+   <name>yarpbatterygui</name>
    <parameters></parameters>
    <node>ikart</node>
-   <stdio>ikart</stdio>
-   <tag>iKartBatteryDisplay</tag>
 </module>
 
 <connection>

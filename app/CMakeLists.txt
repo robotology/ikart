@@ -5,10 +5,5 @@
 #
 
 add_subdirectory(iKart)
-add_subdirectory(iKartGoto)
-add_subdirectory(iKartNav)
-add_subdirectory(iKartPathPlanner)
-add_subdirectory(laserScannerGui)
-add_subdirectory(forceGuidance)
 add_subdirectory(iKartWirelessDisplay)
 

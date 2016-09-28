@@ -163,7 +163,7 @@
 	<surface>
 	  <friction>
 	    <ode>
-	      <mu>0.3</mu>
+	      <mu>0</mu>
 	      <mu2>0</mu2>
 	    </ode>
 	  </friction>
@@ -193,7 +193,7 @@
 	<surface>
 	  <friction>
 	    <ode>
-	      <mu>0.3</mu>
+	      <mu>0</mu>
 	      <mu2>0</mu2>
 	    </ode>
 	  </friction>
@@ -223,7 +223,7 @@
 	<surface>
 	  <friction>
 	    <ode>
-	      <mu>0.3</mu>
+	      <mu>0</mu>
 	      <mu2>0</mu2>
 	    </ode>
 	  </friction>
@@ -240,15 +240,12 @@
       </visual>
     </link>	
 
-
     <joint name='mobile_base_back_wheel_joint' type='revolute'>
       <child>laser_back_wheel</child>
       <parent>mobile_base_body</parent>
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
-          <!-- <lower>-17.4358</lower> -->
-          <!-- <upper>17.4358</upper> -->
           <effort>100</effort>
           <velocity>50000</velocity>
         </limit>
@@ -279,8 +276,6 @@
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
-          <!-- <lower>-17.4358</lower> -->
-          <!-- <upper>17.4358</upper> -->
           <effort>100</effort>
           <velocity>50000</velocity>
         </limit>
@@ -310,8 +305,7 @@
       <axis>
         <xyz> 0 0 -1</xyz>
         <limit>
-          <!-- <lower>-17.4358</lower> -->
-          <!-- <upper>17.4358</upper> -->
+
           <effort>100</effort>
           <velocity>50000</velocity>
         </limit>
@@ -334,6 +328,14 @@
         </ode>
       </physics>
     </joint>
+
+    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+      <commandTopic>cmd_vel_output</commandTopic>
+      <odometryTopic>odom_ikart</odometryTopic>
+      <odometryFrame>odom_ikart</odometryFrame>
+      <odometryRate>20.0</odometryRate>
+      <robotBaseFrame>base_footprint_ikart</robotBaseFrame>
+    </plugin>
 
     <plugin name='controlboard_mobile_base' filename='libgazebo_yarp_controlboard.so'>
       <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>

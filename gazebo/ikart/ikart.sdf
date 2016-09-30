@@ -144,7 +144,7 @@
 	  </noise>
 	</ray>
 	<plugin name = 'laser_sensor' filename = 'libgazebo_yarp_lasersensor.so'>
-	  <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_laser_sensor.ini</yarpConfigurationFile>
+	  <yarpConfigurationFile>model://ikart/conf/gazebo_ikart_laser_sensor.ini</yarpConfigurationFile>
 	</plugin>
       </sensor>
     </link>
@@ -338,7 +338,7 @@
     </plugin>
 
     <plugin name='controlboard_mobile_base' filename='libgazebo_yarp_controlboard.so'>
-      <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>
+      <yarpConfigurationFile>model://ikart/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>
     </plugin>
 	
   </model>

@@ -26,89 +26,6 @@
 	</geometry>
       </visual>
 
-
-      <!-- <collision name = 'caster_radar_collision'>
-	<pose> 0.25 0 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-
-	<surface>
-	  <friction>
-	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
-	    </ode>
-	  </friction>
-	</surface>
-      </collision>-->
-
-     <!-- <visual name = 'caster_radar_visual'>
-	<pose> .25 0 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-      </visual>-->
-
-     <!--  <collision name = 'caster_radar_back_right_collision'>
-	<pose> -0.20 -0.20 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-
-	<surface>
-	  <friction>
-	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
-	    </ode>
-	  </friction>
-	</surface>
-      </collision>-->
-
-    <!--   <visual name = 'caster_radar_back_right_visual'>
-	<pose> -0.20 -0.20 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-      </visual>-->
-
-    <!--   <collision name = 'caster_radar_back_left_collision'>
-	<pose> -0.20 0.20 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-
-	<surface>
-	  <friction>
-	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
-	    </ode>
-	  </friction>
-	</surface>
-      </collision>-->
-
-  <!--    <visual name = 'caster_radar_back_left_visual'>
-	<pose> -0.20 0.20 -0.1625 0 0 0 </pose>
-	<geometry>
-	  <sphere>
-	    <radius> .0625 </radius>
-	  </sphere>
-	</geometry>
-      </visual>-->
-
-
       <visual name = 'laser_box_body_visual'>
 	<pose> .245 0 .15 0 0 0</pose>
 	<geometry>
@@ -144,7 +61,7 @@
 	  </noise>
 	</ray>
 	<plugin name = 'laser_sensor' filename = 'libgazebo_yarp_lasersensor.so'>
-	  <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_laser_sensor.ini</yarpConfigurationFile>
+	  <yarpConfigurationFile>model://ikart_wheels_friction/conf/gazebo_ikart_laser_sensor.ini</yarpConfigurationFile>
 	</plugin>
       </sensor>
     </link>
@@ -156,20 +73,19 @@
 	<geometry>
 	  <cylinder>
 	    <radius> .0625 </radius>
-	    <length> .025 </length>
+	    <length> .001 </length>
 	  </cylinder>
 	</geometry>
-
 	<surface>
 	  <friction>
 	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
+		  <fdir1>0 0 1</fdir1>
+	      <mu>0.0005</mu>
+	      <mu2>0.8</mu2>
 	    </ode>
 	  </friction>
 	</surface>
-      </collision>
-      
+      </collision>     
       <visual name = 'laser_back_wheel_visual'>
 	<geometry>
 	  <cylinder>
@@ -181,55 +97,53 @@
     </link>
 
     <link name = 'laser_front_left_wheel'>
-      <pose> 0.1365 0.2364 0.0625 0 1.5707 0.8666 </pose>
+      <pose> 0.1365 0.2364 0.0625 0 1.5707 1.0472 </pose>
       <collision name ='laser_front_left_wheel_collision'>
-	<geometry>
-	  <cylinder>
-	    <radius> .0625 </radius>
-	    <length> .025 </length>
-	  </cylinder>
-	</geometry>
-
-	<surface>
-	  <friction>
-	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
-	    </ode>
-	  </friction>
-	</surface>
+		<geometry>
+		  <cylinder>
+			<radius> .0625 </radius>
+			<length> .001 </length>
+		  </cylinder>
+		</geometry>
+		<surface>
+		  <friction>
+			<ode>
+			  <fdir1>0 0 1</fdir1>
+			  <mu>0.0005</mu>
+			  <mu2>0.8</mu2>
+			</ode>
+		  </friction>
+		</surface>
       </collision>
-
       <visual name = 'laser_front_left_wheel_visual'>
-	<geometry>
-	  <cylinder>
-	    <radius> .0625 </radius>
-	    <length> .025 </length>
-	  </cylinder>
-	</geometry>
+		<geometry>
+		  <cylinder>
+			<radius> .0625 </radius>
+			<length> .025 </length>
+		  </cylinder>
+		</geometry>
       </visual>
     </link>
 
     <link name = 'laser_front_right_wheel'>
-      <pose> 0.1365 -0.2364 0.0625 0 1.5707 -0.866025403784 </pose>
+      <pose> 0.1365 -0.2364 0.0625 0 1.5707 -1.0472 </pose>
       <collision name ='laser_front_right_wheel_collision'>
 	<geometry>
 	  <cylinder>
 	    <radius> .0625 </radius>
-	    <length> .025 </length>
+	    <length> .001 </length>
 	  </cylinder>
 	</geometry>
-
 	<surface>
 	  <friction>
 	    <ode>
-	      <mu>0</mu>
-	      <mu2>0</mu2>
+		  <fdir1>0 0 1</fdir1>
+	      <mu>0.0005</mu>
+	      <mu2>0.8</mu2>
 	    </ode>
 	  </friction>
 	</surface>
-      </collision>
-      
+      </collision>     
       <visual name = 'laser_front_right_wheel_visual'>
 	<geometry>
 	  <cylinder>
@@ -246,8 +160,8 @@
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
-          <effort>100</effort>
-          <velocity>50000</velocity>
+          <effort>30</effort>
+          <velocity>50</velocity>
         </limit>
         <dynamics>
           <damping>1</damping>
@@ -276,8 +190,8 @@
       <axis>
         <xyz>0 0 1</xyz>
         <limit>
-          <effort>100</effort>
-          <velocity>50000</velocity>
+          <effort>30</effort>
+          <velocity>50</velocity>
         </limit>
         <dynamics>
           <damping>1</damping>
@@ -303,11 +217,10 @@
       <child>laser_front_right_wheel</child>
       <parent>mobile_base_body</parent>
       <axis>
-        <xyz> 0 0 -1</xyz>
+        <xyz> 0 0 1</xyz>
         <limit>
-
-          <effort>100</effort>
-          <velocity>50000</velocity>
+          <effort>30</effort>
+          <velocity>50</velocity>
         </limit>
         <dynamics>
           <damping>1</damping>
@@ -329,16 +242,8 @@
       </physics>
     </joint>
 
-    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
-      <commandTopic>cmd_vel_output</commandTopic>
-      <odometryTopic>odom_ikart</odometryTopic>
-      <odometryFrame>odom_ikart</odometryFrame>
-      <odometryRate>20.0</odometryRate>
-      <robotBaseFrame>base_footprint_ikart</robotBaseFrame>
-    </plugin>
-
     <plugin name='controlboard_mobile_base' filename='libgazebo_yarp_controlboard.so'>
-      <yarpConfigurationFile>model://ikart_v1/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>
+      <yarpConfigurationFile>model://ikart_wheels_friction/conf/gazebo_ikart_mobile_base.ini</yarpConfigurationFile>
     </plugin>
 	
   </model>

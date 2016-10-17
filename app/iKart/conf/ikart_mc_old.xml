@@ -28,10 +28,10 @@
     <group name="GENERAL"> 
         <param name="Joints">       3                                       </param>
         <param name="MaxDAC">       100           100           100         </param>
-        <param name="AxisMap">      1             0             2           </param>
-        <param name="AxisName">     "motor0"      "motor1"      "motor2"    </param>
+        <param name="AxisMap">      0             1             2           </param>
+        <param name="AxisName">     "motor0"      "motor1"      "motor2"         </param>
         <param name="AxisType">     "revolute"    "revolute"    "revolute"  </param>
-        <param name="Encoder">      1137.5       1137.5        1137.5       </param>
+        <param name="Encoder">      -1137.5       -1137.5       -1137.5     </param>
         <param name="Zeros">        0             0             0           </param>
         <param name="TorqueId">     0             0             0           </param>
         <param name="TorqueChan">   0             0             0           </param>

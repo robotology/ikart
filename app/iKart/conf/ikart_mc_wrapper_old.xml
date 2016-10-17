@@ -7,8 +7,8 @@
       </paramlist>
 
       <param name="period"> 10            </param>
-      <param name="name">   /ikart/mobile_base </param>
-      <param name="ports">  mobile_base        </param>
+      <param name="name">   /ikart/wheels </param>
+      <param name="ports">  wheels        </param>
       <param name="joints"> 3             </param>
 
       <action phase="startup" level="5" type="attach">

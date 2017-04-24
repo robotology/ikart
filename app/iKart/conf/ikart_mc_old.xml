@@ -32,6 +32,8 @@
         <param name="AxisName">     "motor0"      "motor1"      "motor2"         </param>
         <param name="AxisType">     "revolute"    "revolute"    "revolute"  </param>
         <param name="Encoder">      -1137.5       -1137.5       -1137.5     </param>
+        <param name="fullscalePWM"> 800           800           800         </param>
+        <param name="ampsToSensor"> 1000.0        1000.0        1000.0      </param>
         <param name="Zeros">        0             0             0           </param>
         <param name="TorqueId">     0             0             0           </param>
         <param name="TorqueChan">   0             0             0           </param>

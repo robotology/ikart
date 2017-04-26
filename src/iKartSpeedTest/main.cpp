@@ -204,7 +204,7 @@ protected:
     IVelocityControl  *ivel;
     IEncoders         *ienc;
     IAmplifierControl *iamp;
-    IOpenLoopControl  *iopl;
+    IPWMControl       *ipwm;
     IControlMode      *icmd;
     IDebugInterface   *idbg;
 
@@ -265,7 +265,7 @@ public:
         ok = true;
         ok = ok & control_board_driver->view(ivel);
         ok = ok & control_board_driver->view(ienc);
-        ok = ok & control_board_driver->view(iopl);
+        ok = ok & control_board_driver->view(ipwm);
         ok = ok & control_board_driver->view(ipid);
         ok = ok & control_board_driver->view(iamp);
         ok = ok & control_board_driver->view(icmd);
@@ -308,7 +308,7 @@ public:
         {
             fprintf(stdout,"Using openloop control mode\n");
             icmd->setOpenLoopMode(joint);
-            iopl->setOutput(joint,0);
+            ipwm->setRefDutyCycle(joint,0);
         }
         if (control_type == CONTROL_SPEED)
         {
@@ -366,7 +366,7 @@ public:
 
         if (control_type == CONTROL_OPENLOOP)
         {
-            //iopl->setOutput(0,command);
+            //ipwm->setRefDutyCycle(0,command);
         }
         else if    (control_type == CONTROL_SPEED)
         {
@@ -398,9 +398,9 @@ public:
         }
         else if (control_type == CONTROL_NONE)
         {
-            //iopl->setOutput(0,0);
-            //iopl->setOutput(1,0);
-            //iopl->setOutput(2,0);
+            //ipwm->setRefDutyCycle(0,0);
+            //ipwm->setRefDutyCycle(1,0);
+            //ipwm->setRefDutyCycle(2,0);
         }
 
 

@@ -5,5 +5,6 @@
 #
 
 add_subdirectory(iKart)
+add_subdirectory(iKartNavigation)
 add_subdirectory(iKartWirelessDisplay)
 

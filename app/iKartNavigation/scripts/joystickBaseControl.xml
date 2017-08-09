@@ -1,0 +1,21 @@
+<application>
+<name>iKart joystick mobile base control</name>
+
+    <dependencies>
+    </dependencies>
+
+    <!-- modules -->
+    <module>
+        <name>baseControl</name>
+        <parameters>--context baseControl --from baseCtrl_ikartV1.ini --joystick_connect --skip_robot_interface_check</parameters>
+        <node>ikart</node>
+    </module>
+
+    <module>
+        <name>joystickCtrl</name>
+        <parameters>--context joystickCtrl --from ikart.ini</parameters>
+        <node>ikart</node>
+    </module>
+		
+</application>
+

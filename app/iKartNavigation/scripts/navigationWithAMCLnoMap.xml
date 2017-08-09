@@ -31,7 +31,7 @@
 
     <module>
        <name>joystickCtrl</name>
-       <parameters>--context joystickCtrl --from ikart_linux.ini</parameters>
+       <parameters>--context joystickCtrl --from ikart.ini</parameters>
        <node>ikart-base</node>
     </module>
 

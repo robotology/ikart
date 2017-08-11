@@ -1,0 +1,10 @@
+<!DOCTYPE robot PUBLIC "-//YARP//DTD robotInterface 1.0//EN" "http://www.icub.org/DTD/robotInterfaceV1.0.dtd">
+<robot name="ikart" build="1" portprefix="ikart">
+    <devices file="hardware/ikart_mc.xml" />
+    <devices file="wrappers/ikart_mc_wrapper.xml" />
+    <devices file="calibrators/ikart_calib.xml" /> 
+
+    <devices file="hardware/ikart_laser_hw.xml" />
+    <devices file="wrappers/ikart_laser_wrapper.xml" /> 
+</robot> 
+

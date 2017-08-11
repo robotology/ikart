@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<robot name="ikart">
+    <devices file="hardware/ikart_laser_hw.xml" />
+    <devices file="wrappers/ikart_laser_wrapper.xml" />
+</robot> 
+

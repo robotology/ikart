@@ -4,7 +4,8 @@
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
 
-add_subdirectory(iKart)
+add_subdirectory(iKartBoot)
+add_subdirectory(robots)
 add_subdirectory(iKartNavigation)
 add_subdirectory(iKartWirelessDisplay)
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010 RobotCub Consortium
+# Copyright (C) 2017 IIT - iCub Facility
 # Author: Marco Randazzo marco.randazzo@iit.it
 # CopyPolicy: Released under the terms of the GNU GPL v2.0.
 #
@@ -16,15 +16,16 @@ endif()
 find_package(YARP)
 find_package(ICUB)
 
+include(GNUInstallDirs)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 include(YarpInstallationHelpers)
-
-find_package(ICUBcontrib)
-list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
-include(ICUBcontribHelpers)
-include(ICUBcontribOptions)
-icubcontrib_set_default_prefix()
+yarp_configure_external_installation(ikart)
+include(AddInstallRPATHSupport)
 
 find_package(OpenCV)
 find_package(GSL)
@@ -32,6 +33,4 @@ find_package(SDL)
 
 add_subdirectory(src)
 add_subdirectory(app)
-
-icubcontrib_add_uninstall_target()
 

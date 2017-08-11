@@ -3,6 +3,9 @@
   <link name = 'mobile_base_body'>
       <pose> 0 0 0 0 0 0 </pose>
   </link>
+  <link name = 'mobile_base_body_link'>
+      <pose> 0 0 0 0 0 0 </pose>
+  </link>
   <link name = 'lidar'>
       <pose> 0 0 0 0 0 0</pose>
   </link>
@@ -18,5 +21,10 @@
     <origin xyz="0 0.0 0.0  " rpy="0 0 0"/>
     <parent link="mobile_base_body"/>
     <child link="base_link"/>
+  </joint>
+  <joint name="base_joint2" type="fixed">
+    <origin xyz="0 0.0 0.0  " rpy="0 0 0"/>
+    <parent link="mobile_base_body"/>
+    <child link="mobile_base_body_link"/>
   </joint>
 </robot>

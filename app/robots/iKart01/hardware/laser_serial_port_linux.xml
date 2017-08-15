@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<params robot="iKart01" build="1">
+    <group name="SERIAL_PORT_CONFIGURATION">
+        <param name="verbose">      0                </param>
+        <param name="comport">      /dev/ttyACM0     </param>
+        <param name="baudrate">       115200         </param>
+        <param name="xonlim">              0         </param>
+        <param name="xofflim">             0         </param>
+        <param name="readmincharacters">   1         </param>
+        <param name="readtimeoutmsec">     2         </param>
+        <param name="parityenb">           0         </param>
+        <param name="paritymode">          none      </param>
+        <param name="ctsenb">              0         </param>
+        <param name="rtsenb">              0         </param>
+        <param name="xinenb">              0         </param>
+        <param name="xoutenb">             0         </param>
+        <param name="modem">               0         </param>
+        <param name="rcvenb">              0         </param>
+        <param name="dsrenb">              0         </param>
+        <param name="dtrdisable">          0         </param>
+        <param name="databits">            8         </param>
+        <param name="stopbits">            1         </param>
+        <param name="line_terminator_char1">        10         </param>
+        <param name="line_terminator_char2">        10         </param>
+    </group>
+</params>

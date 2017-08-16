@@ -19,7 +19,7 @@
         <param name="Convert_Error_Codes">        1         </param>
     </group>
 
-    <params file="hardware\laser_serial_port_linux.xml" />
+    <params file="hardware/laser_serial_port_linux.xml" />
 
     </device>
 </devices>

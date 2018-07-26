@@ -204,7 +204,7 @@ public:
         //serial port configuration parameters
         rf.setDefaultContext("ikart");
         rf.setDefaultConfigFile("batterySerialPort.ini");
-        ConstString configFile=rf.findFile("from");
+        std:string configFile=rf.findFile("from");
         Property prop;
         prop.fromConfigFile(configFile.c_str());
         prop.put("device","serialport");
@@ -432,8 +432,6 @@ public:
         string partName;
         string remoteName;
         string localName;
-
-        Time::turboBoost();
 
         // get params from the RF
         ctrlName=rf.check("ctrlName",Value("ikart")).asString();

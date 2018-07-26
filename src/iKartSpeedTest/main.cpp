@@ -376,7 +376,7 @@ public:
                         ivel->velocityMove(1,command);
                         ivel->velocityMove(2,command);
             ienc->getEncoderSpeed(joint,&measure_speed);
-            ipid->getOutput(joint,&measure_pwm);
+            ipid->getPidOutput(VOCAB_PIDTYPE_VELOCITY,joint,&measure_pwm);
 
             fprintf (stdout,"%4d cycle: %3d t: %+8.3f cmd: %+8.2f err: %+8.2f sp:%+8.2f pwm:%+8.2f \n",
                              count,
@@ -458,8 +458,6 @@ public:
         string partName;
         string remoteName;
         string localName;
-
-        Time::turboBoost();
 
         // get params from the RF
         ctrlName=rf.check("ctrlName",Value("commandGenerator")).asString();

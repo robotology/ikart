@@ -7,13 +7,13 @@ ikart
 
 <module>
    <name>yarprobotinterface</name>
-   <parameters>--context ikart --config conf/iKart.ini</parameters>
+   <parameters></parameters>
    <node>ikart</node>
 </module>
 
 <module>
    <name>baseControl</name>
-   <parameters>--context navigation --from baseCtrl_ikartV1.ini</parameters>
+   <parameters>--context baseControl --from baseCtrl_ikartV1.ini</parameters>
    <node>ikart</node>
 </module>
 

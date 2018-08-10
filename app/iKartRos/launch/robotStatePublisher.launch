@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="model" default="./ikart.urdf"/>
+  <arg name="model" default="../model/ikart.urdf"/>
 
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
 

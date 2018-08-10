@@ -1,12 +1,11 @@
 <launch>
 
-  <arg name="scan_topic" default="narrow_scan" />
-
-  <node pkg="amcl" type="amcl" name="amcl" args="scan:=/laser map:=occupancy_map">
+ 
+  <node pkg="amcl" type="amcl" name="amcl" args="scan:=/laser map:=/occupancy_map">
     <param name="initial_pose_x" value="0" />
     <param name="initial_pose_y" value="0" />
     <param name="initial_pose_a" value="0" />
-    <param name="base_frame" value="base_link"/>
+    <param name="base_frame" value="mobile_base_body_link"/>
     <param name="odom_frame_id" value="odom"/>
     <param name="min_particles" value="500"/>
     <param name="max_particles" value="2000"/>
@@ -38,9 +37,9 @@
         <param name="laser_likelihood_max_dist" value="2.0"/>
     <!-- update block --> 
         <param name="update_min_d" value="0.1"/>
-        <param name="update_min_a" value="0.025"/>
+        <param name="update_min_a" value="0.1963"/>
         <param name="resample_interval" value="1"/>
-        <param name="gui_publish_rate" value="50.0"/>
+        <param name="gui_publish_rate" value="-1"/>
     <!-- Increase tolerance because the computer can get quite busy -->
     <param name="transform_tolerance" value="0.2"/>
     <param name="recovery_alpha_slow" value="0.0"/>

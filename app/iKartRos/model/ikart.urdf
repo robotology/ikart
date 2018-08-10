@@ -9,6 +9,9 @@
   <link name = 'lidar'>
       <pose> 0 0 0 0 0 0</pose>
   </link>
+  <link name = 'base_laser'>
+      <pose> 0 0 0 0 0 0</pose>
+  </link>
   <link name = 'base_link'>
       <pose> 0 0 0 0 0 0</pose>
   </link>
@@ -16,6 +19,11 @@
     <origin xyz="0.245 0 0.33  " rpy="0 0 0"/>
     <parent link="mobile_base_body"/>
     <child link="lidar"/>
+  </joint>
+  <joint name="laser_joint2" type="fixed">
+    <origin xyz="0 0 0  " rpy="0 0 0"/>
+    <parent link="mobile_base_body"/>
+    <child link="base_laser"/>
   </joint>
   <joint name="base_joint" type="fixed">
     <origin xyz="0 0.0 0.0  " rpy="0 0 0"/>

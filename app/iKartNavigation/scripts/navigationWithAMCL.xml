@@ -38,7 +38,7 @@
     <module>
         <name>roslaunch</name>
         <parameters>robotStatePublisher.launch</parameters>
-        <node>ikart/node>
+        <node>ikart</node>
     </module>
 
     <module>
@@ -108,5 +108,11 @@
        <protocol>tcp</protocol>
     </connection>
 
+    <connection>
+       <from>/joystickCtrl:o</from>
+       <to>/baseControl/joystick1:i</to>
+       <protocol>udp</protocol>
+    </connection>
+    
 </application>
 

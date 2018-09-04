@@ -108,5 +108,11 @@
        <protocol>tcp</protocol>
     </connection>
 
+    <connection>
+       <from>/joystickCtrl:o</from>
+       <to>/baseControl/joystick1:i</to>
+       <protocol>udp</protocol>
+    </connection>
+    
 </application>
 

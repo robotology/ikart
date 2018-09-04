@@ -16,6 +16,12 @@
         <parameters>--context joystickCtrl --from ikart.ini</parameters>
         <node>ikart</node>
     </module>
-		
+
+    <connection>
+        <from>/joystickCtrl:o</from>
+        <to>/baseControl/joystick1:i</to>
+        <protocol>udp</protocol>
+    </connection>
+
 </application>
 

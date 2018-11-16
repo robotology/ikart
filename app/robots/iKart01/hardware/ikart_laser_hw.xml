@@ -18,6 +18,6 @@
         <param name="Convert_Error_Codes">        1         </param>
     </group>
 
-    <xi:include href="hardware/laser_serial_port_linux.xml" />
+    <xi:include href="./laser_serial_port_linux.xml" />
 
     </device>

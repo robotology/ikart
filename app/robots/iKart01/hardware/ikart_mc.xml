@@ -1,7 +1,7 @@
 <!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 
     <device name="ikart_mc" type="canmotioncontrol" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="general.xml" />
+    <xi:include href="../general.xml" />
 
     <group name="CAN">
         <param name="canbusdevice">               sharedcan     </param>

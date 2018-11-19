@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE devices PUBLIC "-//YARP//DTD robotInterface 1.0//EN" "http://www.icub.org/DTD/robotInterfaceV1.0.dtd">
-<devices robot="ikart" build="1">
-  <device name="ikart_mc_wrapper" type="controlboardwrapper2">
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+
+  <device name="ikart_mc_wrapper" type="controlboardwrapper2" xmlns:xi="http://www.w3.org/2001/XInclude">
       <paramlist name="networks">
       <elem name="wheels">  0 2 0 2 </elem>
       </paramlist>
@@ -19,4 +18,4 @@
 
       <action phase="shutdown" level="5" type="detach" />
   </device>
-</devices>
+

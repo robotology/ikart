@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE robot PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 
-<devices>      
-    <device name="ikartLaser" type="laserHokuyo">
+    <device name="ikartLaser" type="laserHokuyo" xmlns:xi="http://www.w3.org/2001/XInclude">
 
     <group name="GENERAL">
         <param name="name">      ikart_laser        </param>
@@ -19,7 +18,6 @@
         <param name="Convert_Error_Codes">        1         </param>
     </group>
 
-    <params file="hardware/laser_serial_port_linux.xml" />
+    <xi:include href="./laser_serial_port_linux.xml" />
 
     </device>
-</devices>
